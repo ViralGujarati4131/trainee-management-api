@@ -85,9 +85,9 @@ GET  /api/health
 ### Trainee APIs
 
 
- # GET  /api/trainees 
- - Sample GET Response
-[
+GET  /api/trainees 
+- Sample GET Response
+- [
   {
     "id": 1,
     "firstName": "Amit",
@@ -97,8 +97,8 @@ GET  /api/health
 
 
 
-# GET  /api/trainees/{id} 
-id = 1
+GET  /api/trainees/{id} 
+- id = 1
 - Sample GetById Response
 [
   {
@@ -110,8 +110,8 @@ id = 1
 
 
 
- # POST  /api/trainees 
- {
+POST  /api/trainees 
+- {
   "firstName": "Amit",
   "lastName": "Sharma",
   "email": "amit.sharma@training.com",
@@ -127,9 +127,9 @@ id = 1
 
 
 
-# PUT  /api/trainees/{id} 
-id = 1
-  {
+PUT  /api/trainees/{id} 
+- id = 1
+-  {
   "firstName": "Viral",
   "lastName": "Gujarati",
   "email": "viral.gujarati@yahoo.com",
@@ -145,15 +145,15 @@ id = 1
 
 
 
-# DELETE  /api/trainees/{id} 
- id = 1
+DELETE  /api/trainees/{id} 
+- id = 1
  - Smaple Success Response
  204 NoContent
 
 
 
-# GET  /api/trainees?search=value 
- search = viral
+GET  /api/trainees?search=value 
+- search = viral
  - Sample Success Response
 {
   "id": 1,
