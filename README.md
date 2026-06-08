@@ -73,7 +73,7 @@ https://localhost:<port>/swagger
 
 ### Health Check
 GET  /api/health
-# Sample GET Response
+- Sample Get Health Response
 {
   "status": "running",
   "application": "Trainee Management API",
@@ -86,7 +86,7 @@ GET  /api/health
 
 
  # GET  /api/trainees 
- # Sample GET Response
+ - Sample GET Response
 [
   {
     "id": 1,
@@ -99,7 +99,7 @@ GET  /api/health
 
 # GET  /api/trainees/{id} 
 id = 1
-# Sample GetById Response
+- Sample GetById Response
 [
   {
     "id": 1,
@@ -118,7 +118,7 @@ id = 1
   "techStack": "HTML, CSS, JavaScript",
   "status": "Active"
 }
-# Sample Success Response
+-  Sample Success Response
 {
   "id": 1,
   "firstName": "Amit",
@@ -136,7 +136,7 @@ id = 1
   "techStack": "React Native, Node",
   "status": "Active"
 }
-# Sample Success Response
+- Sample Success Response
 {
   "id": 1,
   "firstName": "Viral",
@@ -145,16 +145,16 @@ id = 1
 
 
 
- DELETE  /api/trainees/{id} 
+# DELETE  /api/trainees/{id} 
  id = 1
- # Smaple Success Response
+ - Smaple Success Response
  204 NoContent
 
 
 
- GET  /api/trainees?search=value 
+# GET  /api/trainees?search=value 
  search = viral
- # Sample Success Response
+ - Sample Success Response
 {
   "id": 1,
   "firstName": "Viral",
@@ -164,9 +164,9 @@ id = 1
 
 # limitations
 
-data is stored is in InMemoryStorage so it clear when server restart.
+- data is stored is in InMemoryStorage so it clear when server restart.
 
 # Next Phase Scope
 
-We can configure database so data is persistent.
-We can create more endpoints to handle media files.
+- We can configure database so data is persistent.
+- We can create more endpoints to handle media files.
