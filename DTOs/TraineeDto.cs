@@ -5,11 +5,11 @@ namespace TraineeManagementApi.DTOs;
 public class UpdateTraineeDto
 {
     [Required(ErrorMessage = "FirstName is required")]
-    [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 characters")]
+    [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 character")]
     public string FirstName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "LastName is required")]
-    [MaxLength(50, ErrorMessage = "LastName can not be exceed 50 characters")]
+    [MaxLength(50, ErrorMessage = "LastName can not be exceed 50 character")]
     public string LastName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Email is required")]

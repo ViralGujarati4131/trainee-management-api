@@ -1,6 +1,7 @@
 using TraineeManagementApi.Service;
 using TraineeManagementApi.Service.Interface;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +12,11 @@ builder.Services.AddControllers()
 .Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var serverVersion = new MySqlServerVersion(new Version(8,0,46));
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseInMemoryDatabase("TraineeDb"));
+    options.UseMySql(connectionString, serverVersion)
+);
 
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 
