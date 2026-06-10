@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.DTOs;
-using TraineeManagementApi.Models;
 using TraineeManagementApi.Service.Interface;
 
 namespace TraineeManagement.Api.Controllers;
