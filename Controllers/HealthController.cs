@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace TraineeManagement.Api.Controllers;
+namespace TraineeManagementApi.Health.Controller;
 
 [ApiController]
 [Route("api/health")]
@@ -16,7 +16,7 @@ public class HealthController : ControllerBase
     [HttpGet]
     public IActionResult GetMessage()
     {
-        _logger.LogInformation("System health status requested");
+        _logger.LogInformation("System health status requested.");
 
         return Ok(new
         {

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Users.Models;
+using TraineeManagementApi.Users.Models;
 
-namespace Users.DTOs;
+namespace TraineeManagementApi.Users.DTOs;
 
 public class UserResponseDto
 {

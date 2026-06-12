@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using MyApi.Models;
-using TraineeManagementApi.Models;
-using Users.Models;
+using TraineeManagementApi.Models.TimestampInterface;
+using TraineeManagementApi.Trainees.Models;
+using TraineeManagementApi.Users.Models;
+using TraineeManagementApi.Mentors.Models;
+using TraineeManagementApi.LearningTasks.Models;
 
 public class AppDbContext : DbContext
 {
@@ -10,6 +12,10 @@ public class AppDbContext : DbContext
     public DbSet<Trainee> Trainees { get; set; }
     
     public DbSet<User> Users { get; set; }
+
+    public DbSet<Mentor> Mentors { get; set; }
+
+    public DbSet<LearningTask> LearningTasks { get; set; }
 
     public override int SaveChanges()
     {
@@ -49,6 +55,14 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<User>()
             .Property(u => u.Role)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Mentor>()
+            .Property(u => u.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<LearningTask>()
+            .Property(u => u.Status)
             .HasConversion<string>();
 
         modelBuilder.Entity<User>()

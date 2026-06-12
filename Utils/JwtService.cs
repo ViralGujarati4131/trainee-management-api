@@ -2,9 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Users.Models;
+using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Users.Models;
 
-namespace Users.Utils;
+namespace TraineeManagementApi.Utils.JwtService;
 
 public interface IJwtService
 {
@@ -58,6 +59,11 @@ public class JwtService : IJwtService
         
         _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user.Id);
 
-        return tokenHandler.WriteToken(token);
+        string generatedToken = tokenHandler.WriteToken(token); 
+        if(generatedToken == null)
+        {
+            throw new JwtOperationException();
+        }
+        return generatedToken;
     }
 }

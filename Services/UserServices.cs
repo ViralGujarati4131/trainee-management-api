@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Users.DTOs;
-using Users.Models;
-using Users.Service.Interface;
-using Users.Utils;
+using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Users.DTOs;
+using TraineeManagementApi.Users.Models;
+using TraineeManagementApi.Users.ServiceInterface;
+using TraineeManagementApi.Utils.JwtService;
 
-namespace Users.Service;
+namespace TraineeManagementApi.Users.Service;
 
 public class UserService : IUserService
 {
@@ -30,7 +30,6 @@ public class UserService : IUserService
     private LoginTokenResponseDto MapToLoginResponseDto(string token, int expiresInSeconds, User user)
     {
         _logger.LogInformation("Creating response object for successful login session of Username: {Username}", user.Username);
-        
         return new LoginTokenResponseDto
         {
             Token = token,
@@ -44,43 +43,32 @@ public class UserService : IUserService
         };
     }
 
-    private async Task<User?> FetchUserByUsernameInternalAsync(string username)
+    private async Task<User> FetchUserByUsernameInternalAsync(string username)
     {
         User? user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         if (user == null)
         {
             _logger.LogWarning("User with Username {Username} was not found in the database", username);
-            return null;
+            throw new NotFoundException("User was not found");
         }
         return user;
     }
 
-    public async Task<LoginTokenResponseDto?> LoginUserAsync(UserLoginDto userLoginDto)
+    public async Task<LoginTokenResponseDto> LoginUserAsync(UserLoginDto userLoginDto)
     {
         _logger.LogDebug("Attempting to find user record for Username: {Username}", userLoginDto.Username);
-        
         User? user = await FetchUserByUsernameInternalAsync(userLoginDto.Username);
-        if (user == null)
-        {
-            return null;
-        }
-
         _logger.LogDebug("Verifying password credentials for Username: {Username}", userLoginDto.Username);
-        
         var verificationResult = VerifyPassword(user, userLoginDto.Password, user.PasswordHash);
         if (verificationResult == PasswordVerificationResult.Success)
         {
             _logger.LogInformation("Password successfully verified. Initiating JWT token generation for Username: {Username}", user.Username);
-            
             var token = _jwtService.GenerateJwtToken(user, out int expiryMinutes);
             var expiresInSeconds = expiryMinutes * 60;
-            
             _logger.LogInformation("JWT Token successfully generated. Expiry: {ExpiryMinutes} minutes", expiryMinutes);
-            
             return MapToLoginResponseDto(token, expiresInSeconds, user);
         }
-
         _logger.LogWarning("Invalid password credential provided for Username: {Username}", userLoginDto.Username);
-        return null;
+        throw new UnauthorizedException("Invalid credential provided");
     }
 }

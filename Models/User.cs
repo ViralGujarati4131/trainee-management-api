@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using MyApi.Models;
+using TraineeManagementApi.Models.TimestampInterface;
 
-namespace Users.Models;
+namespace TraineeManagementApi.Users.Models;
 
 public class User : ITimestamp
 {

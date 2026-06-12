@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Users.Models;
+using TraineeManagementApi.Users.Models;
 
+namespace TraineeManagementApi.Utils.UserSeeder;
 public class UserSeeder
 {
     private static ILogger<UserSeeder>? _logger;
@@ -36,7 +37,7 @@ public class UserSeeder
                 var passwordHasher = new PasswordHasher<User>();
                 adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "Admin@123");
                 
-                await db.Users.AddAsync(adminUser);
+                db.Users.Add(adminUser);
                 await db.SaveChangesAsync();
                 
                 _logger?.LogInformation("Admin user {Username} seeded successfully", DefaultUser);

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.Models;
+using TraineeManagementApi.Trainees.Models;
 
-namespace TraineeManagementApi.DTOs;
+namespace TraineeManagementApi.Trainees.DTOs;
 
-public class UpdateTraineeDto
+public class TraineeUpdateDto
 {
     [Required(ErrorMessage = "FirstName is required")]
     [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 character")]
@@ -34,7 +34,7 @@ public class TraineeResponseDto
     public string LastName { get; set; } = string.Empty;
 }
 
-public class CreateTraineeDto
+public class TraineeCreateDto
 {
     [Required(ErrorMessage = "FirstName is required")]
     [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 characters")]
@@ -56,7 +56,7 @@ public class CreateTraineeDto
     public TraineeStatus Status { get; set; }
 }
 
-public class PaginationSearchDto
+public class TraineePaginationSearchDto
 {
     public int PageNumber { get; set; }
 

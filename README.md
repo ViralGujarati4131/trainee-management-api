@@ -25,15 +25,23 @@ TraineeManagement.Api/
 │   ├── HealthController.cs
 │   ├── TraineesController.cs
 │   ├── UserController.cs
+│   ├── MentorsController.cs
+│   ├── LearningTasksController.cs
 ├── Models/
 │   ├── Trainee.cs
 │   ├── User.cs
+│   ├── Mentor.cs
+│   ├── LearningTask.cs
 ├── DTOs/
 │   ├── TraineeDto/
 │   ├── UserDto/
+│   ├── MentorDto/
+│   ├── LearningTaskDto/
 ├── Services/
 │   ├── ITraineeServices.cs / TraineeServices.cs
 │   ├── IUserServices.cs / AuthServices.cs
+│   ├── IMentorServices.cs / MentorServices.cs
+│   ├── ILearningTaskServices.cs / LearningTaskServices.cs
 ├── Data/
 │   └── DbContext.cs
 ├── Migrations/
@@ -186,6 +194,26 @@ https://localhost:<port>/swagger
 | PUT | `/api/trainees/{id}` | Update trainee details |
 | DELETE | `/api/trainees/{id}` | Delete a trainee |
 
+### Mentor APIs (Protected)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/mentors` | Get all mentors |
+| GET | `/api/mentors/{id}` | Get mentor by ID |
+| POST | `/api/mentors` | Create a new mentor |
+| PUT | `/api/mentors/{id}` | Update mentor details |
+| DELETE | `/api/mentors/{id}` | Delete a mentor |
+
+### Learning Task APIs (Protected)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/learning-tasks` | Get all learning tasks |
+| GET | `/api/learning-tasks/{id}` | Get learning task by ID |
+| POST | `/api/learning-tasks` | Create a new learning task |
+| PUT | `/api/learning-tasks/{id}` | Update a learning task |
+| DELETE | `/api/learning-tasks/{id}` | Delete a learning task |
+
 ---
 
 ## Sample Request & Response JSON
@@ -249,6 +277,40 @@ Response `200 OK`:
   ]
 }
 ```
+
+---
+
+### Create Mentor
+
+**POST** `/api/mentors`
+
+Request:
+```json
+{
+  "firstName": "Priya",
+  "lastName": "Nair",
+  "email": "priya.nair@company.com",
+  "expertise": "C#, ASP.NET Core, SQL",
+  "status": "Active"
+}
+```
+
+---
+
+### Create Learning Task
+
+**POST** `/api/learning-tasks`
+
+Request:
+```json
+{
+  "title": "Build a REST API",
+  "description": "Build a CRUD REST API using ASP.NET Core",
+  "expectedTechStack": "C#, ASP.NET Core, EF Core",
+  "dueDate": "2026-07-01",
+  "status": "Published"
+}
+```
 ---
 
 ## CORS Configuration
@@ -280,6 +342,7 @@ The following events are logged:
 
 - User login success and failure
 - Trainee created, updated, and deleted
+- Mentor created, updated, and deleted
 - Record-not-found (404) cases
 - Unexpected exceptions
 

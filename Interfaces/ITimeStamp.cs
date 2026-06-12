@@ -1,4 +1,4 @@
-namespace MyApi.Models;
+namespace TraineeManagementApi.Models.TimestampInterface;
 
 public interface ITimestamp
 {

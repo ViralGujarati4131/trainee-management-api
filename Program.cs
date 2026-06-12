@@ -4,11 +4,18 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using TraineeManagementApi.Service;
-using TraineeManagementApi.Service.Interface;
-using Users.Service;
-using Users.Service.Interface;
-using Users.Utils;
+using TraineeManagementApi.GlobalExceptionMiddleware;
+using TraineeManagementApi.LearningTasks.Models;
+using TraineeManagementApi.LearningTasks.Service;
+using TraineeManagementApi.LearningTasks.ServiceInterface;
+using TraineeManagementApi.Mentors.Service;
+using TraineeManagementApi.Mentors.ServiceInterface;
+using TraineeManagementApi.Trainees.Service;
+using TraineeManagementApi.Trainees.ServiceInterface;
+using TraineeManagementApi.Users.Service;
+using TraineeManagementApi.Users.ServiceInterface;
+using TraineeManagementApi.Utils.JwtService;
+using TraineeManagementApi.Utils.UserSeeder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,6 +94,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IMentorServices,MentorService>();
+builder.Services.AddScoped<ILearningTaskService,LearningTaskService>();
 
 builder.Services.AddCors(options =>
 {
@@ -128,12 +137,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors(AllowedOriginsPolicy);
-
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
