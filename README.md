@@ -33,15 +33,27 @@ TraineeManagement.Api/
 │   ├── Mentor.cs
 │   ├── LearningTask.cs
 ├── DTOs/
-│   ├── TraineeDto/
-│   ├── UserDto/
-│   ├── MentorDto/
-│   ├── LearningTaskDto/
+│   ├── TraineeDto
+│   ├── UserDto
+│   ├── MentorDto
+│   ├── LearningTaskDto
+├── Interfaces/
+│   ├── ILearningTaskServices
+│   ├── IMentorServices
+│   ├── ITimeStamp
+│   ├── ITraineeServices
+│   ├── IUserServices
 ├── Services/
-│   ├── ITraineeServices.cs / TraineeServices.cs
-│   ├── IUserServices.cs / AuthServices.cs
-│   ├── IMentorServices.cs / MentorServices.cs
-│   ├── ILearningTaskServices.cs / LearningTaskServices.cs
+│   ├── ITraineeServices.cs
+│   ├── IUserServices.cs
+│   ├── IMentorServices.cs
+│   ├── ILearningTaskServices.cs
+├── Utils/
+│   ├── CustomException.cs
+│   ├── JwtService.cs
+│   ├── UserSeeder.cs
+├── Middlewares/
+│   └── GlobalExceptionMiddleware.cs
 ├── Data/
 │   └── DbContext.cs
 ├── Migrations/
