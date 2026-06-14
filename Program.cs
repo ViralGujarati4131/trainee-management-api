@@ -16,6 +16,12 @@ using TraineeManagementApi.Users.Service;
 using TraineeManagementApi.Users.ServiceInterface;
 using TraineeManagementApi.Utils.JwtService;
 using TraineeManagementApi.Utils.UserSeeder;
+using TraineeManagementApi.TaskAssignments.ServiceInterface;
+using TraineeManagementApi.TaskAssignments.Service;
+using TraineeManagementApi.Submissions.ServiceInterface;
+using TraineeManagementApi.Submissions.Service;
+using TraineeManagementApi.Reviews.ServiceInterface;
+using TraineeManagementApi.Reviews.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,6 +102,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMentorServices,MentorService>();
 builder.Services.AddScoped<ILearningTaskService,LearningTaskService>();
+builder.Services.AddScoped<ITaskAssignmentService,TaskAssignmentService>();
+builder.Services.AddScoped<ISubmissionService,SubmissionService>();
+builder.Services.AddScoped<IReviewService,ReviewService>();
 
 builder.Services.AddCors(options =>
 {

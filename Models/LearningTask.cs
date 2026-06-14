@@ -1,6 +1,7 @@
 using TraineeManagementApi.Models.TimestampInterface;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
+using TraineeManagementApi.TaskAssignments.Models;
 
 namespace TraineeManagementApi.LearningTasks.Models;
 
@@ -19,12 +20,16 @@ public class LearningTask : ITimestamp
     public string ExpectedTechStack {get; set;} = string.Empty;
 
     [Required(ErrorMessage = "DueDate is required")]
-    public DateTime DueDate {get; set;}
+    public DateOnly DueDate {get; set;}
 
-    [Required(ErrorMessage = "Status is Required")]
+    [EnumDataType(typeof(LearningTaskStatus), ErrorMessage = "Invalid Status")]
     public LearningTaskStatus Status {get; set;}
+
     public DateTime CreatedDate {get; set;}
+
     public DateTime UpdatedDate {get; set;}
+
+    public List<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 }
 public enum LearningTaskStatus
 {

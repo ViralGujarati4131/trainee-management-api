@@ -14,7 +14,7 @@ public class User : ITimestamp
     [Required(ErrorMessage = "Password can not be empty")]
     public string PasswordHash { get; set; } = string.Empty;
 
-    [AllowedValues(UserRole.Admin, UserRole.Mentor, UserRole.Trainee)]
+    [EnumDataType(typeof(UserRole), ErrorMessage = "Invalid Status")]
     public UserRole Role { get; set; }
 
     public DateTime CreatedDate { get; set; }

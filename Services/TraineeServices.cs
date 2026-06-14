@@ -20,11 +20,11 @@ public class TraineeService : ITraineeService
     private TraineeResponseDto MapToResponseDto(Trainee trainee)
     {
         return new TraineeResponseDto
-        {
-            Id = trainee.Id,
-            FirstName = trainee.FirstName,
-            LastName = trainee.LastName,
-        };
+        (
+            trainee.Id,
+            trainee.FirstName,
+            trainee.LastName
+        );
     }
 
     private async Task<Trainee> FetchTraineeByIdInternalAsync(int id)
@@ -118,11 +118,11 @@ public class TraineeService : ITraineeService
             .ToList();
         IEnumerable<TraineeResponseDto> responseData = pagedData.Select(MapToResponseDto).ToList();
         return new TraineePaginationSearchDto
-        {
-            PageNumber = pageNumber,
-            PageSize = pagedData.Count(),
-            TotalRecords = totalRecords,
-            Data = responseData
-        };
+        (
+            pageNumber,
+            pagedData.Count(),
+            totalRecords,
+            responseData
+        );
     }
 }

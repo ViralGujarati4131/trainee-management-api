@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.Models.TimestampInterface;
+using TraineeManagementApi.TaskAssignments.Models;
+using TraineeManagementApi.Reviews.Models;
 
 namespace TraineeManagementApi.Mentors.Models;
 public class Mentor : ITimestamp
@@ -16,13 +18,18 @@ public class Mentor : ITimestamp
     [EmailAddress]
     public string Email { get; set; } = string.Empty;
 
-     [Required(ErrorMessage = "Expertise is required")]
+    [Required(ErrorMessage = "Expertise is required")]
     public string Expertise { get; set; } = string.Empty;
 
-    [AllowedValues(MentorStatus.Active, MentorStatus.Inactive)]
+    [EnumDataType(typeof(MentorStatus), ErrorMessage = "Invalid Status")]
     public MentorStatus Status { get; set; }
+
     public DateTime CreatedDate { get; set; }
+
     public DateTime UpdatedDate { get; set; }
+
+    public List<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
+    public List<Review> Reviews { get; set; } = new List<Review>();
 }
 public enum MentorStatus
 {

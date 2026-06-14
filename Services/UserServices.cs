@@ -31,16 +31,16 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Creating response object for successful login session of Username: {Username}", user.Username);
         return new LoginTokenResponseDto
-        {
-            Token = token,
-            ExpiresIn = expiresInSeconds,
-            User = new UserResponseDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Role = user.Role
-            }
-        };
+        (
+            token,
+            expiresInSeconds,
+            new UserResponseDto
+            (
+                user.Id,
+                user.Username,
+                user.Role
+            )
+        );
     }
 
     private async Task<User> FetchUserByUsernameInternalAsync(string username)

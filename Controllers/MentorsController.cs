@@ -34,7 +34,7 @@ public class MentorController : ControllerBase
         return Ok(mentor);
     }
 
-    [HttpPut]
+    [HttpPost]
     public async Task<ActionResult<MentorResponseDto>> CreateMentor([FromBody]MentorCreateDto createMentorDto)
     {
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");

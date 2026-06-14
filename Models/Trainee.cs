@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.Models.TimestampInterface;
+using TraineeManagementApi.TaskAssignments.Models;
 
 namespace TraineeManagementApi.Trainees.Models;
 
@@ -23,13 +24,14 @@ public class Trainee : ITimestamp
     [Required(ErrorMessage = "TechStack is required")]
     public string TechStack { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Invalid Status")]
-    [AllowedValues(TraineeStatus.Active, TraineeStatus.Inactive, TraineeStatus.Completed)]
+    [EnumDataType(typeof(TraineeStatus), ErrorMessage = "Invalid Status")]
     public TraineeStatus Status { get; set; }
 
     public DateTime CreatedDate { get; set; }
 
     public DateTime UpdatedDate { get; set; }
+
+    public List<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 }
 
 public enum TraineeStatus

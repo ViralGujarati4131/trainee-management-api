@@ -3,66 +3,59 @@ using TraineeManagementApi.Trainees.Models;
 
 namespace TraineeManagementApi.Trainees.DTOs;
 
-public class TraineeUpdateDto
-{
+public record TraineeUpdateDto
+(
     [Required(ErrorMessage = "FirstName is required")]
     [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 character")]
-    public string FirstName { get; set; } = string.Empty;
+    string FirstName,
 
     [Required(ErrorMessage = "LastName is required")]
     [MaxLength(50, ErrorMessage = "LastName can not be exceed 50 character")]
-    public string LastName { get; set; } = string.Empty;
+    string LastName,
 
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    string Email,
 
     [Required(ErrorMessage = "TechStack is required")]
-    public string TechStack { get; set; } = string.Empty;
+    string TechStack,
 
-    [Required(ErrorMessage = "Invalid Status")]
-    [AllowedValues(TraineeStatus.Active, TraineeStatus.Inactive, TraineeStatus.Completed)]
-    public TraineeStatus Status { get; set; }
-}
+    [EnumDataType(typeof(TraineeStatus), ErrorMessage = "Invalid Status")]
+    TraineeStatus Status
+);
 
-public class TraineeResponseDto
-{
-    public int Id { get; set; }
+public record TraineeResponseDto
+(
+    int Id,
+    string FirstName,
+    string LastName
+);
 
-    public string FirstName { get; set; } = string.Empty;
-
-    public string LastName { get; set; } = string.Empty;
-}
-
-public class TraineeCreateDto
-{
+public record TraineeCreateDto
+(
     [Required(ErrorMessage = "FirstName is required")]
     [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 characters")]
-    public string FirstName { get; set; } = string.Empty;
+    string FirstName,
 
     [Required(ErrorMessage = "LastName is required")]
     [MaxLength(50, ErrorMessage = "LastName can not be exceed 50 characters")]
-    public string LastName { get; set; } = string.Empty;
+    string LastName,
 
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    string Email,
 
     [Required(ErrorMessage = "TechStack is required")]
-    public string TechStack { get; set; } = string.Empty;
+    string TechStack,
 
-    [Required(ErrorMessage = "Invalid Status")]
-    [AllowedValues(TraineeStatus.Active, TraineeStatus.Inactive, TraineeStatus.Completed)]
-    public TraineeStatus Status { get; set; }
-}
+    [EnumDataType(typeof(TraineeStatus), ErrorMessage = "Invalid Status")]
+    TraineeStatus Status
+);
 
-public class TraineePaginationSearchDto
-{
-    public int PageNumber { get; set; }
-
-    public int PageSize { get; set; }
-
-    public int TotalRecords { get; set; }
-
-    public IEnumerable<TraineeResponseDto>? Data { get; set; }
-}
+public record TraineePaginationSearchDto
+(
+    int PageNumber,
+    int PageSize,
+    int TotalRecords,
+    IEnumerable<TraineeResponseDto>? Data
+);

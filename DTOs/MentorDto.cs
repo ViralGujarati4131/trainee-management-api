@@ -2,50 +2,46 @@ using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.Mentors.Models;
 
 namespace TraineeManagementApi.Mentors.DTOs;
-public class MentorCreateDto
-{
+
+public record MentorCreateDto
+(
     [Required(ErrorMessage = "FirstName is required")]
-    public string FirstName { get; set; } = string.Empty;
+    string FirstName,
 
     [Required(ErrorMessage = "LastName is required")]
-    public string LastName { get; set; } = string.Empty;
+    string LastName,
 
     [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    string Email,
 
-     [Required(ErrorMessage = "Expertise is required")]
-    public string Expertise { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Expertise is required")]
+    string Expertise,
 
-    [AllowedValues(MentorStatus.Active, MentorStatus.Inactive)]
-    public MentorStatus Status { get; set; }
-}
+    [EnumDataType(typeof(MentorStatus), ErrorMessage = "Invalid Status")]
+    MentorStatus Status
+);
 
-public class MentorUpdateDto
-{
+public record MentorUpdateDto
+(
     [Required(ErrorMessage = "FirstName is required")]
-    public string FirstName { get; set; } = string.Empty;
+    string FirstName,
 
     [Required(ErrorMessage = "LastName is required")]
-    public string LastName { get; set; } = string.Empty;
+    string LastName,
 
     [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    string Email,
 
-     [Required(ErrorMessage = "Expertise is required")]
-    public string Expertise { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Expertise is required")]
+    string Expertise,
 
-    [AllowedValues(MentorStatus.Active, MentorStatus.Inactive)]
-    public MentorStatus Status { get; set; }
-}
+    [EnumDataType(typeof(MentorStatus), ErrorMessage = "Invalid Status")]
+    MentorStatus Status
+);
 
-public class MentorResponseDto
-{
-    [Key]
-    public int Id {get; set;}
-
-    [Required(ErrorMessage = "FirstName is required")]
-    public string FirstName { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "LastName is required")]
-    public string LastName { get; set; } = string.Empty;
-}
+public record MentorResponseDto
+(
+    int Id,
+    string FirstName,
+    string LastName
+);

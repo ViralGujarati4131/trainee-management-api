@@ -18,11 +18,11 @@ public class MentorService : IMentorServices
     public MentorResponseDto MapToResponseDto(Mentor mentor)
     {
         return new MentorResponseDto
-        {
-            Id = mentor.Id,
-            FirstName = mentor.FirstName,
-            LastName = mentor.LastName
-        };
+        (
+            mentor.Id,
+            mentor.FirstName,
+            mentor.LastName
+        );
     }
     public async Task<Mentor> FetchMentorByIdInternalAsync(int id)
     {

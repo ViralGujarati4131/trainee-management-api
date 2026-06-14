@@ -18,14 +18,14 @@ public class LearningTaskService : ILearningTaskService
     public LearningTaskResposeDto MapToResponseDto(LearningTask learningTask)
     {
         return new LearningTaskResposeDto
-        {
-            Id = learningTask.Id,
-            Title = learningTask.Title,
-            Description = learningTask.Description,
-            ExpectedTechStack = learningTask.ExpectedTechStack,
-            DueDate = learningTask.DueDate,
-            Status = learningTask.Status 
-        };
+        (
+            learningTask.Id,
+            learningTask.Title,
+            learningTask.Description,
+            learningTask.ExpectedTechStack,
+            learningTask.DueDate,
+            learningTask.Status 
+        );
     }
     public async Task<LearningTask> FetchLearningTaskByIdInternalAsync(int id)
     {

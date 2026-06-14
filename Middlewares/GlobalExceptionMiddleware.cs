@@ -1,4 +1,5 @@
 using TraineeManagementApi.Utils.CustomException;
+using MySqlConnector;
 namespace TraineeManagementApi.GlobalExceptionMiddleware;
 
 public class GlobalExceptionMiddleware
@@ -40,9 +41,24 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
-                context.Request.Method, context.Request.Path);
-            await WriteResponse(context, StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
+            if(ex.InnerException is MySqlException mysqlEx){
+                _logger.LogError($"SQL Exception Occured Error Code : {mysqlEx.Number}");
+                if (mysqlEx.Number == 1452)
+                {
+                    _logger.LogError("Reference operation Error: {ex}" , ex);
+                    await WriteResponse(context, StatusCodes.Status400BadRequest,  "Some of the provided References does conflits ");
+                }
+                if (mysqlEx.Number == 1451)
+                {
+                    _logger.LogError("Delete operation Referance Error: {ex}" , ex);
+                    await WriteResponse(context, StatusCodes.Status400BadRequest,  "Delete Operation Could not be completed because of existing reference");
+                }
+            }
+            else{
+                _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
+                await WriteResponse(context, StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
+            }
         }
     }
 
