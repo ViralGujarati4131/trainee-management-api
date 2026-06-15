@@ -23,7 +23,7 @@ public class UserService : IUserService
 
     private PasswordVerificationResult VerifyPassword(User user, string password, string hashedPassword)
     {
-        var passwordHasher = new PasswordHasher<User>();   
+        PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
         return passwordHasher.VerifyHashedPassword(user, hashedPassword, password);
     }
 
@@ -59,12 +59,12 @@ public class UserService : IUserService
         _logger.LogDebug("Attempting to find user record for Username: {Username}", userLoginDto.Username);
         User? user = await FetchUserByUsernameInternalAsync(userLoginDto.Username);
         _logger.LogDebug("Verifying password credentials for Username: {Username}", userLoginDto.Username);
-        var verificationResult = VerifyPassword(user, userLoginDto.Password, user.PasswordHash);
+        PasswordVerificationResult verificationResult = VerifyPassword(user, userLoginDto.Password, user.PasswordHash);
         if (verificationResult == PasswordVerificationResult.Success)
         {
             _logger.LogInformation("Password successfully verified. Initiating JWT token generation for Username: {Username}", user.Username);
-            var token = _jwtService.GenerateJwtToken(user, out int expiryMinutes);
-            var expiresInSeconds = expiryMinutes * 60;
+            string token = _jwtService.GenerateJwtToken(user, out int expiryMinutes);
+            int expiresInSeconds = expiryMinutes * 60;
             _logger.LogInformation("JWT Token successfully generated. Expiry: {ExpiryMinutes} minutes", expiryMinutes);
             return MapToLoginResponseDto(token, expiresInSeconds, user);
         }

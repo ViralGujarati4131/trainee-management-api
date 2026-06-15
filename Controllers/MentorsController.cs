@@ -12,7 +12,7 @@ public class MentorController : ControllerBase
 {
     private readonly IMentorServices _mentorService;
     private readonly ILogger<MentorController> _logger;
-    public MentorController(IMentorServices mentorService,ILogger<MentorController> logger)
+    public MentorController(IMentorServices mentorService, ILogger<MentorController> logger)
     {
         _mentorService = mentorService;
         _logger = logger;
@@ -35,7 +35,7 @@ public class MentorController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<MentorResponseDto>> CreateMentor([FromBody]MentorCreateDto createMentorDto)
+    public async Task<ActionResult<MentorResponseDto>> CreateMentor([FromBody] MentorCreateDto createMentorDto)
     {
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");
         MentorResponseDto createdMentor = await _mentorService.CreateMentorAsync(createMentorDto);
@@ -51,10 +51,10 @@ public class MentorController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<MentorResponseDto>> UpdateMentorById(int id,[FromBody]MentorUpdateDto updateMentorDto)
+    public async Task<ActionResult<MentorResponseDto>> UpdateMentorById(int id, [FromBody] MentorUpdateDto updateMentorDto)
     {
         _logger.LogDebug("Invoking mentor service to modify records for MentorId: {MentorId}", id);
-        MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id,updateMentorDto);
+        MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id, updateMentorDto);
         return Ok(updatedMentor);
     }
 }

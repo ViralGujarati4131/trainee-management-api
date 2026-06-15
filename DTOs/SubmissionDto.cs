@@ -12,7 +12,10 @@ public record SubmissionCreateDto
 
     [Required(ErrorMessage = "Notes is required")]
     string Notes,
-    
+
+    [Required(ErrorMessage="SubmittedDate required")]
+    DateOnly SubmittedDate,
+
     [EnumDataType(typeof(SubmissionStatus), ErrorMessage = "Invalid Status")]
     SubmissionStatus Status
 );

@@ -31,7 +31,7 @@ public class Trainee : ITimestamp
 
     public DateTime UpdatedDate { get; set; }
 
-    public List<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
+    public IEnumerable<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 }
 
 public enum TraineeStatus

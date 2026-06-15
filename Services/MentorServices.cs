@@ -10,7 +10,7 @@ public class MentorService : IMentorServices
 {
     private readonly AppDbContext _context;
     private readonly ILogger<MentorService> _logger;
-    public MentorService(AppDbContext context,ILogger<MentorService> logger)
+    public MentorService(AppDbContext context, ILogger<MentorService> logger)
     {
         _context = context;
         _logger = logger;
@@ -27,10 +27,10 @@ public class MentorService : IMentorServices
     public async Task<Mentor> FetchMentorByIdInternalAsync(int id)
     {
         Mentor? mentor = await _context.Mentors.FindAsync(id);
-        if(mentor == null)
+        if (mentor == null)
         {
             _logger.LogWarning("Mentor with ID {MentorId} was not found", id);
-            throw new NotFoundException("Mentor was not found");   
+            throw new NotFoundException("Mentor was not found");
         }
         return mentor;
     }
@@ -51,7 +51,7 @@ public class MentorService : IMentorServices
 
     public async Task<MentorResponseDto> CreateMentorAsync(MentorCreateDto createMentor)
     {
-        Mentor mentor =  new Mentor
+        Mentor mentor = new Mentor
         {
             FirstName = createMentor.FirstName,
             LastName = createMentor.LastName,

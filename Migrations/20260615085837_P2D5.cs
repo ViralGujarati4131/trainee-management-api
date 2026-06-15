@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TraineeManagement.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class Phase2Day5 : Migration
+    public partial class P2D5 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -151,7 +151,7 @@ namespace TraineeManagement.Api.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Submission",
+                name: "Submissions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -167,9 +167,9 @@ namespace TraineeManagement.Api.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Submission", x => x.Id);
+                    table.PrimaryKey("PK_Submissions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Submission_TaskAssignments_TaskAssignmentId",
+                        name: "FK_Submissions_TaskAssignments_TaskAssignmentId",
                         column: x => x.TaskAssignmentId,
                         principalTable: "TaskAssignments",
                         principalColumn: "Id",
@@ -178,7 +178,7 @@ namespace TraineeManagement.Api.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Review",
+                name: "Reviews",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -188,41 +188,41 @@ namespace TraineeManagement.Api.Migrations
                     Feedback = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Score = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "longtext", nullable: false)
+                    ReviewStatus = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ReviewedDate = table.Column<DateOnly>(type: "date", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Review", x => x.Id);
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Review_Mentors_MentorId",
+                        name: "FK_Reviews_Mentors_MentorId",
                         column: x => x.MentorId,
                         principalTable: "Mentors",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Review_Submission_SubmissionId",
+                        name: "FK_Reviews_Submissions_SubmissionId",
                         column: x => x.SubmissionId,
-                        principalTable: "Submission",
+                        principalTable: "Submissions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Review_MentorId",
-                table: "Review",
+                name: "IX_Reviews_MentorId",
+                table: "Reviews",
                 column: "MentorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Review_SubmissionId",
-                table: "Review",
+                name: "IX_Reviews_SubmissionId",
+                table: "Reviews",
                 column: "SubmissionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Submission_TaskAssignmentId",
-                table: "Submission",
+                name: "IX_Submissions_TaskAssignmentId",
+                table: "Submissions",
                 column: "TaskAssignmentId");
 
             migrationBuilder.CreateIndex(
@@ -251,13 +251,13 @@ namespace TraineeManagement.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Review");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Submission");
+                name: "Submissions");
 
             migrationBuilder.DropTable(
                 name: "TaskAssignments");

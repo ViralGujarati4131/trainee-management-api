@@ -11,12 +11,15 @@ public record TaskAssignmentCreateDto
 
     int LearningTaskId,
 
+    [Required(ErrorMessage="AssignedDate required")]
+    DateOnly AssignedDate,
+
     [Required(ErrorMessage="DueDate required")]
     DateOnly DueDate,
 
     [EnumDataType(typeof(TaskAssignmentStatus), ErrorMessage = "Invalid Status")]
     TaskAssignmentStatus Status,
-    
+
     string Remarks
 );
 

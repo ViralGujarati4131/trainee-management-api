@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagementApi.Utils.CustomException;
 using TraineeManagementApi.TaskAssignments.DTOs;
 using TraineeManagementApi.TaskAssignments.ServiceInterface;
 
@@ -48,7 +47,7 @@ public class TaskAssignmentsController : ControllerBase
     public async Task<ActionResult<TaskAssignmentResponseDto>> UpdateTaskAssignmentById(int id, [FromBody] TaskAssignmentUpdateDto updateTaskAssignmentDto)
     {
         _logger.LogDebug("Invoking task-assignment service to modify records for AssignmentId: {AssignmentId}", id);
-        TaskAssignmentResponseDto updatedTaskAssignment = await _taskAssignmentService.UpdateTaskAssignmentAsync(id, updateTaskAssignmentDto); 
+        TaskAssignmentResponseDto updatedTaskAssignment = await _taskAssignmentService.UpdateTaskAssignmentAsync(id, updateTaskAssignmentDto);
         return Ok(updatedTaskAssignment);
     }
 }

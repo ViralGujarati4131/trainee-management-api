@@ -46,11 +46,14 @@ public class TaskAssignmentService : ITaskAssignmentService
 
     public async Task<TaskAssignmentResponseDto> CreateTaskAssignmentAsync(TaskAssignmentCreateDto createTaskAssignmentDto)
     {
+        if (createTaskAssignmentDto.AssignedDate > createTaskAssignmentDto.DueDate)
+            throw new BadRequestException("Duedate can not be before the assigned date.");
         TaskAssignment taskAssignment = new TaskAssignment
         {
             TraineeId = createTaskAssignmentDto.TraineeId,
             MentorId = createTaskAssignmentDto.MentorId,
             LearningTaskId = createTaskAssignmentDto.LearningTaskId,
+            AssignedDate = createTaskAssignmentDto.AssignedDate,
             DueDate = createTaskAssignmentDto.DueDate,
             Status = createTaskAssignmentDto.Status,
             Remarks = createTaskAssignmentDto.Remarks

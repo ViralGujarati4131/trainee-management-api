@@ -40,7 +40,7 @@ public class TraineesController : ControllerBase
     public async Task<ActionResult<TraineeResponseDto>> UpdateTraineeById(int id, [FromBody] TraineeUpdateDto updateTraineeDto)
     {
         _logger.LogDebug("Invoking trainee service to modify records for TraineeId: {TraineeId}", id);
-        TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto); 
+        TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto);
         return Ok(updatedTrainee);
     }
 
@@ -48,7 +48,7 @@ public class TraineesController : ControllerBase
     public async Task<ActionResult> DeleteTraineeById(int id)
     {
         _logger.LogDebug("Invoking trainee service to delete records for TraineeId: {TraineeId}", id);
-        await _traineeService.DeleteTraineeByIdAsync(id);    
+        await _traineeService.DeleteTraineeByIdAsync(id);
         return NoContent();
     }
 

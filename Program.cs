@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TraineeManagementApi.GlobalExceptionMiddleware;
-using TraineeManagementApi.LearningTasks.Models;
 using TraineeManagementApi.LearningTasks.Service;
 using TraineeManagementApi.LearningTasks.ServiceInterface;
 using TraineeManagementApi.Mentors.Service;
@@ -22,8 +21,9 @@ using TraineeManagementApi.Submissions.ServiceInterface;
 using TraineeManagementApi.Submissions.Service;
 using TraineeManagementApi.Reviews.ServiceInterface;
 using TraineeManagementApi.Reviews.Service;
+using Microsoft.OpenApi.Models;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 const string AllowedOriginsPolicy = "_myAllowSpecificOrigins";
 
@@ -39,8 +39,8 @@ builder.Services.AddControllers()
         );
     });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
+string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
@@ -49,23 +49,23 @@ builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        var scheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        OpenApiSecurityScheme scheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
-            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            In = ParameterLocation.Header,
             Description = "Enter your JWT token directly"
         };
-        document.Components ??= new Microsoft.OpenApi.Models.OpenApiComponents();
+        document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes.Add("Bearer", scheme);
-        document.SecurityRequirements.Add(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        document.SecurityRequirements.Add(new OpenApiSecurityRequirement
         {
-            [new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            [new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             }] = Array.Empty<string>()
@@ -74,9 +74,9 @@ builder.Services.AddOpenApi("v1", options =>
     });
 });
 
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var jwtKeyString = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is missing from configuration.");
-var tokenSigningKey = Encoding.UTF8.GetBytes(jwtKeyString);
+IConfigurationSection jwtSettings = builder.Configuration.GetSection("Jwt");
+string jwtKeyString = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is missing from configuration.");
+byte[] tokenSigningKey = Encoding.UTF8.GetBytes(jwtKeyString);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -100,11 +100,11 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IMentorServices,MentorService>();
-builder.Services.AddScoped<ILearningTaskService,LearningTaskService>();
-builder.Services.AddScoped<ITaskAssignmentService,TaskAssignmentService>();
-builder.Services.AddScoped<ISubmissionService,SubmissionService>();
-builder.Services.AddScoped<IReviewService,ReviewService>();
+builder.Services.AddScoped<IMentorServices, MentorService>();
+builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
+builder.Services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddCors(options =>
 {
@@ -119,22 +119,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddOpenApi();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        logger.LogInformation("Starting database seeding process...");
-        await UserSeeder.SeedAsync(scope.ServiceProvider);
-        logger.LogInformation("Database seeding completed successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while seeding the database.");
-    }
-}
+await UserSeeder.SeedAsync(app.Services);
 
 if (app.Environment.IsDevelopment())
 {

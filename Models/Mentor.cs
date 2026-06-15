@@ -4,6 +4,7 @@ using TraineeManagementApi.TaskAssignments.Models;
 using TraineeManagementApi.Reviews.Models;
 
 namespace TraineeManagementApi.Mentors.Models;
+
 public class Mentor : ITimestamp
 {
     [Key]
@@ -28,8 +29,8 @@ public class Mentor : ITimestamp
 
     public DateTime UpdatedDate { get; set; }
 
-    public List<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
-    public List<Review> Reviews { get; set; } = new List<Review>();
+    public IEnumerable<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
+    public IEnumerable<Review> Reviews { get; set; } = new List<Review>();
 }
 public enum MentorStatus
 {

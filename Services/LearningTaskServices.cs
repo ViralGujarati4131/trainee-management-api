@@ -10,7 +10,7 @@ public class LearningTaskService : ILearningTaskService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<LearningTaskService> _logger;
-    public LearningTaskService(AppDbContext context,ILogger<LearningTaskService> logger)
+    public LearningTaskService(AppDbContext context, ILogger<LearningTaskService> logger)
     {
         _logger = logger;
         _context = context;
@@ -24,16 +24,16 @@ public class LearningTaskService : ILearningTaskService
             learningTask.Description,
             learningTask.ExpectedTechStack,
             learningTask.DueDate,
-            learningTask.Status 
+            learningTask.Status
         );
     }
     public async Task<LearningTask> FetchLearningTaskByIdInternalAsync(int id)
     {
         LearningTask? learningTask = await _context.LearningTasks.FindAsync(id);
-        if(learningTask == null)
+        if (learningTask == null)
         {
             _logger.LogWarning("LearningTask with ID {TaskId} was not found", id);
-            throw new NotFoundException("LearningTask was not found"); 
+            throw new NotFoundException("LearningTask was not found");
         }
         return learningTask;
     }
@@ -75,7 +75,7 @@ public class LearningTaskService : ILearningTaskService
         return;
     }
 
-    public async Task<LearningTaskResposeDto> UpdateLearningTaskByIdAsync(int id,LearningTaskUpdateDto updateTask)
+    public async Task<LearningTaskResposeDto> UpdateLearningTaskByIdAsync(int id, LearningTaskUpdateDto updateTask)
     {
         _logger.LogDebug("Locating learning-task with ID {TaskId} for modifications", id);
         LearningTask learningTask = await FetchLearningTaskByIdInternalAsync(id);

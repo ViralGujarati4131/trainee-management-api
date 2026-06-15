@@ -6,7 +6,9 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
-
+    const int notFoundReferanceError = 1452;
+    const int deleteReferanceError = 1451;
+    const int usernamExistsError = 1062;
     public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
     {
         _next = next;
@@ -41,20 +43,27 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            if(ex.InnerException is MySqlException mysqlEx){
+            if (ex.InnerException is MySqlException mysqlEx)
+            {
                 _logger.LogError($"SQL Exception Occured Error Code : {mysqlEx.Number}");
-                if (mysqlEx.Number == 1452)
+                if (mysqlEx.Number == notFoundReferanceError)
                 {
-                    _logger.LogError("Reference operation Error: {ex}" , ex);
-                    await WriteResponse(context, StatusCodes.Status400BadRequest,  "Some of the provided References does conflits ");
+                    _logger.LogError("Reference operation Error: {ex}", ex);
+                    await WriteResponse(context, StatusCodes.Status400BadRequest, "Some of the provided References does conflits ");
                 }
-                if (mysqlEx.Number == 1451)
+                if (mysqlEx.Number == deleteReferanceError)
                 {
-                    _logger.LogError("Delete operation Referance Error: {ex}" , ex);
-                    await WriteResponse(context, StatusCodes.Status400BadRequest,  "Delete Operation Could not be completed because of existing reference");
+                    _logger.LogError("Delete operation Referance Error: {ex}", ex);
+                    await WriteResponse(context, StatusCodes.Status400BadRequest, "Delete Operation Could not be completed because of existing reference");
+                }
+                if (mysqlEx.Number == usernamExistsError)
+                {
+                    _logger?.LogError("Create operation Referance Error: {ex}", ex);
+                    await WriteResponse(context, StatusCodes.Status400BadRequest, "Username is already exists");
                 }
             }
-            else{
+            else
+            {
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
                     context.Request.Method, context.Request.Path);
                 await WriteResponse(context, StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");

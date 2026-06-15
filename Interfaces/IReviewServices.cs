@@ -4,9 +4,9 @@ namespace TraineeManagementApi.Reviews.ServiceInterface;
 
 public interface IReviewService
 {
-//     Task<ReviewResponseDto> CreateReviewAsync(ReviewCreateDto createReviewDto);
+    Task<ReviewResponseDto> CreateReviewAsync(ReviewCreateDto createReviewDto);
 
-//     Task<IEnumerable<ReviewResponseDto>> GetReviewsAsync();
+    Task<IEnumerable<ReviewResponseDto>> GetReviewsAsync();
 
-//     Task<ReviewResponseDto> GetReviewByIdAsync(int id);
+    Task<ReviewResponseDto> GetReviewByIdAsync(int id);
 }

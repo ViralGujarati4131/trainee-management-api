@@ -13,7 +13,7 @@ public class LearningTasksController : ControllerBase
     private readonly ILearningTaskService _learningTaskService;
     private readonly ILogger<LearningTasksController> _logger;
 
-    public LearningTasksController(ILearningTaskService learningTaskService,ILogger<LearningTasksController> logger)
+    public LearningTasksController(ILearningTaskService learningTaskService, ILogger<LearningTasksController> logger)
     {
         _learningTaskService = learningTaskService;
         _logger = logger;
@@ -52,10 +52,10 @@ public class LearningTasksController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<LearningTaskResposeDto>> UpdateLearningTask(int id,[FromBody]LearningTaskUpdateDto updateTaskDto)
+    public async Task<ActionResult<LearningTaskResposeDto>> UpdateLearningTask(int id, [FromBody] LearningTaskUpdateDto updateTaskDto)
     {
         _logger.LogDebug("Invoking learning-task service to modify task for TaskId: {TaskId}", id);
-        LearningTaskResposeDto updatedTask = await _learningTaskService.UpdateLearningTaskByIdAsync(id,updateTaskDto);
+        LearningTaskResposeDto updatedTask = await _learningTaskService.UpdateLearningTaskByIdAsync(id, updateTaskDto);
         return Ok(updatedTask);
     }
 }

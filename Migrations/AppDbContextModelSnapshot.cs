@@ -113,15 +113,15 @@ namespace TraineeManagement.Api.Migrations
                     b.Property<int>("MentorId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateOnly>("ReviewedDate")
                         .HasColumnType("date");
 
                     b.Property<int>("Score")
                         .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.Property<int>("SubmissionId")
                         .HasColumnType("int");
@@ -132,7 +132,7 @@ namespace TraineeManagement.Api.Migrations
 
                     b.HasIndex("SubmissionId");
 
-                    b.ToTable("Review");
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("TraineeManagementApi.Submissions.Models.Submission", b =>
@@ -165,7 +165,7 @@ namespace TraineeManagement.Api.Migrations
 
                     b.HasIndex("TaskAssignmentId");
 
-                    b.ToTable("Submission");
+                    b.ToTable("Submissions");
                 });
 
             modelBuilder.Entity("TraineeManagementApi.TaskAssignments.Models.TaskAssignment", b =>

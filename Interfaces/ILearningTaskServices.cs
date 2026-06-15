@@ -12,5 +12,5 @@ public interface ILearningTaskService
 
     public Task DeleteLearningTaskByIdAsync(int id);
 
-    public Task<LearningTaskResposeDto> UpdateLearningTaskByIdAsync(int id,LearningTaskUpdateDto updateLearningTask);
+    public Task<LearningTaskResposeDto> UpdateLearningTaskByIdAsync(int id, LearningTaskUpdateDto updateLearningTask);
 }

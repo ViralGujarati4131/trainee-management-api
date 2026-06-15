@@ -1,8 +1,74 @@
+using Microsoft.EntityFrameworkCore;
+using TraineeManagementApi.Submissions.DTOs;
+using TraineeManagementApi.Submissions.Models;
 using TraineeManagementApi.Submissions.ServiceInterface;
+using TraineeManagementApi.Utils.CustomException;
 
 namespace TraineeManagementApi.Submissions.Service;
 
 public class SubmissionService : ISubmissionService
 {
+    private readonly ILogger<SubmissionService> _logger;
+    private readonly AppDbContext _cotext;
 
+    public SubmissionService(ILogger<SubmissionService> logger, AppDbContext context)
+    {
+        _logger = logger;
+        _cotext = context;
+    }
+
+    private SubmissionResponseDto MapToResponseDto(Submission submission)
+    {
+        return new SubmissionResponseDto
+        (
+            submission.Id,
+            submission.TaskAssignmentId,
+            submission.SubmissionUrl,
+            submission.Notes,
+            submission.SubmittedDate,
+            submission.Status
+        );
+    }
+
+    private async Task<Submission> FetchSubmissionByIdInternalAsync(int id)
+    {
+        Submission? submission = await _cotext.Submissions.FindAsync(id);
+        if (submission == null)
+        {
+            _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
+            throw new NotFoundException("Submission was not found");
+        }
+        return submission;
+    }
+
+
+    public async Task<SubmissionResponseDto> CreateSubmissionAsync(SubmissionCreateDto submissionCreateDto)
+    {
+        Submission submission = new Submission
+        {
+            TaskAssignmentId = submissionCreateDto.TaskAssignmentId,
+            SubmissionUrl = submissionCreateDto.SubmissionUrl,
+            Notes = submissionCreateDto.Notes,
+            SubmittedDate = submissionCreateDto.SubmittedDate,
+            Status = submissionCreateDto.Status
+        };
+        _cotext.Submissions.Add(submission);
+        await _cotext.SaveChangesAsync();
+        _logger.LogInformation("Successfully created new submission with ID {SubmissionId}", submission.Id);
+        return MapToResponseDto(submission);
+    }
+
+    public async Task<IEnumerable<SubmissionResponseDto>> GetSubmissionsAsync()
+    {
+        _logger.LogDebug("Fetching all submissions from the database");
+        IEnumerable<Submission> submissions = await _cotext.Submissions.ToListAsync();
+        return submissions.Select(s => MapToResponseDto(s));
+    }
+
+    public async Task<SubmissionResponseDto> GetSubmissionByIdAsync(int id)
+    {
+        _logger.LogDebug("Retrieving submission with ID: {SubmissionId}", id);
+        Submission submission = await FetchSubmissionByIdInternalAsync(id);
+        return MapToResponseDto(submission);
+    }
 }

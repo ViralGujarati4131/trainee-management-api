@@ -12,5 +12,5 @@ public interface IMentorServices
 
     public Task DeleteMentorByIdAsync(int id);
 
-    public Task<MentorResponseDto> UpdateMentorByIdAsync(int id,MentorUpdateDto updateMentor);
+    public Task<MentorResponseDto> UpdateMentorByIdAsync(int id, MentorUpdateDto updateMentor);
 }

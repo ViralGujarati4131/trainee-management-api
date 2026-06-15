@@ -27,25 +27,25 @@ public class JwtService : IJwtService
     {
         _logger.LogInformation("Retrieving configuration settings and claims to generate JWT token for UserId: {UserId}", user.Id);
 
-        var jwtSettings = _configuration.GetSection("Jwt");
-        var secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Secret Key not configured.");
-        
+        IConfigurationSection jwtSettings = _configuration.GetSection("Jwt");
+        string secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Secret Key not configured.");
+
         if (!int.TryParse(jwtSettings["ExpiryMinutes"], out expiryMinutes))
         {
             expiryMinutes = 60;
         }
 
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        Claim[] claims = new[]
         {
             new Claim("UserId", user.Id.ToString()),
             new Claim("Username", user.Username),
             new Claim("Role", user.Role.ToString())
         };
 
-        var tokenDescriptor = new SecurityTokenDescriptor
+        SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
@@ -54,13 +54,13 @@ public class JwtService : IJwtService
             SigningCredentials = credentials
         };
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        
+        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+
         _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user.Id);
 
-        string generatedToken = tokenHandler.WriteToken(token); 
-        if(generatedToken == null)
+        string generatedToken = tokenHandler.WriteToken(token);
+        if (generatedToken == null)
         {
             throw new JwtOperationException();
         }
