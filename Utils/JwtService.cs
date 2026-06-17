@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using TraineeManagementApi.Utils.CustomException;
 using TraineeManagementApi.Users.Models;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Utils.JwtService;
 
@@ -28,11 +29,11 @@ public class JwtService : IJwtService
         _logger.LogInformation("Retrieving configuration settings and claims to generate JWT token for UserId: {UserId}", user.Id);
 
         IConfigurationSection jwtSettings = _configuration.GetSection("Jwt");
-        string secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Secret Key not configured.");
+        string secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException(AppConstants.Errors.JwtSecretMissing);
 
         if (!int.TryParse(jwtSettings["ExpiryMinutes"], out expiryMinutes))
         {
-            expiryMinutes = 60;
+            expiryMinutes = AppConstants.Security.DefaultExpiryMinutes;
         }
 
         SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -40,9 +41,9 @@ public class JwtService : IJwtService
 
         Claim[] claims = new[]
         {
-            new Claim("Id", user.Id.ToString()),
-            new Claim("Username", user.Username),
-            new Claim("Role", user?.Role?.ToString() ?? "Admin")
+            new Claim(AppConstants.Security.ClaimId, user.Id.ToString()),
+            new Claim(AppConstants.Security.ClaimUsername, user.Username),
+            new Claim(AppConstants.Security.ClaimRole, user?.Role?.ToString() ?? AppConstants.Security.DefaultRole)
         };
 
         SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor

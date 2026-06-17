@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.Mentors.DTOs;
 using TraineeManagementApi.Mentors.ServiceInterface;
+using TraineeManagementApi.ResponsesBuilder;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Mentors.Controller;
 
 [ApiController]
-[Route("api/mentors")]
+[Route(AppConstants.Routes.Mentors)]
 [Authorize]
 public class MentorController : ControllerBase
 {
@@ -23,7 +25,7 @@ public class MentorController : ControllerBase
     {
         _logger.LogDebug("Invoking mentor service to fetch all mentors");
         IEnumerable<MentorResponseDto> mentors = await _mentorService.GetMentorsAsync();
-        return Ok(mentors);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,mentors);
     }
 
     [HttpGet("{id}")]
@@ -31,15 +33,19 @@ public class MentorController : ControllerBase
     {
         _logger.LogDebug("Invoking mentor service to retrieve profile for MentorId: {MentorId}", id);
         MentorResponseDto mentor = await _mentorService.GetMentorByIdAsync(id);
-        return Ok(mentor);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,mentor);
     }
 
     [HttpPost]
     public async Task<ActionResult<MentorResponseDto>> CreateMentor([FromBody] MentorCreateDto createMentorDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");
         MentorResponseDto createdMentor = await _mentorService.CreateMentorAsync(createMentorDto);
-        return CreatedAtAction(nameof(GetMentorById), new { id = createdMentor.Id }, createdMentor);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdMentor);
     }
 
     [HttpDelete("{id}")]
@@ -47,14 +53,18 @@ public class MentorController : ControllerBase
     {
         _logger.LogDebug("Invoking mentor service to delete record for MentorId: {MentorId}", id);
         await _mentorService.DeleteMentorByIdAsync(id);
-        return NoContent();
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status204NoContent);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<MentorResponseDto>> UpdateMentorById(int id, [FromBody] MentorUpdateDto updateMentorDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest, AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking mentor service to modify records for MentorId: {MentorId}", id);
         MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id, updateMentorDto);
-        return Ok(updatedMentor);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,updatedMentor);
     }
 }

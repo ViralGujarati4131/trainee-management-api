@@ -5,7 +5,7 @@ namespace TraineeManagementApi.ResponsesBuilder;
 
 public static class ResponseBuilder
 {
-    public static ActionResult CreateResponse(int status,string message,ModelStateDictionary modelstate)
+    public static ActionResult CreateResponse(int status, string message, ModelStateDictionary modelstate)
     {
         var errors = modelstate
             .Where(ms => ms.Value?.Errors.Count > 0)
@@ -14,6 +14,7 @@ public static class ResponseBuilder
                 Field = ms.Key,
                 Errors = ms.Value?.Errors.Select(e => e.ErrorMessage).ToArray()
             });
+
         return new ObjectResult(new
         {
             Messages = message,
@@ -23,12 +24,14 @@ public static class ResponseBuilder
             StatusCode = status
         };
     }
-    public static ActionResult CreateResponseSuccess(int status,object? data = null)
+
+    public static ActionResult CreateResponseSuccess(int status, object? data = null)
     {
         if (status == StatusCodes.Status204NoContent || data == null)
         {
             return new StatusCodeResult(StatusCodes.Status204NoContent);
         }
+
         return new ObjectResult(data)
         {
             StatusCode = status

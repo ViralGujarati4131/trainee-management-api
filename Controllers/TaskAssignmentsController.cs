@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.TaskAssignments.DTOs;
 using TraineeManagementApi.TaskAssignments.ServiceInterface;
 using TraineeManagementApi.ResponsesBuilder;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.TaskAssignments.Controller;
 
 [ApiController]
-[Route("api/task-assignments")]
+[Route(AppConstants.Routes.TaskAssignments)]
 [Authorize]
 public class TaskAssignmentsController : ControllerBase
 {
@@ -25,7 +26,7 @@ public class TaskAssignmentsController : ControllerBase
     {
         if(!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking task-assignment service to add a new task-assignment");
         TaskAssignmentResponseDto createdTaskAssignment = await _taskAssignmentService.CreateTaskAssignmentAsync(createTaskAssignmentDto);
@@ -53,7 +54,7 @@ public class TaskAssignmentsController : ControllerBase
     {
         if(!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest, AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking task-assignment service to modify records for AssignmentId: {AssignmentId}", id);
         TaskAssignmentResponseDto updatedTaskAssignment = await _taskAssignmentService.UpdateTaskAssignmentAsync(id, updateTaskAssignmentDto);

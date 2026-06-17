@@ -3,6 +3,7 @@ using TraineeManagementApi.Reviews.DTOs;
 using TraineeManagementApi.Reviews.Models;
 using TraineeManagementApi.Reviews.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Reviews.Service;
 
@@ -37,7 +38,7 @@ public class ReviewService : IReviewService
         if (review == null)
         {
             _logger.LogWarning("Review with ID {ReviewId} was not found", id);
-            throw new NotFoundException("Review was not found");
+            throw new NotFoundException(AppConstants.Errors.Reviews.NotFound);
         }
         return review;
     }
@@ -92,7 +93,7 @@ public class ReviewService : IReviewService
         if (review == null)
         {
             _logger.LogWarning("Review with ID {ReviewId} was not found", id);
-            throw new NotFoundException("Review was not found");
+            throw new NotFoundException(AppConstants.Errors.Reviews.NotFound);
         }                            
         return review;
     }

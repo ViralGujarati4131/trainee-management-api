@@ -3,6 +3,7 @@ using TraineeManagementApi.TaskAssignments.ServiceInterface;
 using TraineeManagementApi.TaskAssignments.DTOs;
 using TraineeManagementApi.TaskAssignments.Models;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.TaskAssignments.Service;
 
@@ -38,15 +39,13 @@ public class TaskAssignmentService : ITaskAssignmentService
         if (taskAssignment == null)
         {
             _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
-            throw new NotFoundException("TaskAssignment was not found");
+            throw new NotFoundException(AppConstants.Errors.TaskAssignments.NotFound);
         }
         return taskAssignment;
     }
 
     public async Task<TaskAssignmentResponseDto> CreateTaskAssignmentAsync(TaskAssignmentCreateDto createTaskAssignmentDto)
     {
-        if (createTaskAssignmentDto.AssignedDate > createTaskAssignmentDto.DueDate)
-            throw new BadRequestException("Duedate can not be before the assigned date.");
         TaskAssignment taskAssignment = new TaskAssignment
         {
             TraineeId = createTaskAssignmentDto.TraineeId,
@@ -98,7 +97,7 @@ public class TaskAssignmentService : ITaskAssignmentService
         if(taskAssignment == null)
         {
             _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
-            throw new NotFoundException("TaskAssignment was not found");
+            throw new NotFoundException(AppConstants.Errors.TaskAssignments.NotFound);
         }
         return taskAssignment;
     }

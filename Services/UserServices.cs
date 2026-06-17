@@ -5,6 +5,7 @@ using TraineeManagementApi.Users.DTOs;
 using TraineeManagementApi.Users.Models;
 using TraineeManagementApi.Users.ServiceInterface;
 using TraineeManagementApi.Utils.JwtService;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Users.Service;
 
@@ -49,7 +50,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _logger.LogWarning("User with Username {Username} was not found in the database", username);
-            throw new NotFoundException("User was not found");
+            throw new NotFoundException(AppConstants.Errors.Users.NotFound);
         }
         return user;
     }
@@ -69,6 +70,6 @@ public class UserService : IUserService
             return MapToLoginResponseDto(token, expiresInSeconds, user);
         }
         _logger.LogWarning("Invalid password credential provided for Username: {Username}", userLoginDto.Username);
-        throw new UnauthorizedException("Invalid credential provided");
+        throw new UnauthorizedException(AppConstants.Errors.Users.InvalidCredentials);
     }
 }

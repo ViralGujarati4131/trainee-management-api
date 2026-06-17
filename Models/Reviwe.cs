@@ -9,30 +9,68 @@ public class Review
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public int Id 
+    { 
+        get; 
+        set; 
+    }
 
-    public int SubmissionId { get; set; }
-    public Submission? Submission { get; set; }
+    public int SubmissionId
+    { 
+        get; 
+        set; 
+    }
+    public Submission? Submission 
+    { 
+        get; 
+        set; 
+    }
 
-    public int MentorId { get; set; }
-    public Mentor? Mentor { get; set; }
+    public int MentorId 
+    { 
+        get; 
+        set; 
+    }
+    public Mentor? Mentor 
+    { 
+        get; 
+        set; 
+    }
 
-    [Required(ErrorMessage = "Feedback is required")]
-    public string Feedback { get; set; } = string.Empty;
+    [Required]
+    public string Feedback 
+    { 
+        get; 
+        set; 
+    } = string.Empty;
 
-    public int Score { get; set; }
+    public int Score 
+    { 
+        get; 
+        set; 
+    }
 
-    [EnumDataType(typeof(ReviewStatus), ErrorMessage = "Invalid Status")]
-    [Required(ErrorMessage = "Status is required")]
-    public ReviewStatus? ReviewStatus { get; set; }
+    [EnumDataType(typeof(ReviewStatus))]
+    [Required]
+    public ReviewStatus? ReviewStatus 
+    { 
+        get; 
+        set; 
+    }
 
-    [Required(ErrorMessage = "ReviewedDate required")]
-    public DateOnly ReviewedDate { get; set; }
+    [Required]
+    public DateOnly ReviewedDate 
+    { 
+        get; 
+        set; 
+    }
 }
 
 public enum ReviewStatus
 {
     Accepted,
+
     ChangesRequired,
+    
     Rejected
 }

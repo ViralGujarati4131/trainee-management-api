@@ -4,6 +4,7 @@ using TraineeManagementApi.LearningTasks.Models;
 using TraineeManagementApi.Mentors.Models;
 using TraineeManagementApi.Trainees.Models;
 using TraineeManagementApi.Users.Models;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Utils.UserSeeder;
 
@@ -15,28 +16,27 @@ public class UserSeeder
         AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         ILogger<UserSeeder> _logger = scope.ServiceProvider.GetRequiredService<ILogger<UserSeeder>>();
 
-        const string DefaultUser = "admin";
         try
         {
-            _logger?.LogDebug("Checking whether the admin user {Username} already exists", DefaultUser);
-            bool userExists = await db.Users.AnyAsync(u => u.Username == DefaultUser);
+            _logger?.LogDebug("Checking whether the admin user {Username} already exists", AppConstants.Security.Seeding.DefaultAdminUsername);
+            bool userExists = await db.Users.AnyAsync(u => u.Username == AppConstants.Security.Seeding.DefaultAdminUsername);
             if (!userExists)
             {
-                _logger?.LogInformation("Starting database seeding: Creating admin user {Username}", DefaultUser);
+                _logger?.LogInformation("Starting database seeding: Creating admin user {Username}", AppConstants.Security.Seeding.DefaultAdminUsername);
 
                 User adminUser = new User
                 {
-                    Username = DefaultUser,
+                    Username = AppConstants.Security.Seeding.DefaultAdminUsername,
                     Role = UserRole.Admin
                 };
 
                 PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
-                adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "Admin@123");
+                adminUser.PasswordHash = passwordHasher.HashPassword(adminUser,AppConstants.Security.Seeding.DefaultAdminPassword);
 
                 db.Users.Add(adminUser);
                 await db.SaveChangesAsync();
 
-                _logger?.LogInformation("Admin user {Username} seeded successfully", DefaultUser);
+                _logger?.LogInformation("Admin user {Username} seeded successfully", AppConstants.Security.Seeding.DefaultAdminUsername);
             }
 
             if (!await db.Trainees.AnyAsync())
@@ -71,7 +71,7 @@ public class UserSeeder
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "An error occurred while seeding the admin user {Username}", DefaultUser);
+            _logger?.LogError(ex, "An error occurred while seeding the admin user {Username}", AppConstants.Security.Seeding.DefaultAdminUsername);
         }
     }
 }

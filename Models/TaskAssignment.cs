@@ -4,10 +4,11 @@ using TraineeManagementApi.Mentors.Models;
 using TraineeManagementApi.LearningTasks.Models;
 using TraineeManagementApi.Submissions.Models;
 using System.ComponentModel.DataAnnotations.Schema;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.TaskAssignments.Models;
 
-public class TaskAssignment
+public class TaskAssignment : IValidatableObject
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -83,13 +84,29 @@ public class TaskAssignment
         get; 
         set; 
     } = new List<Submission>();
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (DueDate < AssignedDate)
+        {
+            yield return new ValidationResult
+            (
+                AppConstants.Errors.TaskAssignments.ModelInvalidDueDate,
+                new[] { nameof(DueDate) }   
+            );
+        }
+    }
 }
 
 public enum TaskAssignmentStatus
 {
     Assigned,
+
     Inprogress,
+
     Submitted,
+
     Reviewed,
+    
     Completed
 }

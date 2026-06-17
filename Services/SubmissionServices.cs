@@ -3,6 +3,7 @@ using TraineeManagementApi.Submissions.DTOs;
 using TraineeManagementApi.Submissions.Models;
 using TraineeManagementApi.Submissions.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Submissions.Service;
 
@@ -36,7 +37,7 @@ public class SubmissionService : ISubmissionService
         if (submission == null)
         {
             _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
-            throw new NotFoundException("Submission was not found");
+            throw new NotFoundException(AppConstants.Errors.Submissions.NotFound);
         }
         return submission;
     }
@@ -89,7 +90,7 @@ public class SubmissionService : ISubmissionService
         if (submission == null)
         {
             _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
-            throw new NotFoundException("Submission was not found");
+            throw new NotFoundException(AppConstants.Errors.Submissions.NotFound);
         }
         return submission;
     }

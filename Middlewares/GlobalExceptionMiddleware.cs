@@ -1,14 +1,14 @@
 using TraineeManagementApi.Utils.CustomException;
 using MySqlConnector;
+using TraineeManagementApi.Constants;
+
 namespace TraineeManagementApi.GlobalExceptionMiddleware;
 
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
-    const int notFoundReferanceError = 1452;
-    const int deleteReferanceError = 1451;
-    const int usernameExistsError = 1062;
+
     public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
     {
         _next = next;
@@ -39,34 +39,35 @@ public class GlobalExceptionMiddleware
         catch (JwtOperationException ex)
         {
             _logger.LogError(ex, "Invalid operation: {Message}", ex.Message);
-            await WriteResponse(context, StatusCodes.Status500InternalServerError, "An unexpected error occurred while processing authentication please retry");
+            await WriteResponse(context, StatusCodes.Status500InternalServerError, AppConstants.Errors.JwtAuthError);
         }
         catch (Exception ex)
         {
             if (ex.InnerException is MySqlException mysqlEx)
             {
                 _logger.LogError($"SQL Exception Occured Error Code : {mysqlEx.Number}");
-                if (mysqlEx.Number == notFoundReferanceError)
+                
+                if (mysqlEx.Number == AppConstants.Database.MySqlErrorCodes.NotFoundReference)
                 {
                     _logger.LogError("Reference operation Error: {ex}", ex);
-                    await WriteResponse(context, StatusCodes.Status400BadRequest, "Some of the provided References does conflits ");
+                    await WriteResponse(context, StatusCodes.Status400BadRequest, AppConstants.Errors.SqlReferenceConflict);
                 }
-                if (mysqlEx.Number == deleteReferanceError)
+                else if (mysqlEx.Number == AppConstants.Database.MySqlErrorCodes.DeleteReference)
                 {
                     _logger.LogError("Delete operation Referance Error: {ex}", ex);
-                    await WriteResponse(context, StatusCodes.Status400BadRequest, "Delete Operation Could not be completed because of existing reference");
+                    await WriteResponse(context, StatusCodes.Status400BadRequest, AppConstants.Errors.SqlDeleteReferenceError);
                 }
-                if (mysqlEx.Number == usernameExistsError)
+                else if (mysqlEx.Number == AppConstants.Database.MySqlErrorCodes.UsernameExists)
                 {
                     _logger?.LogError("Create operation Referance Error: {ex}", ex);
-                    await WriteResponse(context, StatusCodes.Status400BadRequest, "Username is already exists");
+                    await WriteResponse(context, StatusCodes.Status400BadRequest, AppConstants.Errors.UsernameExists);
                 }
             }
             else
             {
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
                     context.Request.Method, context.Request.Path);
-                await WriteResponse(context, StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
+                await WriteResponse(context, StatusCodes.Status500InternalServerError, AppConstants.Errors.GeneralInternalServerError);
             }
         }
     }

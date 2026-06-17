@@ -27,7 +27,9 @@ public record TraineeUpdateDto
 public record TraineeResponseDto
 (
     int Id,
+
     string FirstName,
+
     string LastName
 );
 
@@ -55,7 +57,10 @@ public record TraineeCreateDto
 public record TraineePaginationSearchDto
 (
     int PageNumber,
+
     int PageSize,
+
     int TotalRecords,
+    
     IEnumerable<TraineeResponseDto>? Data
 );

@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.Submissions.DTOs;
 using TraineeManagementApi.Submissions.ServiceInterface;
+using TraineeManagementApi.ResponsesBuilder;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Submissions.Cotroller;
 
 [ApiController]
-[Route("api/submissions")]
+[Route(AppConstants.Routes.Submissions)]
 [Authorize]
 public class SubmissionsController : ControllerBase
 {
@@ -21,9 +23,13 @@ public class SubmissionsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<SubmissionResponseDto>> CreateSubmission([FromBody] SubmissionCreateDto createSubmissionDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking submission service to add a new submission");
         SubmissionResponseDto createdSubmission = await _submissionService.CreateSubmissionAsync(createSubmissionDto);
-        return CreatedAtAction(nameof(GetSubmissionById), new { id = createdSubmission.Id }, createdSubmission);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdSubmission);
     }
 
     [HttpGet]
@@ -31,7 +37,7 @@ public class SubmissionsController : ControllerBase
     {
         _logger.LogDebug("Invoking submission service to fetch all submissions");
         IEnumerable<SubmissionResponseDto> submissions = await _submissionService.GetSubmissionsAsync();
-        return Ok(submissions);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,submissions);
     }
 
     [HttpGet("{id}")]
@@ -39,6 +45,6 @@ public class SubmissionsController : ControllerBase
     {
         _logger.LogDebug("Invoking submission service to retrieve submission for SubmissionId: {SubmissionId}", id);
         SubmissionResponseDto submission = await _submissionService.GetSubmissionByIdAsync(id);
-        return Ok(submission);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,submission);
     }
 }

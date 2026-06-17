@@ -4,11 +4,12 @@ using TraineeManagementApi.Utils.CustomException;
 using TraineeManagementApi.Trainees.DTOs;
 using TraineeManagementApi.Trainees.ServiceInterface;
 using TraineeManagementApi.ResponsesBuilder;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Trainees.Controller;
 
 [ApiController]
-[Route("api/trainee")]
+[Route(AppConstants.Routes.Trainees)]
 [Authorize]
 public class TraineesController : ControllerBase
 {
@@ -34,7 +35,7 @@ public class TraineesController : ControllerBase
     {
         if(!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking trainee service to establish a new trainee registration");
         TraineeResponseDto createdTrainee = await _traineeService.CreateTraineeAsync(createTraineeDto);
@@ -46,7 +47,7 @@ public class TraineesController : ControllerBase
     {
         if(!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking trainee service to modify records for TraineeId: {TraineeId}", id);
         TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto);
@@ -75,13 +76,13 @@ public class TraineesController : ControllerBase
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,searchResults);
     }
 
-    [HttpGet("paginationSearch")]
+    [HttpGet(AppConstants.Routes.PaginationSearch)]
     public async Task<ActionResult<TraineePaginationSearchDto>> PaginationSearchTrainee([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string? name, [FromQuery] string? status)
     {
         if (pageNumber <= 0 || pageSize <= 0 || name == null || status == null)
         {
             _logger.LogWarning("Pagination request processing aborted due to missing or invalid filter arguments");
-            throw new BadRequestException("All fields are require");
+            throw new BadRequestException(AppConstants.Errors.AllFieldsRequired);
         }
         _logger.LogDebug("Invoking trainee service to generate paginated lookup - Name: {FilterName}, Status: {FilterStatus}, Page: {PageNumber}, Size: {PageSize}", name, status, pageNumber, pageSize);
         TraineePaginationSearchDto? pagedData = await _traineeService.GetPagedAndSearchedTraineesAsync(pageNumber, pageSize, name, status);

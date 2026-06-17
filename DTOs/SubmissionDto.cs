@@ -7,26 +7,31 @@ public record SubmissionCreateDto
 (
     int TaskAssignmentId,
 
-    [Required(ErrorMessage = "Submissio Url is required")]
+    [Required]
     string SubmissionUrl,
 
-    [Required(ErrorMessage = "Notes is required")]
+    [Required]
     string Notes,
 
-    [Required(ErrorMessage="SubmittedDate required")]
+    [Required]
     DateOnly SubmittedDate,
 
-    [EnumDataType(typeof(SubmissionStatus), ErrorMessage = "Invalid Status")]
-    [Required(ErrorMessage = "Status is required")]
+    [EnumDataType(typeof(SubmissionStatus))]
+    [Required]
     SubmissionStatus? Status
 );
 
 public record SubmissionResponseDto
 (
     int Id,
+
     int TaskAssignmentId,
+
     string SubmissionUrl,
+    
     string Notes,
+    
     DateOnly SubmittedDate,
+    
     SubmissionStatus? Status
 );

@@ -5,46 +5,48 @@ namespace TraineeManagementApi.Mentors.DTOs;
 
 public record MentorCreateDto
 (
-    [Required(ErrorMessage = "FirstName is required")]
+    [Required]
     string FirstName,
 
-    [Required(ErrorMessage = "LastName is required")]
+    [Required]
     string LastName,
 
-    [Required(ErrorMessage = "Email is required")]
+    [Required]
     [EmailAddress]
     string Email,
 
-    [Required(ErrorMessage = "Expertise is required")]
+    [Required]
     string Expertise,
 
-    [EnumDataType(typeof(MentorStatus), ErrorMessage = "Invalid Status")]
-    [Required(ErrorMessage = "Status is required")]
+    [EnumDataType(typeof(MentorStatus))]
+    [Required]
     MentorStatus Status
 );
 
 public record MentorUpdateDto
 (
-    [Required(ErrorMessage = "FirstName is required")]
+    [Required]
     string FirstName,
 
-    [Required(ErrorMessage = "LastName is required")]
+    [Required]
     string LastName,
 
-    [EmailAddress(ErrorMessage = "Valid Email is required")]
+    [EmailAddress]
     string Email,
 
-    [Required(ErrorMessage = "Expertise is required")]
+    [Required]
     string Expertise,
 
-    [EnumDataType(typeof(MentorStatus), ErrorMessage = "Invalid Status")]
-    [Required(ErrorMessage = "Status is required")]
+    [EnumDataType(typeof(MentorStatus))]
+    [Required]
     MentorStatus? Status
 );
 
 public record MentorResponseDto
 (
     int Id,
+
     string FirstName,
+    
     string LastName
 );

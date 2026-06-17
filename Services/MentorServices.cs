@@ -3,6 +3,7 @@ using TraineeManagementApi.Mentors.DTOs;
 using TraineeManagementApi.Mentors.Models;
 using TraineeManagementApi.Mentors.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Mentors.Service;
 
@@ -30,7 +31,7 @@ public class MentorService : IMentorServices
         if (mentor == null)
         {
             _logger.LogWarning("Mentor with ID {MentorId} was not found", id);
-            throw new NotFoundException("Mentor was not found");
+            throw new NotFoundException(AppConstants.Errors.Mentors.NotFound);
         }
         return mentor;
     }
@@ -60,7 +61,7 @@ public class MentorService : IMentorServices
         if (mentor == null)
         {
             _logger.LogWarning("Mentor with ID {MentorId} was not found", id);
-            throw new NotFoundException("Mentor was not found");
+            throw new NotFoundException(AppConstants.Errors.Mentors.NotFound);
         }
         return mentor;
     }

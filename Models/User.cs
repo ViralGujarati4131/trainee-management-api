@@ -52,6 +52,8 @@ public class User : ITimestamp
 public enum UserRole
 {
     Admin,
+
     Mentor,
+    
     Trainee
 }

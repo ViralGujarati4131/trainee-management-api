@@ -3,6 +3,7 @@ using TraineeManagementApi.Trainees.DTOs;
 using TraineeManagementApi.Trainees.Models;
 using TraineeManagementApi.Trainees.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Trainees.Service;
 
@@ -33,7 +34,7 @@ public class TraineeService : ITraineeService
         if (trainee == null)
         {
             _logger.LogWarning("Trainee with ID {TraineeId} was not found", id);
-            throw new NotFoundException("Trainee was not found");
+            throw new NotFoundException(AppConstants.Errors.Trainees.NotFound);
         }
         return trainee;
     }
@@ -63,7 +64,7 @@ public class TraineeService : ITraineeService
         if (trainee == null)
         {
             _logger.LogWarning("Trainee with ID {TraineeId} was not found", id);
-            throw new NotFoundException("Trainee was not found");
+            throw new NotFoundException(AppConstants.Errors.Trainees.NotFound);
         }
         return trainee;
     }

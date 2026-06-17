@@ -5,48 +5,53 @@ namespace TraineeManagementApi.LearningTasks.DTOs;
 
 public record LearningTaskCreateDto
 (
-    [Required(ErrorMessage = "Title is required")]
+    [Required]
     string Title,
 
-    [Required(ErrorMessage = "Description is required")]
+    [Required]
     string Description,
 
-    [Required(ErrorMessage = "ExpectedTechStack is required")]
+    [Required]
     string ExpectedTechStack,
 
-    [Required(ErrorMessage = "DueDate is required")]
+    [Required]
     DateOnly DueDate,
 
-    [EnumDataType(typeof(LearningTaskStatus), ErrorMessage = "Invalid Status")]
-    [Required(ErrorMessage = "Status is required")]
+    [EnumDataType(typeof(LearningTaskStatus))]
+    [Required]
     LearningTaskStatus? Status
 );
 
 public record LearningTaskUpdateDto
 (
-    [Required(ErrorMessage = "Title is required")]
+    [Required]
     string Title,
 
-    [Required(ErrorMessage = "Description is required")]
+    [Required]
     string Description,
 
-    [Required(ErrorMessage = "ExpectedTechStack is required")]
+    [Required]
     string ExpectedTechStack,
 
-    [Required(ErrorMessage = "DueDate is required")]
+    [Required]
     DateOnly DueDate,
 
-    [EnumDataType(typeof(LearningTaskStatus), ErrorMessage = "Invalid Status")]
-    [Required(ErrorMessage = "Status is required")]
+    [EnumDataType(typeof(LearningTaskStatus))]
+    [Required]
     LearningTaskStatus Status
 );
 
 public record LearningTaskResposeDto
 (
     int Id,
+    
     string Title,
+    
     string Description,
+    
     string ExpectedTechStack,
+    
     DateOnly DueDate,
+    
     LearningTaskStatus? Status
 );

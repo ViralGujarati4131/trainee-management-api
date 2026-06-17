@@ -3,6 +3,7 @@ using TraineeManagementApi.LearningTasks.DTOs;
 using TraineeManagementApi.LearningTasks.Models;
 using TraineeManagementApi.LearningTasks.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.LearningTasks.Service;
 
@@ -33,7 +34,7 @@ public class LearningTaskService : ILearningTaskService
         if (learningTask == null)
         {
             _logger.LogWarning("LearningTask with ID {TaskId} was not found", id);
-            throw new NotFoundException("LearningTask was not found");
+            throw new NotFoundException(AppConstants.Errors.LearningTasks.NotFound);
         }
         return learningTask;
     }
@@ -68,7 +69,7 @@ public class LearningTaskService : ILearningTaskService
         if (learningTask == null)
         {
             _logger.LogWarning("LearningTask with ID {TaskId} was not found", id);
-            throw new NotFoundException("LearningTask was not found");
+            throw new NotFoundException(AppConstants.Errors.LearningTasks.NotFound);
         }
         return learningTask;
     }
