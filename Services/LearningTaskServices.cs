@@ -3,7 +3,6 @@ using TraineeManagementApi.LearningTasks.DTOs;
 using TraineeManagementApi.LearningTasks.Models;
 using TraineeManagementApi.LearningTasks.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
-using Mapster;
 
 namespace TraineeManagementApi.LearningTasks.Service;
 
@@ -42,14 +41,36 @@ public class LearningTaskService : ILearningTaskService
     public async Task<IEnumerable<LearningTaskResposeDto>> GetLearningTaskAsync()
     {
         _logger.LogDebug("Fetching all learning-tasks from the database");
-        IEnumerable<LearningTaskResposeDto> learningTasks = await _context.LearningTasks.ProjectToType<LearningTaskResposeDto>().ToListAsync();
+        IEnumerable<LearningTaskResposeDto> learningTasks = await _context.LearningTasks
+                                                                        .Select(Lt =>  new LearningTaskResposeDto(
+                                                                            Lt.Id,
+                                                                            Lt.Title,
+                                                                            Lt.Description,
+                                                                            Lt.ExpectedTechStack,
+                                                                            Lt.DueDate,
+                                                                            Lt.Status
+                                                                        )).ToListAsync();
         return learningTasks;
     }
     public async Task<LearningTaskResposeDto> GetLearningTaskByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving learning-task profile with ID: {TaskId}", id);
-        LearningTask learningTask = await FetchLearningTaskByIdInternalAsync(id);
-        return MapToResponseDto(learningTask);
+        LearningTaskResposeDto? learningTask = await _context.LearningTasks
+                                                .Where(lt => lt.Id == id)
+                                                .Select(lt => new LearningTaskResposeDto(
+                                                    lt.Id,
+                                                    lt.Title,
+                                                    lt.Description,
+                                                    lt.ExpectedTechStack,
+                                                    lt.DueDate,
+                                                    lt.Status
+                                                )).FirstOrDefaultAsync();
+        if (learningTask == null)
+        {
+            _logger.LogWarning("LearningTask with ID {TaskId} was not found", id);
+            throw new NotFoundException("LearningTask was not found");
+        }
+        return learningTask;
     }
     public async Task<LearningTaskResposeDto> CreateLearningTaskAsync(LearningTaskCreateDto createTask)
     {

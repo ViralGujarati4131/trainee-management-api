@@ -3,7 +3,6 @@ using TraineeManagementApi.Trainees.DTOs;
 using TraineeManagementApi.Trainees.Models;
 using TraineeManagementApi.Trainees.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
-using Mapster;
 
 namespace TraineeManagementApi.Trainees.Service;
 
@@ -42,15 +41,31 @@ public class TraineeService : ITraineeService
     public async Task<IEnumerable<TraineeResponseDto>> GetTraineesAsync()
     {
         _logger.LogDebug("Fetching all trainees from the database");
-        IEnumerable<TraineeResponseDto> trainees = await _context.Trainees.ProjectToType<TraineeResponseDto>().ToListAsync();
+        IEnumerable<TraineeResponseDto> trainees = await _context.Trainees
+                                                            .Select(t => new TraineeResponseDto(
+                                                                t.Id,
+                                                                t.FirstName,
+                                                                t.LastName
+                                                            )).ToListAsync();
         return trainees;
     }
 
     public async Task<TraineeResponseDto> GetTraineeByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving trainee profile with ID: {TraineeId}", id);
-        Trainee trainee = await FetchTraineeByIdInternalAsync(id);
-        return MapToResponseDto(trainee);
+        TraineeResponseDto? trainee = await _context.Trainees
+                                                            .Where(t => t.Id == id)
+                                                            .Select(t => new TraineeResponseDto(
+                                                                t.Id,
+                                                                t.FirstName,
+                                                                t.LastName
+                                                            )).FirstOrDefaultAsync();
+        if (trainee == null)
+        {
+            _logger.LogWarning("Trainee with ID {TraineeId} was not found", id);
+            throw new NotFoundException("Trainee was not found");
+        }
+        return trainee;
     }
 
     public async Task<TraineeResponseDto> CreateTraineeAsync(TraineeCreateDto createTraineeDto)
@@ -101,7 +116,11 @@ public class TraineeService : ITraineeService
                         t.LastName.Contains(searchTerm) ||
                         t.Email.Contains(searchTerm) ||
                         t.TechStack.Contains(searchTerm))
-            .ProjectToType<TraineeResponseDto>().ToListAsync();
+            .Select(t => new TraineeResponseDto(
+                t.Id,
+                t.FirstName,
+                t.LastName
+            )).ToListAsync();
         return matchingTrainees;
     }
 
@@ -119,8 +138,11 @@ public class TraineeService : ITraineeService
             .OrderBy(t => t.Id)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ProjectToType<TraineeResponseDto>() 
-            .ToListAsync();
+            .Select(t => new TraineeResponseDto(
+                t.Id,
+                t.FirstName,
+                t.LastName
+            )).ToListAsync();
 
         return new TraineePaginationSearchDto(
             pageNumber,

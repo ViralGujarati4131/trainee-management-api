@@ -17,7 +17,8 @@ public record SubmissionCreateDto
     DateOnly SubmittedDate,
 
     [EnumDataType(typeof(SubmissionStatus), ErrorMessage = "Invalid Status")]
-    SubmissionStatus Status
+    [Required(ErrorMessage = "Status is required")]
+    SubmissionStatus? Status
 );
 
 public record SubmissionResponseDto
@@ -27,5 +28,5 @@ public record SubmissionResponseDto
     string SubmissionUrl,
     string Notes,
     DateOnly SubmittedDate,
-    SubmissionStatus Status
+    SubmissionStatus? Status
 );

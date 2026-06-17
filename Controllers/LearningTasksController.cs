@@ -40,7 +40,7 @@ public class LearningTasksController : ControllerBase
     {
         _logger.LogDebug("Invoking learning-task service to add a new task");
         LearningTaskResposeDto createdTask = await _learningTaskService.CreateLearningTaskAsync(createTaskDto);
-        return Ok(createdTask);
+        return CreatedAtAction(nameof(GetLearningTaskById), new { id = createdTask.Id }, createdTask);
     }
 
     [HttpDelete("{id}")]

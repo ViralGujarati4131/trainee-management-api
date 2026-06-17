@@ -2,12 +2,14 @@ using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.Models.TimestampInterface;
 using TraineeManagementApi.TaskAssignments.Models;
 using TraineeManagementApi.Reviews.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TraineeManagementApi.Mentors.Models;
 
 public class Mentor : ITimestamp
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     [Required(ErrorMessage = "FirstName is required")]
@@ -16,14 +18,15 @@ public class Mentor : ITimestamp
     [Required(ErrorMessage = "LastName is required")]
     public string LastName { get; set; } = string.Empty;
 
-    [EmailAddress]
+    [EmailAddress(ErrorMessage = " Valid Email is required")]
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Expertise is required")]
     public string Expertise { get; set; } = string.Empty;
 
     [EnumDataType(typeof(MentorStatus), ErrorMessage = "Invalid Status")]
-    public MentorStatus Status { get; set; }
+    [Required(ErrorMessage = "Status is required")]
+    public MentorStatus? Status { get; set; }
 
     public DateTime CreatedDate { get; set; }
 

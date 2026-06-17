@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.Utils.CustomException;
 using TraineeManagementApi.Trainees.DTOs;
 using TraineeManagementApi.Trainees.ServiceInterface;
+using TraineeManagementApi.ResponsesBuilder;
 
 namespace TraineeManagementApi.Trainees.Controller;
 
@@ -21,27 +22,35 @@ public class TraineesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TraineeResponseDto>> GetTraineeById(int id)
+    public async Task<ActionResult> GetTraineeById(int id)
     {
         _logger.LogDebug("Invoking trainee service to retrieve profile for TraineeId: {TraineeId}", id);
         TraineeResponseDto trainee = await _traineeService.GetTraineeByIdAsync(id);
-        return Ok(trainee);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,trainee);
     }
 
     [HttpPost]
-    public async Task<ActionResult<TraineeResponseDto>> CreateTrainee([FromBody] TraineeCreateDto createTraineeDto)
+    public async Task<ActionResult> CreateTrainee([FromBody] TraineeCreateDto createTraineeDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+        }
         _logger.LogDebug("Invoking trainee service to establish a new trainee registration");
         TraineeResponseDto createdTrainee = await _traineeService.CreateTraineeAsync(createTraineeDto);
-        return CreatedAtAction(nameof(GetTraineeById), new { id = createdTrainee.Id }, createdTrainee);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdTrainee);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<TraineeResponseDto>> UpdateTraineeById(int id, [FromBody] TraineeUpdateDto updateTraineeDto)
+    public async Task<ActionResult> UpdateTraineeById(int id, [FromBody] TraineeUpdateDto updateTraineeDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+        }
         _logger.LogDebug("Invoking trainee service to modify records for TraineeId: {TraineeId}", id);
         TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto);
-        return Ok(updatedTrainee);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,updatedTrainee);
     }
 
     [HttpDelete("{id}")]
@@ -49,7 +58,7 @@ public class TraineesController : ControllerBase
     {
         _logger.LogDebug("Invoking trainee service to delete records for TraineeId: {TraineeId}", id);
         await _traineeService.DeleteTraineeByIdAsync(id);
-        return NoContent();
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status204NoContent);
     }
 
     [HttpGet]
@@ -59,11 +68,11 @@ public class TraineesController : ControllerBase
         {
             _logger.LogDebug("Invoking trainee service to fetch all trainees");
             IEnumerable<TraineeResponseDto> trainees = await _traineeService.GetTraineesAsync();
-            return Ok(trainees);
+            return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,trainees);
         }
         _logger.LogDebug("Invoking trainee service to query profiles matching search criteria: {SearchTerm}", searchTrainee);
         IEnumerable<TraineeResponseDto> searchResults = await _traineeService.SearchTraineesAsync(searchTrainee);
-        return Ok(searchResults);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,searchResults);
     }
 
     [HttpGet("paginationSearch")]
@@ -76,6 +85,6 @@ public class TraineesController : ControllerBase
         }
         _logger.LogDebug("Invoking trainee service to generate paginated lookup - Name: {FilterName}, Status: {FilterStatus}, Page: {PageNumber}, Size: {PageSize}", name, status, pageNumber, pageSize);
         TraineePaginationSearchDto? pagedData = await _traineeService.GetPagedAndSearchedTraineesAsync(pageNumber, pageSize, name, status);
-        return Ok(pagedData);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,pagedData);
     }
 }

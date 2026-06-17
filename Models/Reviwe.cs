@@ -1,12 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.Submissions.Models;
 using TraineeManagementApi.Mentors.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TraineeManagementApi.Reviews.Models;
 
 public class Review
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int SubmissionId { get; set; }
@@ -21,7 +23,8 @@ public class Review
     public int Score { get; set; }
 
     [EnumDataType(typeof(ReviewStatus), ErrorMessage = "Invalid Status")]
-    public ReviewStatus ReviewStatus { get; set; }
+    [Required(ErrorMessage = "Status is required")]
+    public ReviewStatus? ReviewStatus { get; set; }
 
     [Required(ErrorMessage = "ReviewedDate required")]
     public DateOnly ReviewedDate { get; set; }

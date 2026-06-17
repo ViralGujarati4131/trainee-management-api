@@ -11,14 +11,15 @@ public record TaskAssignmentCreateDto
 
     int LearningTaskId,
 
-    [Required(ErrorMessage="AssignedDate required")]
+    [Required]
     DateOnly AssignedDate,
 
-    [Required(ErrorMessage="DueDate required")]
+    [Required]
     DateOnly DueDate,
 
-    [EnumDataType(typeof(TaskAssignmentStatus), ErrorMessage = "Invalid Status")]
-    TaskAssignmentStatus Status,
+    [EnumDataType(typeof(TaskAssignmentStatus))]
+    [Required]
+    TaskAssignmentStatus? Status,
 
     string Remarks
 );
@@ -26,17 +27,25 @@ public record TaskAssignmentCreateDto
 public record TaskAssignmentResponseDto
 (
     int Id,
+
     int TraineeId,
+
     int MentorId,
+
     int LearningTaskId,
+
     DateOnly AssignedDate,
+
     DateOnly DueDate,
-    TaskAssignmentStatus Status,
+
+    TaskAssignmentStatus? Status,
+
     string Remarks
 );
 
 public record TaskAssignmentUpdateDto
 (
-    [EnumDataType(typeof(TaskAssignmentStatus), ErrorMessage = "Invalid Status")]
-    TaskAssignmentStatus Status
+    [EnumDataType(typeof(TaskAssignmentStatus))]
+    [Required]
+    TaskAssignmentStatus? Status
 );

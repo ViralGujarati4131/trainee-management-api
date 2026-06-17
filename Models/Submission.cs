@@ -1,12 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.TaskAssignments.Models;
 using TraineeManagementApi.Reviews.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TraineeManagementApi.Submissions.Models;
 
 public class Submission
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int TaskAssignmentId { get; set; }
@@ -22,7 +24,8 @@ public class Submission
     public DateOnly SubmittedDate { get; set; }
 
     [EnumDataType(typeof(SubmissionStatus), ErrorMessage = "Invalid Status")]
-    public SubmissionStatus Status { get; set; }
+    [Required(ErrorMessage = "Status is required")]
+    public SubmissionStatus? Status { get; set; }
 
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

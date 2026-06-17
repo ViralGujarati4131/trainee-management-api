@@ -5,9 +5,9 @@ namespace TraineeManagementApi.Users.DTOs;
 
 public record UserResponseDto
 (
-     int Id,
-     string Username,
-     UserRole Role
+    int Id,
+    string Username,
+    UserRole? Role
 );
 
 public record LoginTokenResponseDto
@@ -19,9 +19,9 @@ public record LoginTokenResponseDto
 
 public record UserLoginDto
 (
-    [Required(ErrorMessage = "Username can not be empty")]
+    [Required]
     string Username,
 
-    [Required(ErrorMessage = "Password can not be empty")]
+    [Required]
     string Password
 );

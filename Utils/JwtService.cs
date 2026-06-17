@@ -42,7 +42,7 @@ public class JwtService : IJwtService
         {
             new Claim("Id", user.Id.ToString()),
             new Claim("Username", user.Username),
-            new Claim("Role", user.Role.ToString())
+            new Claim("Role", user?.Role?.ToString() ?? "Admin")
         };
 
         SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
@@ -57,7 +57,7 @@ public class JwtService : IJwtService
         JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
-        _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user.Id);
+        _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user?.Id);
 
         string generatedToken = tokenHandler.WriteToken(token);
         if (generatedToken == null)

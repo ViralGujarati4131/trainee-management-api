@@ -22,6 +22,7 @@ using TraineeManagementApi.Submissions.Service;
 using TraineeManagementApi.Reviews.ServiceInterface;
 using TraineeManagementApi.Reviews.Service;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -31,12 +32,26 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
+// builder.Services.AddControllers()
+//     .AddJsonOptions(options =>
+//     {
+//         // options.JsonSerializerOptions.Converters.Add(
+//         //     new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false)
+//         // );
+//         // options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+//     });
+
 builder.Services.AddControllers()
-    .AddJsonOptions(options =>
+    .ConfigureApiBehaviorOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false)
-        );
+        options.SuppressModelStateInvalidFilter = true;
+    });
+
+
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+       options.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error; 
     });
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -106,14 +121,17 @@ builder.Services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
+string[] allowedOrigin = builder.Configuration.GetSection("AllowedOrigin").Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowedOriginsPolicy,
                       policy =>
                       {
-                          policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+                          policy.WithOrigins(allowedOrigin)
                                 .AllowAnyHeader()
-                                .AllowAnyMethod();
+                                .AllowAnyMethod()
+                                .AllowCredentials();
                       });
 });
 

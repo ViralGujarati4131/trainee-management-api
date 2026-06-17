@@ -5,23 +5,23 @@ namespace TraineeManagementApi.Trainees.DTOs;
 
 public record TraineeUpdateDto
 (
-    [Required(ErrorMessage = "FirstName is required")]
-    [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 character")]
+    [Required]
+    [MaxLength(50)]
     string FirstName,
 
-    [Required(ErrorMessage = "LastName is required")]
-    [MaxLength(50, ErrorMessage = "LastName can not be exceed 50 character")]
+    [Required]
+    [MaxLength(50)]
     string LastName,
 
-    [Required(ErrorMessage = "Email is required")]
     [EmailAddress]
     string Email,
 
-    [Required(ErrorMessage = "TechStack is required")]
+    [Required]
     string TechStack,
 
-    [EnumDataType(typeof(TraineeStatus), ErrorMessage = "Invalid Status")]
-    TraineeStatus Status
+    [EnumDataType(typeof(TraineeStatus))]
+    [Required]
+    TraineeStatus? Status
 );
 
 public record TraineeResponseDto
@@ -33,23 +33,23 @@ public record TraineeResponseDto
 
 public record TraineeCreateDto
 (
-    [Required(ErrorMessage = "FirstName is required")]
-    [MaxLength(50, ErrorMessage = "FirstName can not be exceed 50 characters")]
+    [Required]
+    [MaxLength(50)]
     string FirstName,
 
-    [Required(ErrorMessage = "LastName is required")]
-    [MaxLength(50, ErrorMessage = "LastName can not be exceed 50 characters")]
+    [Required]
+    [MaxLength(50)]
     string LastName,
 
-    [Required(ErrorMessage = "Email is required")]
     [EmailAddress]
     string Email,
 
-    [Required(ErrorMessage = "TechStack is required")]
+    [Required]
     string TechStack,
 
-    [EnumDataType(typeof(TraineeStatus), ErrorMessage = "Invalid Status")]
-    TraineeStatus Status
+    [EnumDataType(typeof(TraineeStatus))]
+    [Required]
+    TraineeStatus? Status
 );
 
 public record TraineePaginationSearchDto

@@ -3,7 +3,6 @@ using TraineeManagementApi.Submissions.DTOs;
 using TraineeManagementApi.Submissions.Models;
 using TraineeManagementApi.Submissions.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
-using Mapster;
 
 namespace TraineeManagementApi.Submissions.Service;
 
@@ -62,14 +61,36 @@ public class SubmissionService : ISubmissionService
     public async Task<IEnumerable<SubmissionResponseDto>> GetSubmissionsAsync()
     {
         _logger.LogDebug("Fetching all submissions from the database");
-        IEnumerable<SubmissionResponseDto> submissions = await _cotext.Submissions.ProjectToType<SubmissionResponseDto>().ToListAsync();
+        IEnumerable<SubmissionResponseDto> submissions = await _cotext.Submissions
+                                                                    .Select(s => new SubmissionResponseDto(
+                                                                        s.Id,
+                                                                        s.TaskAssignmentId,
+                                                                        s.SubmissionUrl,
+                                                                        s.Notes,
+                                                                        s.SubmittedDate,
+                                                                        s.Status
+                                                                    )).ToListAsync();
         return submissions;
     }
 
     public async Task<SubmissionResponseDto> GetSubmissionByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving submission with ID: {SubmissionId}", id);
-        Submission submission = await FetchSubmissionByIdInternalAsync(id);
-        return MapToResponseDto(submission);
+        SubmissionResponseDto? submission = await _cotext.Submissions
+                                            .Where(s => s.Id == id)
+                                            .Select(s => new SubmissionResponseDto(
+                                                s.Id,
+                                                s.TaskAssignmentId,
+                                                s.SubmissionUrl,
+                                                s.Notes,
+                                                s.SubmittedDate,
+                                                s.Status
+                                            )).FirstOrDefaultAsync();
+        if (submission == null)
+        {
+            _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
+            throw new NotFoundException("Submission was not found");
+        }
+        return submission;
     }
 }

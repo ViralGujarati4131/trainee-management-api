@@ -3,7 +3,6 @@ using TraineeManagementApi.Mentors.DTOs;
 using TraineeManagementApi.Mentors.Models;
 using TraineeManagementApi.Mentors.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
-using Mapster;
 
 namespace TraineeManagementApi.Mentors.Service;
 
@@ -39,15 +38,31 @@ public class MentorService : IMentorServices
     public async Task<IEnumerable<MentorResponseDto>> GetMentorsAsync()
     {
         _logger.LogDebug("Fetching all mentors from the database");
-        IEnumerable<MentorResponseDto> mentors = await _context.Mentors.ProjectToType<MentorResponseDto>().ToListAsync();
+        IEnumerable<MentorResponseDto> mentors = await _context.Mentors
+                                                            .Select(m => new MentorResponseDto (
+                                                                m.Id,
+                                                                m.FirstName,
+                                                                m.LastName
+                                                            )).ToListAsync();
         return mentors;
     }
 
     public async Task<MentorResponseDto> GetMentorByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving mentor profile with ID: {MentorId}", id);
-        Mentor mentor = await FetchMentorByIdInternalAsync(id);
-        return MapToResponseDto(mentor);
+        MentorResponseDto? mentor = await _context.Mentors
+                                    .Where(m => m.Id == id)
+                                    .Select(m => new MentorResponseDto(
+                                        m.Id,
+                                        m.FirstName,
+                                        m.LastName
+                                    )).FirstOrDefaultAsync();
+        if (mentor == null)
+        {
+            _logger.LogWarning("Mentor with ID {MentorId} was not found", id);
+            throw new NotFoundException("Mentor was not found");
+        }
+        return mentor;
     }
 
     public async Task<MentorResponseDto> CreateMentorAsync(MentorCreateDto createMentor)

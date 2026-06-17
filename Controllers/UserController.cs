@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.Users.DTOs;
 using TraineeManagementApi.Users.ServiceInterface;
+using TraineeManagementApi.ResponsesBuilder;
 
 namespace TraineeManagementApi.Users.Controller;
 
@@ -20,9 +21,13 @@ public class UserController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<LoginTokenResponseDto>> LoginUser([FromBody] UserLoginDto userLoginDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+        }
         _logger.LogInformation("Login attempt initiated for Username: {Username}", userLoginDto.Username);
         LoginTokenResponseDto authenticationResult = await _userService.LoginUserAsync(userLoginDto);
         _logger.LogInformation("Authentication successful. Session token issued for Username: {Username}", userLoginDto.Username);
-        return Ok(authenticationResult);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,authenticationResult);
     }
 }

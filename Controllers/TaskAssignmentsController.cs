@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagementApi.TaskAssignments.DTOs;
 using TraineeManagementApi.TaskAssignments.ServiceInterface;
+using TraineeManagementApi.ResponsesBuilder;
 
 namespace TraineeManagementApi.TaskAssignments.Controller;
 
@@ -20,34 +21,42 @@ public class TaskAssignmentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskAssignmentResponseDto>> CreateTaskAssignment([FromBody] TaskAssignmentCreateDto createTaskAssignmentDto)
+    public async Task<ActionResult> CreateTaskAssignment([FromBody] TaskAssignmentCreateDto createTaskAssignmentDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+        }
         _logger.LogDebug("Invoking task-assignment service to add a new task-assignment");
         TaskAssignmentResponseDto createdTaskAssignment = await _taskAssignmentService.CreateTaskAssignmentAsync(createTaskAssignmentDto);
-        return CreatedAtAction(nameof(GetTaskAssignmentById), new { id = createdTaskAssignment.Id }, createdTaskAssignment);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdTaskAssignment);
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TaskAssignmentResponseDto>>> GetTaskAssignments()
+    public async Task<ActionResult> GetTaskAssignments()
     {
         _logger.LogDebug("Invoking task-assignment service to fetch all task-assignments");
         IEnumerable<TaskAssignmentResponseDto> taskAssignments = await _taskAssignmentService.GetTaskAssignmentsAsync();
-        return Ok(taskAssignments);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,taskAssignments);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TaskAssignmentResponseDto>> GetTaskAssignmentById(int id)
+    public async Task<ActionResult> GetTaskAssignmentById(int id)
     {
         _logger.LogDebug("Invoking task-assignment service to retrieve assignments for AssignmentId: {AssignmentId}", id);
         TaskAssignmentResponseDto taskAssignment = await _taskAssignmentService.GetTaskAssignmentByIdAsync(id);
-        return Ok(taskAssignment);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,taskAssignment);
     }
 
-    [HttpPut("{id}")]
-    public async Task<ActionResult<TaskAssignmentResponseDto>> UpdateTaskAssignmentById(int id, [FromBody] TaskAssignmentUpdateDto updateTaskAssignmentDto)
+    [HttpPut("{id}/status")]
+    public async Task<ActionResult> UpdateTaskAssignmentById(int id, [FromBody] TaskAssignmentUpdateDto updateTaskAssignmentDto)
     {
+        if(!ModelState.IsValid)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,"Validation failed",ModelState);
+        }
         _logger.LogDebug("Invoking task-assignment service to modify records for AssignmentId: {AssignmentId}", id);
         TaskAssignmentResponseDto updatedTaskAssignment = await _taskAssignmentService.UpdateTaskAssignmentAsync(id, updateTaskAssignmentDto);
-        return Ok(updatedTaskAssignment);
+        return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,updatedTaskAssignment);
     }
 }

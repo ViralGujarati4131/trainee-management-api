@@ -11,7 +11,8 @@ public record ReviewCreateDto
     string Feedback,
     int score,
     [EnumDataType(typeof(ReviewStatus), ErrorMessage = "Invalid Status")]
-    ReviewStatus ReviewStatus,
+    [Required(ErrorMessage = "Status is required")]
+    ReviewStatus? ReviewStatus,
     [Required(ErrorMessage="ReviewedDate required")]
     DateOnly ReviewedDate
 );
@@ -23,6 +24,6 @@ public record ReviewResponseDto
     int MentorId,
     string Feedback,
     int score,
-    ReviewStatus ReviewStatus,
+    ReviewStatus? ReviewStatus,
     DateOnly ReviewedDate
 );

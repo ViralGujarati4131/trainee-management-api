@@ -18,7 +18,8 @@ public record LearningTaskCreateDto
     DateOnly DueDate,
 
     [EnumDataType(typeof(LearningTaskStatus), ErrorMessage = "Invalid Status")]
-    LearningTaskStatus Status
+    [Required(ErrorMessage = "Status is required")]
+    LearningTaskStatus? Status
 );
 
 public record LearningTaskUpdateDto
@@ -36,6 +37,7 @@ public record LearningTaskUpdateDto
     DateOnly DueDate,
 
     [EnumDataType(typeof(LearningTaskStatus), ErrorMessage = "Invalid Status")]
+    [Required(ErrorMessage = "Status is required")]
     LearningTaskStatus Status
 );
 
@@ -46,5 +48,5 @@ public record LearningTaskResposeDto
     string Description,
     string ExpectedTechStack,
     DateOnly DueDate,
-    LearningTaskStatus Status
+    LearningTaskStatus? Status
 );

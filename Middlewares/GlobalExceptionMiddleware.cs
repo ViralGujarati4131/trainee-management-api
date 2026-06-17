@@ -8,7 +8,7 @@ public class GlobalExceptionMiddleware
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
     const int notFoundReferanceError = 1452;
     const int deleteReferanceError = 1451;
-    const int usernamExistsError = 1062;
+    const int usernameExistsError = 1062;
     public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
     {
         _next = next;
@@ -56,7 +56,7 @@ public class GlobalExceptionMiddleware
                     _logger.LogError("Delete operation Referance Error: {ex}", ex);
                     await WriteResponse(context, StatusCodes.Status400BadRequest, "Delete Operation Could not be completed because of existing reference");
                 }
-                if (mysqlEx.Number == usernamExistsError)
+                if (mysqlEx.Number == usernameExistsError)
                 {
                     _logger?.LogError("Create operation Referance Error: {ex}", ex);
                     await WriteResponse(context, StatusCodes.Status400BadRequest, "Username is already exists");

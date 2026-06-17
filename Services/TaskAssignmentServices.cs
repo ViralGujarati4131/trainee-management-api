@@ -3,7 +3,6 @@ using TraineeManagementApi.TaskAssignments.ServiceInterface;
 using TraineeManagementApi.TaskAssignments.DTOs;
 using TraineeManagementApi.TaskAssignments.Models;
 using TraineeManagementApi.Utils.CustomException;
-using Mapster;
 
 namespace TraineeManagementApi.TaskAssignments.Service;
 
@@ -67,15 +66,41 @@ public class TaskAssignmentService : ITaskAssignmentService
     public async Task<IEnumerable<TaskAssignmentResponseDto>> GetTaskAssignmentsAsync()
     {
         _logger.LogDebug("Fetching all taskAssignments from the database");
-        IEnumerable<TaskAssignmentResponseDto> taskAssignments = await _context.TaskAssignments.ProjectToType<TaskAssignmentResponseDto>().ToListAsync();
+        IEnumerable<TaskAssignmentResponseDto> taskAssignments = await _context.TaskAssignments
+                                                                            .Select(ta => new TaskAssignmentResponseDto(
+                                                                                ta.Id,
+                                                                                ta.TraineeId,
+                                                                                ta.MentorId,
+                                                                                ta.LearningTaskId,
+                                                                                ta.AssignedDate,
+                                                                                ta.DueDate,
+                                                                                ta.Status,
+                                                                                ta.Remarks
+                                                                            )).ToListAsync();
         return taskAssignments;
     }
 
     public async Task<TaskAssignmentResponseDto> GetTaskAssignmentByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving taskAssignment with ID: {Assignmentid}", id);
-        TaskAssignment taskAssignment = await FetchTaskAssignmentByIdInternalAsync(id);
-        return MapToResponseDto(taskAssignment);
+        TaskAssignmentResponseDto? taskAssignment = await _context.TaskAssignments
+                                                    .Where(ta => ta.Id == id)
+                                                    .Select(ta => new TaskAssignmentResponseDto(
+                                                        ta.Id,
+                                                        ta.TraineeId,
+                                                        ta.MentorId,
+                                                        ta.LearningTaskId,
+                                                        ta.AssignedDate,
+                                                        ta.DueDate,
+                                                        ta.Status,
+                                                        ta.Remarks
+                                                    )).FirstOrDefaultAsync();
+        if(taskAssignment == null)
+        {
+            _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
+            throw new NotFoundException("TaskAssignment was not found");
+        }
+        return taskAssignment;
     }
 
     public async Task<TaskAssignmentResponseDto> UpdateTaskAssignmentAsync(int id, TaskAssignmentUpdateDto updateTaskAssignmentDto)
