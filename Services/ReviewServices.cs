@@ -10,6 +10,7 @@ namespace TraineeManagementApi.Reviews.Service;
 public class ReviewService : IReviewService
 {
     private readonly AppDbContext _context;
+
     private readonly ILogger<ReviewService> _logger;
 
     public ReviewService(AppDbContext context, ILogger<ReviewService> logger)
@@ -38,6 +39,7 @@ public class ReviewService : IReviewService
         if (review == null)
         {
             _logger.LogWarning("Review with ID {ReviewId} was not found", id);
+
             throw new NotFoundException(AppConstants.Errors.Reviews.NotFound);
         }
         return review;
@@ -56,43 +58,54 @@ public class ReviewService : IReviewService
         };
         _context.Reviews.Add(review);
         await _context.SaveChangesAsync();
+
         _logger.LogInformation("Successfully created new review with ID {ReviewId}", review.Id);
+
         return MapToResponseDto(review);
     }
 
     public async Task<IEnumerable<ReviewResponseDto>> GetReviewsAsync()
     {
         _logger.LogDebug("Fetching all reviews from the database");
+
         IEnumerable<ReviewResponseDto> reviews = await _context.Reviews
-                                                            .Select(r => new ReviewResponseDto(
-                                                                r.Id,
-                                                                r.SubmissionId,
-                                                                r.MentorId,
-                                                                r.Feedback,
-                                                                r.Score,
-                                                                r.ReviewStatus,
-                                                                r.ReviewedDate
-                                                            )).ToListAsync();
+                                                             .Select(r => new 
+                                                                ReviewResponseDto
+                                                                (
+                                                                    r.Id,
+                                                                    r.SubmissionId,
+                                                                    r.MentorId,
+                                                                    r.Feedback,
+                                                                    r.Score,
+                                                                    r.ReviewStatus,
+                                                                    r.ReviewedDate
+                                                                )
+                                                            ).ToListAsync();
         return reviews;
     }
 
     public async Task<ReviewResponseDto> GetReviewByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving review with ID: {ReviewId}", id);
+
         ReviewResponseDto? review = await _context.Reviews  
-                                    .Where(r => r.Id == id)
-                                    .Select(r => new ReviewResponseDto(
-                                        r.Id,
-                                        r.SubmissionId,
-                                        r.MentorId,
-                                        r.Feedback,
-                                        r.Score,
-                                        r.ReviewStatus,
-                                        r.ReviewedDate
-                                    )).FirstOrDefaultAsync();
+                                                .Where(r => r.Id == id)
+                                                .Select(r => new 
+                                                    ReviewResponseDto
+                                                    (
+                                                        r.Id,
+                                                        r.SubmissionId,
+                                                        r.MentorId,
+                                                        r.Feedback,
+                                                        r.Score,
+                                                        r.ReviewStatus,
+                                                        r.ReviewedDate
+                                                    )
+                                                ).FirstOrDefaultAsync();
         if (review == null)
         {
             _logger.LogWarning("Review with ID {ReviewId} was not found", id);
+            
             throw new NotFoundException(AppConstants.Errors.Reviews.NotFound);
         }                            
         return review;

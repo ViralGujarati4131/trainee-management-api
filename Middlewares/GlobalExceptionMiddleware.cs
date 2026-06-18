@@ -24,21 +24,25 @@ public class GlobalExceptionMiddleware
         catch (NotFoundException ex)
         {
             _logger.LogWarning("Not found: {Message}", ex.Message);
+
             await WriteResponse(context, StatusCodes.Status404NotFound, ex.Message);
         }
         catch (UnauthorizedException ex)
         {
             _logger.LogWarning("Unauthorized: {Message}", ex.Message);
+
             await WriteResponse(context, StatusCodes.Status401Unauthorized, ex.Message);
         }
         catch (BadRequestException ex)
         {
             _logger.LogWarning("Bad request: {Message}", ex.Message);
+
             await WriteResponse(context, StatusCodes.Status400BadRequest, ex.Message);
         }
         catch (JwtOperationException ex)
         {
             _logger.LogError(ex, "Invalid operation: {Message}", ex.Message);
+
             await WriteResponse(context, StatusCodes.Status500InternalServerError, AppConstants.Errors.JwtAuthError);
         }
         catch (Exception ex)
@@ -50,23 +54,28 @@ public class GlobalExceptionMiddleware
                 if (mysqlEx.Number == AppConstants.Database.MySqlErrorCodes.NotFoundReference)
                 {
                     _logger.LogError("Reference operation Error: {ex}", ex);
+
                     await WriteResponse(context, StatusCodes.Status400BadRequest, AppConstants.Errors.SqlReferenceConflict);
                 }
                 else if (mysqlEx.Number == AppConstants.Database.MySqlErrorCodes.DeleteReference)
                 {
                     _logger.LogError("Delete operation Referance Error: {ex}", ex);
+
                     await WriteResponse(context, StatusCodes.Status400BadRequest, AppConstants.Errors.SqlDeleteReferenceError);
                 }
                 else if (mysqlEx.Number == AppConstants.Database.MySqlErrorCodes.UsernameExists)
                 {
                     _logger?.LogError("Create operation Referance Error: {ex}", ex);
+
                     await WriteResponse(context, StatusCodes.Status400BadRequest, AppConstants.Errors.UsernameExists);
                 }
             }
             else
             {
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
-                    context.Request.Method, context.Request.Path);
+
+                context.Request.Method, context.Request.Path);
+
                 await WriteResponse(context, StatusCodes.Status500InternalServerError, AppConstants.Errors.GeneralInternalServerError);
             }
         }
@@ -75,7 +84,12 @@ public class GlobalExceptionMiddleware
     private static async Task WriteResponse(HttpContext context, int statusCode, string message)
     {
         context.Response.StatusCode = statusCode;
+
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { Message = message });
+
+        await context.Response.WriteAsJsonAsync(new 
+        { 
+            Message = message 
+        });
     }
 }

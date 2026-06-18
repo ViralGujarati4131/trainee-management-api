@@ -29,6 +29,7 @@ public class JwtService : IJwtService
         _logger.LogInformation("Retrieving configuration settings and claims to generate JWT token for UserId: {UserId}", user.Id);
 
         IConfigurationSection jwtSettings = _configuration.GetSection("Jwt");
+        
         string secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException(AppConstants.Errors.JwtSecretMissing);
 
         if (!int.TryParse(jwtSettings["ExpiryMinutes"], out expiryMinutes))
@@ -42,16 +43,22 @@ public class JwtService : IJwtService
         Claim[] claims = new[]
         {
             new Claim(AppConstants.Security.ClaimId, user.Id.ToString()),
+
             new Claim(AppConstants.Security.ClaimUsername, user.Username),
+
             new Claim(AppConstants.Security.ClaimRole, user?.Role?.ToString() ?? AppConstants.Security.DefaultRole)
         };
 
         SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
+
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
+
             Issuer = jwtSettings["Issuer"],
+
             Audience = jwtSettings["Audience"],
+
             SigningCredentials = credentials
         };
 
@@ -61,6 +68,7 @@ public class JwtService : IJwtService
         _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user?.Id);
 
         string generatedToken = tokenHandler.WriteToken(token);
+        
         if (generatedToken == null)
         {
             throw new JwtOperationException();

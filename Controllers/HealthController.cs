@@ -17,7 +17,7 @@ public class HealthController : ControllerBase
     public IActionResult GetMessage()
     {
         _logger.LogInformation("System health status requested.");
-
+        
         return Ok(new
         {
             Status = "running",

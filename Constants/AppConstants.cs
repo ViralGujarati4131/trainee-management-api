@@ -87,11 +87,11 @@ namespace TraineeManagementApi.Constants
             public const string ClaimUsername = "Username";
             public const string ClaimRole = "Role";
 
-            // Seed user
+            // Seed user config data
             public const string DefaultRole = "Admin";
             public const int DefaultExpiryMinutes = 60;
 
-            // seed admin
+            // seed user
             public static class Seeding
             {
                 public const string DefaultAdminUsername = "admin";

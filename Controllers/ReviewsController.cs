@@ -21,30 +21,40 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ReviewResponseDto>> CreateReview([FromBody] ReviewCreateDto createReviewDto)
+    public async Task<ActionResult> CreateReview([FromBody] ReviewCreateDto createReviewDto)
     {
         if(!ModelState.IsValid)
         {
             return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking review service to add a new review");
+
         ReviewResponseDto createdReview = await _reviewService.CreateReviewAsync(createReviewDto);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdReview);
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReviewResponseDto>>> GetReviews()
+    public async Task<ActionResult> GetReviews()
     {
         _logger.LogDebug("Invoking review service to fetch all reviews");
+
         IEnumerable<ReviewResponseDto> reviews = await _reviewService.GetReviewsAsync();
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,reviews);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ReviewResponseDto>> GetReviewById(int id)
+    public async Task<ActionResult> GetReviewById(int id)
     {
+        if(!ModelState.IsValid || id < 1)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking review service to retrieve review for ReviewId: {ReviewId}", id);
+
         ReviewResponseDto review = await _reviewService.GetReviewByIdAsync(id);
+        
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,review);
     }
 }

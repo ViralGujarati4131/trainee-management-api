@@ -22,50 +22,68 @@ public class LearningTasksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<LearningTaskResposeDto>>> GetLearningTasks()
+    public async Task<ActionResult> GetLearningTasks()
     {
         _logger.LogDebug("Invoking learning-task service to fetch all tasks");
+
         IEnumerable<LearningTaskResposeDto> learningTasks = await _learningTaskService.GetLearningTaskAsync();
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,learningTasks);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<LearningTaskResposeDto>> GetLearningTaskById(int id)
+    public async Task<ActionResult> GetLearningTaskById(int id)
     {
+        if(!ModelState.IsValid || id < 1)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking learning-task service to retrieve for TaskId: {TaskId}", id);
+
         LearningTaskResposeDto learningTask = await _learningTaskService.GetLearningTaskByIdAsync(id);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,learningTask);
     }
 
     [HttpPost]
-    public async Task<ActionResult<LearningTaskResposeDto>> CreateLearningTask([FromBody] LearningTaskCreateDto createTaskDto)
+    public async Task<ActionResult> CreateLearningTask([FromBody] LearningTaskCreateDto createTaskDto)
     {
         if(!ModelState.IsValid)
         {
             return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking learning-task service to add a new task");
+
         LearningTaskResposeDto createdTask = await _learningTaskService.CreateLearningTaskAsync(createTaskDto);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdTask);
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteLearningTask(int id)
     {
+        if(!ModelState.IsValid || id < 1)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking learning-task service to delete task for TaskId: {TaskId}", id);
+
         await _learningTaskService.DeleteLearningTaskByIdAsync(id);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status204NoContent);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<LearningTaskResposeDto>> UpdateLearningTask(int id, [FromBody] LearningTaskUpdateDto updateTaskDto)
+    public async Task<ActionResult> UpdateLearningTask(int id, [FromBody] LearningTaskUpdateDto updateTaskDto)
     {
-        if(!ModelState.IsValid)
+        if(!ModelState.IsValid || id < 1)
         {
             return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking learning-task service to modify task for TaskId: {TaskId}", id);
+
         LearningTaskResposeDto updatedTask = await _learningTaskService.UpdateLearningTaskByIdAsync(id, updateTaskDto);
+        
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,updatedTask);
     }
 }

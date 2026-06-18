@@ -10,6 +10,7 @@ namespace TraineeManagementApi.Submissions.Service;
 public class SubmissionService : ISubmissionService
 {
     private readonly ILogger<SubmissionService> _logger;
+    
     private readonly AppDbContext _cotext;
 
     public SubmissionService(ILogger<SubmissionService> logger, AppDbContext context)
@@ -37,11 +38,11 @@ public class SubmissionService : ISubmissionService
         if (submission == null)
         {
             _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
+
             throw new NotFoundException(AppConstants.Errors.Submissions.NotFound);
         }
         return submission;
     }
-
 
     public async Task<SubmissionResponseDto> CreateSubmissionAsync(SubmissionCreateDto submissionCreateDto)
     {
@@ -55,41 +56,52 @@ public class SubmissionService : ISubmissionService
         };
         _cotext.Submissions.Add(submission);
         await _cotext.SaveChangesAsync();
+
         _logger.LogInformation("Successfully created new submission with ID {SubmissionId}", submission.Id);
+
         return MapToResponseDto(submission);
     }
 
     public async Task<IEnumerable<SubmissionResponseDto>> GetSubmissionsAsync()
     {
         _logger.LogDebug("Fetching all submissions from the database");
+
         IEnumerable<SubmissionResponseDto> submissions = await _cotext.Submissions
-                                                                    .Select(s => new SubmissionResponseDto(
-                                                                        s.Id,
-                                                                        s.TaskAssignmentId,
-                                                                        s.SubmissionUrl,
-                                                                        s.Notes,
-                                                                        s.SubmittedDate,
-                                                                        s.Status
-                                                                    )).ToListAsync();
+                                                                    .Select(s => new 
+                                                                        SubmissionResponseDto
+                                                                        (
+                                                                            s.Id,
+                                                                            s.TaskAssignmentId,
+                                                                            s.SubmissionUrl,
+                                                                            s.Notes,
+                                                                            s.SubmittedDate,
+                                                                            s.Status
+                                                                        )
+                                                                    ).ToListAsync();
         return submissions;
     }
-
+    
     public async Task<SubmissionResponseDto> GetSubmissionByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving submission with ID: {SubmissionId}", id);
+
         SubmissionResponseDto? submission = await _cotext.Submissions
-                                            .Where(s => s.Id == id)
-                                            .Select(s => new SubmissionResponseDto(
-                                                s.Id,
-                                                s.TaskAssignmentId,
-                                                s.SubmissionUrl,
-                                                s.Notes,
-                                                s.SubmittedDate,
-                                                s.Status
-                                            )).FirstOrDefaultAsync();
+                                                       .Where(s => s.Id == id)
+                                                       .Select(s => new 
+                                                            SubmissionResponseDto
+                                                            (
+                                                               s.Id,
+                                                               s.TaskAssignmentId,
+                                                               s.SubmissionUrl,
+                                                               s.Notes,
+                                                               s.SubmittedDate,
+                                                               s.Status
+                                                           )
+                                                        ).FirstOrDefaultAsync();
         if (submission == null)
         {
             _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
+
             throw new NotFoundException(AppConstants.Errors.Submissions.NotFound);
         }
         return submission;

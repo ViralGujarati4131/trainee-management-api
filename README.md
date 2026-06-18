@@ -102,9 +102,9 @@ dotnet build
 
 ---
 
-## MySQL Setup Steps
+## MySQL Setup Step
 
-### 1. Create the Database
+### Create the Database
 
 Log in to MySQL and run:
 
@@ -112,34 +112,20 @@ Log in to MySQL and run:
 CREATE DATABASE trainee_management_db;
 ```
 
-### 2. Configure Connection String
-
-Update `appsettings.json` with your MySQL credentials:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=3306;database=trainee_management_db;user=root;password=your_password;"
-  }
-}
-```
-
-### 3. Start Mysql
-
-```bash
-sudo service mysql start
-```
-
 ---
 
-## Configure SigningKey
+## Configure `appsettings.Development.json`
 
-Update `appsettings.json`:
+Refer `appsettings.Development.template.json` and add that cors, connection string and jwt credential in `appsettings.Development.json` in that update jwt credential and connection string with your credential
 
-```json
- "JWT": {
-    "Key": "<Add Your SigningKey>"
-  }
+**Linux :** 
+```bash
+export ASPNETCORE_ENVIRONMENT=Development 
+```
+
+**Windows :** 
+```bash
+set ASPNETCORE_ENVIRONMENT=Development
 ```
 
 ---

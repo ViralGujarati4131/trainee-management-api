@@ -21,30 +21,40 @@ public class SubmissionsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<SubmissionResponseDto>> CreateSubmission([FromBody] SubmissionCreateDto createSubmissionDto)
+    public async Task<ActionResult> CreateSubmission([FromBody] SubmissionCreateDto createSubmissionDto)
     {
         if(!ModelState.IsValid)
         {
             return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking submission service to add a new submission");
+
         SubmissionResponseDto createdSubmission = await _submissionService.CreateSubmissionAsync(createSubmissionDto);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdSubmission);
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SubmissionResponseDto>>> GetSubmissions()
+    public async Task<ActionResult> GetSubmissions()
     {
         _logger.LogDebug("Invoking submission service to fetch all submissions");
+
         IEnumerable<SubmissionResponseDto> submissions = await _submissionService.GetSubmissionsAsync();
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,submissions);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<SubmissionResponseDto>> GetSubmissionById(int id)
+    public async Task<ActionResult> GetSubmissionById(int id)
     {
+        if(!ModelState.IsValid || id < 1)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking submission service to retrieve submission for SubmissionId: {SubmissionId}", id);
+
         SubmissionResponseDto submission = await _submissionService.GetSubmissionByIdAsync(id);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,submission);
     }
 }

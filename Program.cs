@@ -1,6 +1,4 @@
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -26,45 +24,43 @@ using Newtonsoft.Json;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// for react cors
 const string AllowedOriginsPolicy = "_myAllowSpecificOrigins";
 
+// structured logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
-// builder.Services.AddControllers()
-//     .AddJsonOptions(options =>
-//     {
-//         // options.JsonSerializerOptions.Converters.Add(
-//         //     new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false)
-//         // );
-//         // options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
-//     });
-
+// to allow the ModelState Validation instead of [ApiController]
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
     });
 
-
+// to do not allow any extra field with new name and value
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
        options.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error; 
     });
 
+// db connection
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
 
+// to take bearer token from user
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        OpenApiSecurityScheme scheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        OpenApiSecurityScheme scheme = new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
@@ -89,7 +85,8 @@ builder.Services.AddOpenApi("v1", options =>
     });
 });
 
-IConfigurationSection jwtSettings = builder.Configuration.GetSection("Jwt");
+// to validate the bearer token
+IConfigurationSection jwtSettings = builder.Configuration.GetSection("JWT");
 string jwtKeyString = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is missing from configuration.");
 byte[] tokenSigningKey = Encoding.UTF8.GetBytes(jwtKeyString);
 
@@ -112,6 +109,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// scoped services
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -121,7 +119,14 @@ builder.Services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
-string[] allowedOrigin = builder.Configuration.GetSection("AllowedOrigin").Get<string[]>() ?? Array.Empty<string>();
+// react origin
+string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+if (allowedOrigin.Length == 0)
+{
+    throw new InvalidOperationException(
+        $"CORS configuration missing for environment: {builder.Environment.EnvironmentName}"
+    );
+}
 
 builder.Services.AddCors(options =>
 {
@@ -139,6 +144,7 @@ builder.Services.AddOpenApi();
 
 WebApplication app = builder.Build();
 
+// seed the user
 await UserSeeder.SeedAsync(app.Services);
 
 if (app.Environment.IsDevelopment())

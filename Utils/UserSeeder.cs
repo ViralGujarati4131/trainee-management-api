@@ -13,13 +13,17 @@ public class UserSeeder
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
         using IServiceScope scope = serviceProvider.CreateScope();
+
         AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
         ILogger<UserSeeder> _logger = scope.ServiceProvider.GetRequiredService<ILogger<UserSeeder>>();
 
         try
         {
             _logger?.LogDebug("Checking whether the admin user {Username} already exists", AppConstants.Security.Seeding.DefaultAdminUsername);
+            
             bool userExists = await db.Users.AnyAsync(u => u.Username == AppConstants.Security.Seeding.DefaultAdminUsername);
+            
             if (!userExists)
             {
                 _logger?.LogInformation("Starting database seeding: Creating admin user {Username}", AppConstants.Security.Seeding.DefaultAdminUsername);

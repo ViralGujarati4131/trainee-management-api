@@ -21,50 +21,68 @@ public class MentorController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MentorResponseDto>>> GetMentors()
+    public async Task<ActionResult> GetMentors()
     {
         _logger.LogDebug("Invoking mentor service to fetch all mentors");
+
         IEnumerable<MentorResponseDto> mentors = await _mentorService.GetMentorsAsync();
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,mentors);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<MentorResponseDto>> GetMentorById(int id)
+    public async Task<ActionResult> GetMentorById(int id)
     {
+        if(!ModelState.IsValid || id < 1)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking mentor service to retrieve profile for MentorId: {MentorId}", id);
+
         MentorResponseDto mentor = await _mentorService.GetMentorByIdAsync(id);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,mentor);
     }
 
     [HttpPost]
-    public async Task<ActionResult<MentorResponseDto>> CreateMentor([FromBody] MentorCreateDto createMentorDto)
+    public async Task<ActionResult> CreateMentor([FromBody] MentorCreateDto createMentorDto)
     {
         if(!ModelState.IsValid)
         {
             return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");
+
         MentorResponseDto createdMentor = await _mentorService.CreateMentorAsync(createMentorDto);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,createdMentor);
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteMentorById(int id)
     {
+        if(!ModelState.IsValid || id < 1)
+        {
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
+        }
         _logger.LogDebug("Invoking mentor service to delete record for MentorId: {MentorId}", id);
+
         await _mentorService.DeleteMentorByIdAsync(id);
+
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status204NoContent);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<MentorResponseDto>> UpdateMentorById(int id, [FromBody] MentorUpdateDto updateMentorDto)
+    public async Task<ActionResult> UpdateMentorById(int id, [FromBody] MentorUpdateDto updateMentorDto)
     {
-        if(!ModelState.IsValid)
+        if(!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest, AppConstants.Errors.ValidationFailed,ModelState);
+            return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest,AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogDebug("Invoking mentor service to modify records for MentorId: {MentorId}", id);
+
         MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id, updateMentorDto);
+        
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,updatedMentor);
     }
 }

@@ -19,16 +19,19 @@ public class UserController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet(AppConstants.Routes.Login)]
-    public async Task<ActionResult<LoginTokenResponseDto>> LoginUser([FromBody] UserLoginDto userLoginDto)
+    [HttpPost(AppConstants.Routes.Login)]
+    public async Task<ActionResult> LoginUser([FromBody] UserLoginDto userLoginDto)
     {
         if(!ModelState.IsValid)
         {
             return ResponseBuilder.CreateResponse(StatusCodes.Status400BadRequest, AppConstants.Errors.ValidationFailed,ModelState);
         }
         _logger.LogInformation("Login attempt initiated for Username: {Username}", userLoginDto.Username);
+
         LoginTokenResponseDto authenticationResult = await _userService.LoginUserAsync(userLoginDto);
+        
         _logger.LogInformation("Authentication successful. Session token issued for Username: {Username}", userLoginDto.Username);
+        
         return ResponseBuilder.CreateResponseSuccess(StatusCodes.Status200OK,authenticationResult);
     }
 }

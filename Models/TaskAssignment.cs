@@ -87,6 +87,7 @@ public class TaskAssignment : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        System.Console.WriteLine("HIiii");
         if (DueDate < AssignedDate)
         {
             yield return new ValidationResult
