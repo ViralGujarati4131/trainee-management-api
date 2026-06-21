@@ -3,14 +3,12 @@ using TraineeManagementApi.TaskAssignments.ServiceInterface;
 using TraineeManagementApi.TaskAssignments.DTOs;
 using TraineeManagementApi.TaskAssignments.Models;
 using TraineeManagementApi.Utils.CustomException;
-using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.TaskAssignments.Service;
 
 public class TaskAssignmentService : ITaskAssignmentService
 {
     private readonly AppDbContext _context;
-
     private readonly ILogger<TaskAssignmentService> _logger;
 
     public TaskAssignmentService(AppDbContext context, ILogger<TaskAssignmentService> logger)
@@ -21,8 +19,7 @@ public class TaskAssignmentService : ITaskAssignmentService
 
     private TaskAssignmentResponseDto MapToResponseDto(TaskAssignment taskAssignment)
     {
-        return new TaskAssignmentResponseDto
-        (
+        return new TaskAssignmentResponseDto(
             taskAssignment.Id,
             taskAssignment.TraineeId,
             taskAssignment.MentorId,
@@ -40,7 +37,6 @@ public class TaskAssignmentService : ITaskAssignmentService
         if (taskAssignment == null)
         {
             _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
-
             throw new NotFoundException("TaskAssignment");
         }
         return taskAssignment;
@@ -58,11 +54,11 @@ public class TaskAssignmentService : ITaskAssignmentService
             Status = createTaskAssignmentDto.Status,
             Remarks = createTaskAssignmentDto.Remarks
         };
+        
         _context.TaskAssignments.Add(taskAssignment);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully created new taskAssignment with ID {AssingmentId}", taskAssignment.Id);
-
+        _logger.LogInformation("Successfully created new taskAssignment with ID {AssignmentId}", taskAssignment.Id);
         return MapToResponseDto(taskAssignment);
     }
 
@@ -70,61 +66,57 @@ public class TaskAssignmentService : ITaskAssignmentService
     {
         _logger.LogDebug("Fetching all taskAssignments from the database");
         
-        IEnumerable<TaskAssignmentResponseDto> taskAssignments = await _context.TaskAssignments
-                                                                             .Select(ta => new 
-                                                                                TaskAssignmentResponseDto
-                                                                                (
-                                                                                   ta.Id,
-                                                                                   ta.TraineeId,
-                                                                                   ta.MentorId,
-                                                                                   ta.LearningTaskId,
-                                                                                   ta.AssignedDate,
-                                                                                   ta.DueDate,
-                                                                                   ta.Status,
-                                                                                   ta.Remarks
-                                                                                )
-                                                                             ).ToListAsync();
-        return taskAssignments;
+        return await _context.TaskAssignments
+            .AsNoTracking()
+            .Select(ta => new TaskAssignmentResponseDto(
+                ta.Id,
+                ta.TraineeId,
+                ta.MentorId,
+                ta.LearningTaskId,
+                ta.AssignedDate,
+                ta.DueDate,
+                ta.Status,
+                ta.Remarks
+            )).ToListAsync();
     }
 
     public async Task<TaskAssignmentResponseDto> GetTaskAssignmentByIdAsync(int id)
     {
-        _logger.LogDebug("Retrieving taskAssignment with ID: {Assignmentid}", id);
+        _logger.LogDebug("Retrieving taskAssignment with ID: {AssignmentId}", id);
 
-        TaskAssignmentResponseDto? taskAssignment = await _context.TaskAssignments
-                                                                .Where(ta => ta.Id == id)
-                                                                .Select(ta => new 
-                                                                    TaskAssignmentResponseDto
-                                                                    (
-                                                                        ta.Id,
-                                                                        ta.TraineeId,
-                                                                        ta.MentorId,
-                                                                        ta.LearningTaskId,
-                                                                        ta.AssignedDate,
-                                                                        ta.DueDate,
-                                                                        ta.Status,
-                                                                        ta.Remarks
-                                                                    )
-                                                                ).FirstOrDefaultAsync();
-        if(taskAssignment == null)
+        var dto = await _context.TaskAssignments
+            .AsNoTracking()
+            .Where(ta => ta.Id == id)
+            .Select(ta => new TaskAssignmentResponseDto(
+                ta.Id,
+                ta.TraineeId,
+                ta.MentorId,
+                ta.LearningTaskId,
+                ta.AssignedDate,
+                ta.DueDate,
+                ta.Status,
+                ta.Remarks
+            )).FirstOrDefaultAsync();
+
+        if (dto == null)
         {
-            _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
-
+            _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found during target DTO projection.", id);
             throw new NotFoundException("TaskAssignment");
         }
-        return taskAssignment;
+        
+        return dto;
     }
 
     public async Task<TaskAssignmentResponseDto> UpdateTaskAssignmentAsync(int id, TaskAssignmentUpdateDto updateTaskAssignmentDto)
     {
-        _logger.LogDebug("Locating taskAssignment with ID {Assignmentid} for modification status", id);
+        _logger.LogDebug("Locating taskAssignment with ID {AssignmentId} for status modification", id);
 
         TaskAssignment taskAssignment = await FetchTaskAssignmentByIdInternalAsync(id);
+        
         taskAssignment.Status = updateTaskAssignmentDto.Status;
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully updated taskAssignment for ID {Assignmentid}", id);
-
+        _logger.LogInformation("Successfully updated taskAssignment for ID {AssignmentId}", id);
         return MapToResponseDto(taskAssignment);
     }
 }

@@ -5,7 +5,7 @@ using TraineeManagementApi.Reviews.ServiceInterface;
 using TraineeManagementApi.Utils.ResponsesBuilder;
 using TraineeManagementApi.Constants;
 
-namespace TraineeManagementApi.Reviews.Cotroller;
+namespace TraineeManagementApi.Reviews.Controller;
 
 [ApiController]
 [Route(AppConstants.Routes.Reviews)]
@@ -13,6 +13,7 @@ namespace TraineeManagementApi.Reviews.Cotroller;
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviewService;
+    
     private readonly ILogger<ReviewsController> _logger;
 
     public ReviewsController(IReviewService reviewService, ILogger<ReviewsController> logger)
@@ -26,16 +27,14 @@ public class ReviewsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking review service to add a new review");
 
         ReviewResponseDto createdReview = await _reviewService.CreateReviewAsync(createReviewDto);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeCreated,
-            AppConstants.ApiResponse.MsgCreated,
+            AppConstants.ApiResponse.Created,
             createdReview
         );
     }
@@ -48,9 +47,7 @@ public class ReviewsController : ControllerBase
         IEnumerable<ReviewResponseDto> reviews = await _reviewService.GetReviewsAsync();
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             reviews
         );
     }
@@ -60,16 +57,14 @@ public class ReviewsController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking review service to retrieve review for ReviewId: {ReviewId}", id);
 
         ReviewResponseDto review = await _reviewService.GetReviewByIdAsync(id);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             review
         );
     }

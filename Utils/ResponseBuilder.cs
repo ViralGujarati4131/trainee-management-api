@@ -6,43 +6,34 @@ namespace TraineeManagementApi.Utils.ResponsesBuilder;
 
 public static class ResponseBuilder
 {
-    public static ActionResult CreateValidationErrorResponse(ModelStateDictionary modelstate)
+    public static ActionResult CreateValidationErrorResponse()
     {
-        // var validationErrors = modelstate
-        //     .Where(ms => ms.Value?.Errors.Count > 0)
-        //     .Select(ms => new
-        //     {
-        //         Field = ms.Key,
-        //         Errors = ms.Value?.Errors.Select(e => e.ErrorMessage).ToArray()
-        //     });
+        ApiResponseDescriptor descriptor = AppConstants.ApiResponse.ValidationError;
 
         return new ObjectResult(new
         {
-            Code = AppConstants.ApiResponse.CodeValidationError,
-            Message = AppConstants.ApiResponse.MsgValidationError,
-            // Errors = validationErrors
+            Code = descriptor.CustomCode,
+            Message = descriptor.Message
         })
         {
-            StatusCode = StatusCodes.Status400BadRequest
+            StatusCode = descriptor.HttpStatusCode
         };
     }
-
-    // Standard Success Envelope (2000, 2010, etc.)
-    public static ActionResult CreateSuccessResponse(int httpStatus, string appCode, string sharedMessage, object? data = null)
+    public static ActionResult CreateSuccessResponse(ApiResponseDescriptor descriptor, object? data = null)
     {
-        if (httpStatus == StatusCodes.Status204NoContent)
+        if (descriptor.HttpStatusCode == StatusCodes.Status204NoContent)
         {
             return new StatusCodeResult(StatusCodes.Status204NoContent);
         }
 
         return new ObjectResult(new
         {
-            Code = appCode,
-            Message = sharedMessage,
+            Code = descriptor.CustomCode,
+            Message = descriptor.Message,
             Data = data
         })
         {
-            StatusCode = httpStatus
+            StatusCode = descriptor.HttpStatusCode
         };
     }
 }

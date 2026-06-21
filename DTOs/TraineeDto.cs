@@ -7,11 +7,11 @@ namespace TraineeManagementApi.Trainees.DTOs;
 public record TraineeUpdateDto
 (
     [RequiredField]
-    [FeildMaxLength(50)]
+    [FieldMaxLength(50)]
     string FirstName,
 
     [RequiredField]
-    [FeildMaxLength(50)]
+    [FieldMaxLength(50)]
     string LastName,
 
     [EmailAddress]
@@ -37,11 +37,11 @@ public record TraineeResponseDto
 public record TraineeCreateDto
 (
     [RequiredField]
-    [FeildMaxLength(50)]
+    [FieldMaxLength(50)]
     string FirstName,
 
     [RequiredField]
-    [FeildMaxLength(50)]
+    [FieldMaxLength(50)]
     string LastName,
 
     [EmailAddress]

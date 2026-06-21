@@ -5,7 +5,7 @@ using TraineeManagementApi.Submissions.ServiceInterface;
 using TraineeManagementApi.Utils.ResponsesBuilder;
 using TraineeManagementApi.Constants;
 
-namespace TraineeManagementApi.Submissions.Cotroller;
+namespace TraineeManagementApi.Submissions.Controller; 
 
 [ApiController]
 [Route(AppConstants.Routes.Submissions)]
@@ -27,16 +27,14 @@ public class SubmissionsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking submission service to add a new submission");
 
         SubmissionResponseDto createdSubmission = await _submissionService.CreateSubmissionAsync(createSubmissionDto);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeCreated,
-            AppConstants.ApiResponse.MsgCreated,
+            AppConstants.ApiResponse.Created,
             createdSubmission
         );
     }
@@ -49,9 +47,7 @@ public class SubmissionsController : ControllerBase
         IEnumerable<SubmissionResponseDto> submissions = await _submissionService.GetSubmissionsAsync();
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             submissions
         );
     }
@@ -61,16 +57,14 @@ public class SubmissionsController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking submission service to retrieve submission for SubmissionId: {SubmissionId}", id);
 
         SubmissionResponseDto submission = await _submissionService.GetSubmissionByIdAsync(id);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             submission
         );
     }

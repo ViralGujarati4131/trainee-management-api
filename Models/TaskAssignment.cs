@@ -67,7 +67,7 @@ public class TaskAssignment
     }
 
    [ValidEnum(typeof(TaskAssignmentStatus))]
-    [RequiredField]
+   [RequiredField]
     public TaskAssignmentStatus? Status 
     { 
         get; 

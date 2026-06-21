@@ -16,7 +16,7 @@ public class Trainee : ICreateTimestamp,IUpdateTimestamp
     }
 
     [RequiredField]
-    [FeildMaxLength(50)]
+    [FieldMaxLength(50)]
     public string FirstName 
     { 
         get; 
@@ -24,7 +24,7 @@ public class Trainee : ICreateTimestamp,IUpdateTimestamp
     } = string.Empty;
 
     [RequiredField]
-    [FeildMaxLength(50)]
+    [FieldMaxLength(50)]
     public string LastName 
     { 
         get; 

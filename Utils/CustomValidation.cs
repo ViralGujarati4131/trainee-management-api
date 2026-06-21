@@ -1,21 +1,17 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 
 namespace TraineeManagementApi.Utils.CustomValidation;
 
 public class RequiredField : RequiredAttribute
 {
-    public RequiredField()
-    {
-        ErrorMessage = "This field cannot be left blank.";
-    }
+    public RequiredField() => ErrorMessage = "This field cannot be left blank.";
 }
 
-public class FeildMaxLength : MaxLengthAttribute
+public class FieldMaxLength : MaxLengthAttribute 
 {
-    public FeildMaxLength(int length) : base(length)
-    {
+    public FieldMaxLength(int length) : base(length) => 
         ErrorMessage = $"Value cannot exceed {length} characters.";
-    }
 }
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
@@ -33,15 +29,15 @@ public class ValidDateRangeAttribute : ValidationAttribute
     {
         if (value == null) return ValidationResult.Success;
 
-        var currentValue = (DateOnly)value;
+        DateOnly currentValue = (DateOnly)value;
 
-        var property = validationContext.ObjectType.GetProperty(_comparisonProperty);
+        PropertyInfo? property = validationContext.ObjectType.GetProperty(_comparisonProperty);
         if (property == null)
         {
             return new ValidationResult($"Unknown property: {_comparisonProperty}");
         }
 
-        var comparisonValue = property.GetValue(validationContext.ObjectInstance);
+        Object? comparisonValue = property.GetValue(validationContext.ObjectInstance);
 
         if (comparisonValue is DateOnly targetDate && currentValue < targetDate)
         {
@@ -51,7 +47,6 @@ public class ValidDateRangeAttribute : ValidationAttribute
         return ValidationResult.Success;
     }
 }
-
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
 public class ValidEnumAttribute : ValidationAttribute

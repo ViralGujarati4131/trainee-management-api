@@ -13,6 +13,7 @@ namespace TraineeManagementApi.Mentors.Controller;
 public class MentorController : ControllerBase
 {
     private readonly IMentorServices _mentorService;
+    
     private readonly ILogger<MentorController> _logger;
 
     public MentorController(IMentorServices mentorService, ILogger<MentorController> logger)
@@ -29,9 +30,7 @@ public class MentorController : ControllerBase
         IEnumerable<MentorResponseDto> mentors = await _mentorService.GetMentorsAsync();
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             mentors
         );
     }
@@ -41,16 +40,14 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking mentor service to retrieve profile for MentorId: {MentorId}", id);
 
         MentorResponseDto mentor = await _mentorService.GetMentorByIdAsync(id);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             mentor
         );
     }
@@ -60,16 +57,14 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");
 
         MentorResponseDto createdMentor = await _mentorService.CreateMentorAsync(createMentorDto);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeCreated,
-            AppConstants.ApiResponse.MsgCreated,
+            AppConstants.ApiResponse.Created,
             createdMentor
         );
     }
@@ -79,16 +74,14 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking mentor service to delete record for MentorId: {MentorId}", id);
 
         await _mentorService.DeleteMentorByIdAsync(id);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status204NoContent,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgDeleted
+            AppConstants.ApiResponse.NoContent
         );
     }
 
@@ -97,16 +90,14 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking mentor service to modify records for MentorId: {MentorId}", id);
 
         MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id, updateMentorDto);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgUpdated,
+            AppConstants.ApiResponse.Updated,
             updatedMentor
         );
     }

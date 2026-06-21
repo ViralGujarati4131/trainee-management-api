@@ -1,10 +1,7 @@
+using Microsoft.Extensions.Options;
+using TraineeManagementApi.FileStorage.Configurations;
 using TraineeManagementApi.FileStorage.ServiceInterface;
-using TraineeManagementApi.SubmissionFiles.Models;
-using System.Security.Cryptography;
 using TraineeManagementApi.Utils.CustomException;
-using TraineeManagementApi.Submissions.Models;
-using MySqlConnector;
-
 
 namespace TraineeManagementApi.FileStorage.Service;
 
@@ -12,122 +9,89 @@ public class FileStorageService : IFileStorageService
 {
     private readonly string _rootPath;
     private readonly ILogger<FileStorageService> _logger;
-        
-    private readonly AppDbContext _context;
+    private readonly FileStorageConfiguration _fileConfiguration;
 
-    public FileStorageService(IWebHostEnvironment env,IConfiguration config,ILogger<FileStorageService> logger,AppDbContext context)
+    public FileStorageService(IWebHostEnvironment env, ILogger<FileStorageService> logger, IOptions<FileStorageConfiguration> fileConfiguration)
     {
-        string configuredPath = config["FileStorage:RootPath"]
-                    ?? throw new InvalidOperationException("FileStorage:RootPath not configured.");
+        _logger = logger;
+        _fileConfiguration = fileConfiguration.Value;
 
+        if (string.IsNullOrWhiteSpace(_fileConfiguration.RootPath))
+        {
+            throw new FileStorageConfigurationException();
+        }
+        
+        string configuredPath = _fileConfiguration.RootPath; 
         string basePath = env.ContentRootPath;
-        var parent1 = Directory.GetParent(basePath);
-        var parent2 = parent1 != null ? Directory.GetParent(parent1.FullName) : null;
 
-        if (parent2 != null)
-        {
-            basePath = parent2.FullName;
-        }
-        else
-        {
-            basePath = env.ContentRootPath;
-        }
-                    
-        _rootPath = Path.IsPathRooted(configuredPath)
-            ? configuredPath
-            : Path.Combine(basePath, configuredPath);
-            
-        if(!Directory.Exists(_rootPath))
+        _rootPath = Path.Combine(basePath, configuredPath);
+
+        if (!Directory.Exists(_rootPath))
         {
             Directory.CreateDirectory(_rootPath);
         }
-
-        _logger = logger;
-        _context = context;
     }
 
-    private async Task<SubmissionFile> FetchSubmissionFileByIdInternalAsync(int id)
+    public async Task<string> SaveAsync(Stream fileStream, string originalFileName)
     {
-        SubmissionFile? submissionFile = await _context.SubmissionFiles.FindAsync(id);
-        if(submissionFile == null)
-        {
-            _logger.LogWarning("SubmissionFile with ID {FileId} was not found", id);
+        string extension = Path.GetExtension(originalFileName).ToLowerInvariant();
+        string uniqueId = Guid.NewGuid().ToString("N");
+        string datePrefix = DateTime.UtcNow.ToString("yyyy/MM/dd");
+        
+        string storedFileName = $"{datePrefix}/{uniqueId}{extension}"; 
 
-            throw new NotFoundException("SubmissionFile");
-        }
-        return submissionFile;
-    }
-
-    public async Task<string> uploadFileAsync(int submissionId,Stream fileStream, string originalFileName, string contentType)
-    {
-        Submission? submission = await _context.Submissions.FindAsync(submissionId);
-        if(submission == null)
-        {
-            _logger.LogWarning("Submission with ID {SubmissionId} was not found for as a referance to upload submissionFile", submissionId);
-
-            throw new BadRequestException("Submission not exists");
-        }
-        string extension = Path.GetExtension(originalFileName);
-        string storedFileName = $"{Guid.NewGuid():N}{extension}";
-        string filePath = Path.Combine(_rootPath, storedFileName);
+        string diskSafeFileName = storedFileName.Replace("/", "_");
+        
+        string filePath = Path.Combine(_rootPath, diskSafeFileName);
+        
         try
         {
-            using FileStream output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
+            using FileStream output = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            
+            if (fileStream.CanSeek)
+            {
+                fileStream.Position = 0;
+            }
+            
             await fileStream.CopyToAsync(output);
+            
+            return diskSafeFileName; 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving file {OriginalFileName}", originalFileName);
+            _logger.LogError(ex, "Physical disk IO failure saving file {OriginalFileName}", originalFileName);
             throw;
         }
+    }
 
-        string checksum;
-        using (var sha256 = SHA256.Create())
+    public Task<Stream> OpenReadAsync(string storageFileName)
+    {
+        string filePath = Path.Combine(_rootPath, storageFileName);
+
+        if (!File.Exists(filePath))
         {
-            var hash = await sha256.ComputeHashAsync(fileStream);
-            checksum = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            throw new ExceptionFileNotFound();
         }
 
-        SubmissionFile submissionFile = new SubmissionFile
+        return Task.FromResult<Stream>(new FileStream(filePath, FileMode.Open, FileAccess.Read));
+    }
+
+    public Task<bool> ExistsAsync(string storageFileName)
+    {
+        string filePath = Path.Combine(_rootPath, storageFileName);
+        return Task.FromResult(File.Exists(filePath));
+    }
+
+    public Task DeleteAsync(string storageFileName)
+    {
+        string filePath = Path.Combine(_rootPath, storageFileName);
+
+        if (File.Exists(filePath))
         {
-            SubmissionId = submissionId,
-            OriginalFileName = originalFileName,
-            StorageFileName = storedFileName,
-            ContentType = contentType,
-            Size = fileStream.Length,
-            Checksum = checksum,
-            UploadedByUserId = "1"
-        };
+            File.Delete(filePath);
+            _logger.LogInformation("Physical storage asset successfully deleted: {FileName}", storageFileName);
+        }
 
-        _context.SubmissionFiles.Add(submissionFile);
-        await _context.SaveChangesAsync();
-        return storedFileName; 
-    }
-
-    public async Task<Stream> downloadFileAsync(int id)
-    {
-        SubmissionFile submissionFile = await FetchSubmissionFileByIdInternalAsync(id);
-
-        string filePath = Path.Combine(_rootPath, Path.GetFileName(submissionFile.StorageFileName));
-        if (!File.Exists(filePath))
-            throw new FileNotFound();
-
-        return await Task.FromResult<Stream>(new FileStream(filePath, FileMode.Open, FileAccess.Read));
-    }
-
-    public async Task deleteFileAsync(int id)
-    {
-        SubmissionFile submissionFile = await FetchSubmissionFileByIdInternalAsync(id);
-
-        string filePath = Path.Combine(_rootPath, Path.GetFileName(submissionFile.StorageFileName));
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("SubmissionFile Not Found for given id");
-
-        _context.SubmissionFiles.Remove(submissionFile);
-        await _context.SaveChangesAsync();
-        File.Delete(filePath);
-
-        return;
+        return Task.CompletedTask;
     }
 }
-

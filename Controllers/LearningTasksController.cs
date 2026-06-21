@@ -13,6 +13,7 @@ namespace TraineeManagementApi.LearningTasks.Controller;
 public class LearningTasksController : ControllerBase
 {
     private readonly ILearningTaskService _learningTaskService;
+
     private readonly ILogger<LearningTasksController> _logger;
 
     public LearningTasksController(ILearningTaskService learningTaskService, ILogger<LearningTasksController> logger)
@@ -29,9 +30,7 @@ public class LearningTasksController : ControllerBase
         IEnumerable<LearningTaskResposeDto> learningTasks = await _learningTaskService.GetLearningTaskAsync();
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             learningTasks
         );
     }
@@ -41,16 +40,14 @@ public class LearningTasksController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking learning-task service to retrieve for TaskId: {TaskId}", id);
 
         LearningTaskResposeDto learningTask = await _learningTaskService.GetLearningTaskByIdAsync(id);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             learningTask
         );
     }
@@ -60,16 +57,14 @@ public class LearningTasksController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking learning-task service to add a new task");
 
         LearningTaskResposeDto createdTask = await _learningTaskService.CreateLearningTaskAsync(createTaskDto);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK, 
-            AppConstants.ApiResponse.CodeCreated, 
-            AppConstants.ApiResponse.MsgCreated, 
+            AppConstants.ApiResponse.Created, 
             createdTask
         );
     }
@@ -79,16 +74,14 @@ public class LearningTasksController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking learning-task service to delete task for TaskId: {TaskId}", id);
 
         await _learningTaskService.DeleteLearningTaskByIdAsync(id);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status204NoContent,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgDeleted
+            AppConstants.ApiResponse.NoContent
         );
     }
 
@@ -97,16 +90,14 @@ public class LearningTasksController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking learning-task service to modify task for TaskId: {TaskId}", id);
 
         LearningTaskResposeDto updatedTask = await _learningTaskService.UpdateLearningTaskByIdAsync(id, updateTaskDto);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK, 
-            AppConstants.ApiResponse.CodeSuccess, 
-            AppConstants.ApiResponse.MsgUpdated, 
+            AppConstants.ApiResponse.Updated, 
             updatedTask
         );
     }

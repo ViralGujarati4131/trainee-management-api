@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using TraineeManagementApi.LearningTasks.Models;
 using TraineeManagementApi.Utils.CustomValidation;
 

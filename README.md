@@ -21,6 +21,9 @@
 
 ```
 TraineeManagement.Api/
+├── Constants/
+│   ├── ApiResponseDescriptor.cs
+│   ├── AppConstants.cs
 ├── Controllers/
 │   ├── HealthController.cs
 │   ├── TraineesController.cs
@@ -30,6 +33,7 @@ TraineeManagement.Api/
 │   ├── TaskAssignmentsController.cs
 │   ├── SubmissionsController.cs
 │   ├── ReviewsController.cs
+│   ├── SubmissionFilesController.cs
 ├── Models/
 │   ├── Trainee.cs
 │   ├── User.cs
@@ -38,6 +42,7 @@ TraineeManagement.Api/
 │   ├── TaskAssignment.cs
 │   ├── Submission.cs
 │   ├── Review.cs
+│   ├── SubmissionFile.cs
 ├── DTOs/
 │   ├── TraineeDto.cs
 │   ├── UserDto.cs
@@ -46,6 +51,7 @@ TraineeManagement.Api/
 │   ├── TaskAssignmentDto.cs
 │   ├── SubmissionDto.cs
 │   ├── ReviewDto.cs
+│   ├── SubmissionFileDto.cs
 ├── Interfaces/
 │   ├── ILearningTaskServices.cs
 │   ├── IMentorServices.cs
@@ -55,6 +61,8 @@ TraineeManagement.Api/
 │   ├── ITaskAssignmentServices.cs
 │   ├── ISubmissionServices.cs
 │   ├── IReviewServices.cs
+│   ├── IFileStorageServices.cs
+│   ├── ISubmissionFileServices.cs
 ├── Services/
 │   ├── TraineeServices.cs
 │   ├── UserServices.cs
@@ -63,10 +71,15 @@ TraineeManagement.Api/
 │   ├── TaskAssignmentServices.cs
 │   ├── SubmissionServices.cs
 │   ├── ReviewServices.cs
+│   ├── FileStorageServices.cs
+│   ├── SubmissionFileServices.cs
 ├── Utils/
 │   ├── CustomException.cs
 │   ├── JwtService.cs
 │   ├── UserSeeder.cs
+│   ├── CustomValidation.cs
+│   ├── FileStorageConfiguration.cs
+│   ├── ResponseBuilder.cs
 ├── Middlewares/
 │   └── GlobalExceptionMiddleware.cs
 ├── Data/
@@ -116,7 +129,7 @@ CREATE DATABASE trainee_management_db;
 
 ## Configure `appsettings.Development.json`
 
-Refer `appsettings.Development.template.json` and add that cors, connection string and jwt credential in `appsettings.Development.json` in that update jwt credential and connection string with your credential
+Refer `appsettings.Development.template.json` and add accordingly your react cors, connection string, File configuration and jwt credential in `appsettings.Development.json`
 
 **Linux :** 
 ```bash
@@ -154,7 +167,7 @@ https://localhost:<port>/swagger
 
 ## Login Credentials for Testing
 
-> Seed an Admin user during application startup.
+Seed an Admin user during application startup.
 
 | Field | Value |
 |---|---|
@@ -263,6 +276,14 @@ https://localhost:<port>/swagger
 | POST | `/api/reviews` | Add a mentor review |
 | GET | `/api/reviews` | Get all reviews |
 | GET | `/api/reviews/{id}` | Get review by ID |
+
+### SubmissionFile APIs (Protected)
+ 
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/submission-files/{id}/files` | Add a submission file |
+| GET | `/api/submission-files/{id}` | Get submission file |
+| DELETE | `/api/submission-files/{id}` | Delete Submission File |
  
 ---
 
@@ -415,6 +436,20 @@ Request:
  
 ---
 
+### Add SubmissionFile
+ 
+**POST** `/api/submission-files/1/files`
+ 
+Request:
+```
+{
+  "key": files,
+  "value": <upload your files>
+}
+```
+
+---
+
 ## CORS Configuration
 
 CORS is configured to allow the React frontend origins:
@@ -438,16 +473,5 @@ CORS is configured to allow the React frontend origins:
 
 ---
 
-## Logging
-
-The following events are logged:
-
-- User login success and failure
-- Trainee created, updated, and deleted
-- Mentor created, updated, and deleted
-- Record-not-found (404) cases
-- Unexpected exceptions
-
----
 
 

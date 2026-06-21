@@ -13,6 +13,7 @@ namespace TraineeManagementApi.TaskAssignments.Controller;
 public class TaskAssignmentsController : ControllerBase
 {
     private readonly ITaskAssignmentService _taskAssignmentService;
+
     private readonly ILogger<TaskAssignmentsController> _logger;
 
     public TaskAssignmentsController(ITaskAssignmentService taskAssignmentService, ILogger<TaskAssignmentsController> logger)
@@ -26,16 +27,14 @@ public class TaskAssignmentsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking task-assignment service to add a new task-assignment");
 
         TaskAssignmentResponseDto createdTaskAssignment = await _taskAssignmentService.CreateTaskAssignmentAsync(createTaskAssignmentDto);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeCreated,
-            AppConstants.ApiResponse.MsgCreated,
+            AppConstants.ApiResponse.Created,
             createdTaskAssignment
         );
     }
@@ -48,9 +47,7 @@ public class TaskAssignmentsController : ControllerBase
         IEnumerable<TaskAssignmentResponseDto> taskAssignments = await _taskAssignmentService.GetTaskAssignmentsAsync();
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             taskAssignments
         );
     }
@@ -60,16 +57,14 @@ public class TaskAssignmentsController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking task-assignment service to retrieve assignments for AssignmentId: {AssignmentId}", id);
 
         TaskAssignmentResponseDto taskAssignment = await _taskAssignmentService.GetTaskAssignmentByIdAsync(id);
 
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             taskAssignment
         );
     }
@@ -79,16 +74,14 @@ public class TaskAssignmentsController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking task-assignment service to modify records for AssignmentId: {AssignmentId}", id);
         
         TaskAssignmentResponseDto updatedTaskAssignment = await _taskAssignmentService.UpdateTaskAssignmentAsync(id, updateTaskAssignmentDto);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgUpdated,
+            AppConstants.ApiResponse.Updated,
             updatedTaskAssignment
         );
     }

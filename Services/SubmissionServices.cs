@@ -3,26 +3,23 @@ using TraineeManagementApi.Submissions.DTOs;
 using TraineeManagementApi.Submissions.Models;
 using TraineeManagementApi.Submissions.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
-using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Submissions.Service;
 
 public class SubmissionService : ISubmissionService
 {
     private readonly ILogger<SubmissionService> _logger;
-    
-    private readonly AppDbContext _cotext;
+    private readonly AppDbContext _context; 
 
     public SubmissionService(ILogger<SubmissionService> logger, AppDbContext context)
     {
         _logger = logger;
-        _cotext = context;
+        _context = context;
     }
 
     private SubmissionResponseDto MapToResponseDto(Submission submission)
     {
-        return new SubmissionResponseDto
-        (
+        return new SubmissionResponseDto(
             submission.Id,
             submission.TaskAssignmentId,
             submission.SubmissionUrl,
@@ -30,18 +27,6 @@ public class SubmissionService : ISubmissionService
             submission.SubmittedDate,
             submission.Status
         );
-    }
-
-    private async Task<Submission> FetchSubmissionByIdInternalAsync(int id)
-    {
-        Submission? submission = await _cotext.Submissions.FindAsync(id);
-        if (submission == null)
-        {
-            _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
-
-            throw new NotFoundException("Submission");
-        }
-        return submission;
     }
 
     public async Task<SubmissionResponseDto> CreateSubmissionAsync(SubmissionCreateDto submissionCreateDto)
@@ -54,11 +39,11 @@ public class SubmissionService : ISubmissionService
             SubmittedDate = submissionCreateDto.SubmittedDate,
             Status = submissionCreateDto.Status
         };
-        _cotext.Submissions.Add(submission);
-        await _cotext.SaveChangesAsync();
+        
+        _context.Submissions.Add(submission);
+        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Successfully created new submission with ID {SubmissionId}", submission.Id);
-
         return MapToResponseDto(submission);
     }
 
@@ -66,44 +51,40 @@ public class SubmissionService : ISubmissionService
     {
         _logger.LogDebug("Fetching all submissions from the database");
 
-        IEnumerable<SubmissionResponseDto> submissions = await _cotext.Submissions
-                                                                    .Select(s => new 
-                                                                        SubmissionResponseDto
-                                                                        (
-                                                                            s.Id,
-                                                                            s.TaskAssignmentId,
-                                                                            s.SubmissionUrl,
-                                                                            s.Notes,
-                                                                            s.SubmittedDate,
-                                                                            s.Status
-                                                                        )
-                                                                    ).ToListAsync();
-        return submissions;
+        return await _context.Submissions
+            .AsNoTracking()
+            .Select(s => new SubmissionResponseDto(
+                s.Id,
+                s.TaskAssignmentId,
+                s.SubmissionUrl,
+                s.Notes,
+                s.SubmittedDate,
+                s.Status
+            )).ToListAsync();
     }
     
     public async Task<SubmissionResponseDto> GetSubmissionByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving submission with ID: {SubmissionId}", id);
 
-        SubmissionResponseDto? submission = await _cotext.Submissions
-                                                       .Where(s => s.Id == id)
-                                                       .Select(s => new 
-                                                            SubmissionResponseDto
-                                                            (
-                                                               s.Id,
-                                                               s.TaskAssignmentId,
-                                                               s.SubmissionUrl,
-                                                               s.Notes,
-                                                               s.SubmittedDate,
-                                                               s.Status
-                                                           )
-                                                        ).FirstOrDefaultAsync();
-        if (submission == null)
-        {
-            _logger.LogWarning("Submission with ID {SubmissionId} was not found", id);
+        var dto = await _context.Submissions
+            .AsNoTracking()
+            .Where(s => s.Id == id)
+            .Select(s => new SubmissionResponseDto(
+                s.Id,
+                s.TaskAssignmentId,
+                s.SubmissionUrl,
+                s.Notes,
+                s.SubmittedDate,
+                s.Status
+            )).FirstOrDefaultAsync();
 
+        if (dto == null)
+        {
+            _logger.LogWarning("Submission with ID {SubmissionId} was not found during target DTO projection.", id);
             throw new NotFoundException("Submission");
         }
-        return submission;
+        
+        return dto;
     }
 }

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagementApi.Utils.CustomException;
 using TraineeManagementApi.Trainees.DTOs;
 using TraineeManagementApi.Trainees.ServiceInterface;
 using TraineeManagementApi.Utils.ResponsesBuilder;
@@ -14,6 +13,7 @@ namespace TraineeManagementApi.Trainees.Controller;
 public class TraineesController : ControllerBase
 {
     private readonly ITraineeService _traineeService;
+
     private readonly ILogger<TraineesController> _logger;
 
     public TraineesController(ITraineeService traineeService, ILogger<TraineesController> logger)
@@ -27,16 +27,14 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking trainee service to retrieve profile for TraineeId: {TraineeId}", id);
         
         TraineeResponseDto trainee = await _traineeService.GetTraineeByIdAsync(id);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             trainee
         );
     }
@@ -46,16 +44,14 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking trainee service to establish a new trainee registration");
         
         TraineeResponseDto createdTrainee = await _traineeService.CreateTraineeAsync(createTraineeDto);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeCreated,
-            AppConstants.ApiResponse.MsgCreated,
+            AppConstants.ApiResponse.Created,
             createdTrainee
         );
     }
@@ -65,16 +61,14 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking trainee service to modify records for TraineeId: {TraineeId}", id);
         
         TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgUpdated,
+            AppConstants.ApiResponse.Updated,
             updatedTrainee
         );
     }
@@ -84,16 +78,14 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking trainee service to delete records for TraineeId: {TraineeId}", id);
         
         await _traineeService.DeleteTraineeByIdAsync(id);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status204NoContent,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgDeleted
+            AppConstants.ApiResponse.NoContent
         );
     }
 
@@ -107,9 +99,7 @@ public class TraineesController : ControllerBase
             IEnumerable<TraineeResponseDto> trainees = await _traineeService.GetTraineesAsync();
 
             return ResponseBuilder.CreateSuccessResponse(
-                StatusCodes.Status200OK,
-                AppConstants.ApiResponse.CodeSuccess,
-                AppConstants.ApiResponse.MsgSuccess,
+                AppConstants.ApiResponse.Success,
                 trainees
             );
         }
@@ -118,9 +108,7 @@ public class TraineesController : ControllerBase
         IEnumerable<TraineeResponseDto> searchResults = await _traineeService.SearchTraineesAsync(searchTrainee);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             searchResults
         );
     }
@@ -132,16 +120,14 @@ public class TraineesController : ControllerBase
         {
             _logger.LogWarning("Pagination request processing aborted due to missing or invalid filter arguments");
 
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogDebug("Invoking trainee service to generate paginated lookup - Name: {FilterName}, Status: {FilterStatus}, Page: {PageNumber}, Size: {PageSize}", name, status, pageNumber, pageSize);
         
         TraineePaginationSearchDto? pagedData = await _traineeService.GetPagedAndSearchedTraineesAsync(pageNumber, pageSize, name, status);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.Success,
             pagedData
         );
     }

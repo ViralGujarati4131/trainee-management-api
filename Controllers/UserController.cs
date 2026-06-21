@@ -11,6 +11,7 @@ namespace TraineeManagementApi.Users.Controller;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+
     private readonly ILogger<UserController> _logger;
 
     public UserController(IUserService userService, ILogger<UserController> logger)
@@ -24,7 +25,7 @@ public class UserController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse(ModelState);
+            return ResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogInformation("Login attempt initiated for Username: {Username}", userLoginDto.Username);
 
@@ -33,9 +34,7 @@ public class UserController : ControllerBase
         _logger.LogInformation("Authentication successful. Session token issued for Username: {Username}", userLoginDto.Username);
         
         return ResponseBuilder.CreateSuccessResponse(
-            StatusCodes.Status200OK,
-            AppConstants.ApiResponse.CodeSuccess,
-            AppConstants.ApiResponse.MsgSuccess,
+            AppConstants.ApiResponse.LoginSuccess,
             authenticationResult
         );
     }

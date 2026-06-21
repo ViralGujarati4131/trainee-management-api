@@ -30,7 +30,7 @@ public class JwtService : IJwtService
 
         IConfigurationSection jwtSettings = _configuration.GetSection("Jwt");
         
-        string secretKey = jwtSettings["Key"] ?? throw new InvalidOperationException(AppConstants.Errors.JwtSecretMissing);
+        string secretKey = jwtSettings["Key"] ?? throw new JwtSecretMissingException();
 
         if (!int.TryParse(jwtSettings["ExpiryMinutes"], out expiryMinutes))
         {
@@ -43,36 +43,30 @@ public class JwtService : IJwtService
         Claim[] claims = new[]
         {
             new Claim(AppConstants.Security.ClaimId, user.Id.ToString()),
-
             new Claim(AppConstants.Security.ClaimUsername, user.Username),
-
-            new Claim(AppConstants.Security.ClaimRole, user?.Role?.ToString() ?? AppConstants.Security.DefaultRole)
+            new Claim(AppConstants.Security.ClaimRole, user.Role.ToString() ?? AppConstants.Security.DefaultRole)
         };
 
         SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
-
             Issuer = jwtSettings["Issuer"],
-
             Audience = jwtSettings["Audience"],
-
             SigningCredentials = credentials
         };
 
         JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
         SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
-        _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user?.Id);
-
         string generatedToken = tokenHandler.WriteToken(token);
         
-        if (generatedToken == null)
+        if (string.IsNullOrWhiteSpace(generatedToken))
         {
             throw new JwtOperationException();
         }
+
+        _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user.Id);
         return generatedToken;
     }
 }

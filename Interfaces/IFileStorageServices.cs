@@ -1,10 +1,8 @@
 namespace TraineeManagementApi.FileStorage.ServiceInterface;
-
 public interface IFileStorageService
 {
-    Task<string> uploadFileAsync(int submissionId,Stream fileStream, string originalFileName, string contentType);
-    Task<Stream> downloadFileAsync(int id);
-
-    Task deleteFileAsync(int id);
+    Task<string> SaveAsync(Stream fileStream, string originalFileName);
+    Task<Stream> OpenReadAsync(string storageFileName);
+    Task<bool> ExistsAsync(string storageFileName);
+    Task DeleteAsync(string storageFileName);
 }
-
