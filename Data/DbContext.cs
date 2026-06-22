@@ -100,12 +100,14 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Trainee>()
             .Property(t => t.Status)
-            .HasConversion<string>();
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         modelBuilder.Entity<User>(entity =>
         {
             entity.Property(u => u.Role)
-                .HasConversion<string>();
+                .HasConversion<string>()
+                .HasMaxLength(20);
 
             entity.HasIndex(u => u.Username)
                 .IsUnique();
@@ -113,11 +115,13 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Mentor>()
             .Property(m => m.Status)
-            .HasConversion<string>();
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         modelBuilder.Entity<LearningTask>()
             .Property(lt => lt.Status)
-            .HasConversion<string>();
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
         modelBuilder.Entity<TaskAssignment>(entity =>
         {
@@ -137,7 +141,8 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(ta => ta.Status)
-                .HasConversion<string>();
+                .HasConversion<string>()
+                .HasMaxLength(20);
         });
 
         modelBuilder.Entity<Submission>(entity =>
@@ -148,7 +153,8 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(s => s.Status)
-                .HasConversion<string>();
+                .HasConversion<string>()
+                .HasMaxLength(20);
         });
 
         modelBuilder.Entity<Review>(entity =>
@@ -164,7 +170,8 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(r => r.ReviewStatus)
-                .HasConversion<string>();
+                .HasConversion<string>()
+                .HasMaxLength(20);
         });
 
         modelBuilder.Entity<SubmissionFile>(entity =>

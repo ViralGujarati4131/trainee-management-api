@@ -45,25 +45,20 @@ public class SubmissionFilesController : ControllerBase
             return ResponseBuilder.CreateValidationErrorResponse();
         }
         
-        if (file == null)
+        if (file == null || file.Length == 0)
         {
             _logger.LogWarning("Upload attempt blocked: No files found in the multipart form-data payload request.");
             throw new BadRequestException("No files were attached to the upload request.");
         }
 
-        Submission? submission = await _context.Submissions.FindAsync(submissionId);
-        if (submission == null)
-        {
-            throw new BadRequestException("The referenced submission profile does not exist.");
-        }
-            
-        using Stream readStream = file.OpenReadStream();
-        string? storedName = await _fileStorageService.SaveAsync(submissionId,file);
-
-        if(storedName == null)
+        bool isDuplicates = await _fileStorageService.Exists(submissionId,file);
+        if(isDuplicates)
         {
             throw new BadRequestException("This file is already uploaded");
         }
+        
+        string storedName = await _fileStorageService.SaveAsync(submissionId,file);
+        
         SubmissionFileResponseDto submissionFile = await _submissionFileService.AddSubmissionFileMetaDataAsync(submissionId,file,storedName);
         
         return ResponseBuilder.CreateSuccessResponse(
@@ -73,21 +68,15 @@ public class SubmissionFilesController : ControllerBase
     }
 
     [HttpGet("{id}/download")] 
-    public async Task<IActionResult> DownloadFile(int id)
+    public async Task<ActionResult> DownloadFile(int id)
     {
         if (!ModelState.IsValid || id < 1)
         {
             return ResponseBuilder.CreateValidationErrorResponse();
         }
-
-        SubmissionFile? metadata = await _context.SubmissionFiles.FindAsync(id);
-        if (metadata == null)
-        {
-            throw new ExceptionFileNotFound();
-        }
-
-        Stream stream = await _fileStorageService.OpenReadAsync(metadata.StorageFileName);
-        return File(stream, metadata.ContentType, metadata.OriginalFileName);
+        var (fileStream, contentType, originalFileName) = await _fileStorageService.OpenAsync(id);
+        
+        return File(fileStream, contentType, originalFileName);
     }
 
     [HttpDelete("{id}")] 
@@ -98,17 +87,11 @@ public class SubmissionFilesController : ControllerBase
             return ResponseBuilder.CreateValidationErrorResponse();
         }
 
-        SubmissionFile? metadata = await _context.SubmissionFiles.FindAsync(id);
-        if (metadata == null)
+        bool isDeleted = await _fileStorageService.DeleteAsync(id);
+        if (!isDeleted)
         {
-            throw new ExceptionFileNotFound();
+            throw new BadRequestException("File could not be removed or found.");
         }
-
-        _context.SubmissionFiles.Remove(metadata);
-        await _context.SaveChangesAsync();
-
-        await _fileStorageService.DeleteAsync(metadata.StorageFileName);
-        
         return ResponseBuilder.CreateSuccessResponse(
             AppConstants.ApiResponse.NoContent
         );

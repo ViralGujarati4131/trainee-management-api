@@ -1,155 +1,163 @@
-using System.Security.Cryptography;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using TraineeManagementApi.FileStorage.Configurations;
-using TraineeManagementApi.FileStorage.ServiceInterface;
-using TraineeManagementApi.SubmissionFiles.Models;
-using TraineeManagementApi.Utils.CustomException;
+    using System.Security.Cryptography;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Options;
+    using TraineeManagementApi.FileStorage.Configurations;
+    using TraineeManagementApi.FileStorage.ServiceInterface;
+    using TraineeManagementApi.SubmissionFiles.Models;
+using TraineeManagementApi.Submissions.Models;
+    using TraineeManagementApi.Utils.CustomException;
 
-namespace TraineeManagementApi.FileStorage.Service;
+    namespace TraineeManagementApi.FileStorage.Service;
 
-public class FileStorageService : IFileStorageService
-{
-    private readonly string _rootPath;
-    
-    private readonly ILogger<FileStorageService> _logger;
-
-    private readonly FileStorageConfiguration _fileConfiguration;
-
-    private readonly AppDbContext _context;
-
-    public FileStorageService(IWebHostEnvironment env, ILogger<FileStorageService> logger, IOptions<FileStorageConfiguration> fileConfiguration,AppDbContext context)
+    public class FileStorageService : IFileStorageService
     {
-        _logger = logger;
-        _fileConfiguration = fileConfiguration.Value;
-        _context = context;
-
-        if (string.IsNullOrWhiteSpace(_fileConfiguration.RootPath))
-        {
-            throw new FileStorageConfigurationException();
-        }
+        private readonly string _rootPath;
         
-        string configuredPath = _fileConfiguration.RootPath; 
-        string basePath = env.ContentRootPath;
+        private readonly ILogger<FileStorageService> _logger;
 
-        _rootPath = Path.Combine(basePath, configuredPath);
+        private readonly FileStorageConfiguration _fileConfiguration;
 
-        if (!Directory.Exists(_rootPath))
+        private readonly AppDbContext _context;
+
+        public FileStorageService(IWebHostEnvironment env, ILogger<FileStorageService> logger, IOptions<FileStorageConfiguration> fileConfiguration,AppDbContext context)
         {
-            Directory.CreateDirectory(_rootPath);
-        }
-    }
+            _logger = logger;
+            _fileConfiguration = fileConfiguration.Value;
+            _context = context;
 
-    public async Task<string?> SaveAsync(int submissionId,IFormFile file)
-    {
-        string diskSafeFileName = string.Empty;
-
-        using SHA256 sha256 = SHA256.Create();
-        using Stream read = file.OpenReadStream();
-        byte[] hashBytes = await sha256.ComputeHashAsync(read);
-        string checksum = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();  
-        SubmissionFile? alreadySubmittedFile = await _context.SubmissionFiles
-            .AsNoTracking()
-            .Where(s => 
-                s.SubmissionId == submissionId &&
-                s.Checksum.Contains(checksum))               
-            .FirstOrDefaultAsync();
-        if(alreadySubmittedFile != null)
-        {
-            return null;
-        }
-
-        if (file == null || file.Length == 0)
-            throw new BadRequestException("Empty file uploads are not allowed.");
-
-        if (file.Length > _fileConfiguration.MaxFileSizeInBytes)
-            throw new BadRequestException($"File size exceeds the allowed {_fileConfiguration.MaxFileSizeInBytes / (1024 * 1024)} MB limit.");
-
-        string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-        if (!_fileConfiguration.AllowedExtensions.Contains(ext))
-        {
-            _logger.LogWarning("Unauthorized file extension block triggered for: {Extension}", ext);
-            throw new BadRequestException($"File type extension '{ext}' is not authorized.");
-        }
-
-        if (_fileConfiguration.MagicNumbers.TryGetValue(ext, out string? hexSignature) && !string.IsNullOrWhiteSpace(hexSignature))
-        {
-            byte[] expectedSignature = Convert.FromHexString(hexSignature);
-            byte[] actualHeader = new byte[expectedSignature.Length];
-
-            using (Stream stream = file.OpenReadStream())
+            if (string.IsNullOrWhiteSpace(_fileConfiguration.RootPath))
             {
-                await stream.ReadExactlyAsync(actualHeader, 0, expectedSignature.Length);
+                throw new FileStorageConfigurationException();
             }
+            
+            string configuredPath = _fileConfiguration.RootPath; 
+            string basePath = env.ContentRootPath;
 
-            if (!actualHeader.SequenceEqual(expectedSignature))
+            _rootPath = Path.Combine(basePath, configuredPath);
+
+            if (!Directory.Exists(_rootPath))
             {
-                _logger.LogWarning("Security: File contents for {FileName} do not match hex signature {Hex}!", file.FileName, hexSignature);
-                throw new BadRequestException("The file contents do not match its true file type extension signature safely.");
+                Directory.CreateDirectory(_rootPath);
             }
         }
 
-        using Stream fileStream = file.OpenReadStream();
-        string originalFileName = file.FileName;
-
-        string uniqueId = Guid.NewGuid().ToString("N");
-        string datePrefix = DateTime.UtcNow.ToString("yyyy/MM/dd");
-        
-        string storedFileName = $"{datePrefix}/{uniqueId}{ext}"; 
-
-        diskSafeFileName = storedFileName.Replace("/", "_");
-        
-        string filePath = Path.Combine(_rootPath, diskSafeFileName);
-        
-        try
+        public async Task<string> SaveAsync(int submissionId,IFormFile file)
         {
-            using FileStream output = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-            
-            if (fileStream.CanSeek)
+            Submission? submission = await _context.Submissions.FindAsync(submissionId);
+            if (submission == null)
             {
-                fileStream.Position = 0;
+                throw new BadRequestException("The referenced submission profile does not exist.");
             }
+
+            if (file == null || file.Length == 0)
+                throw new BadRequestException("Empty file uploads are not allowed.");
+
+            if (file.Length > _fileConfiguration.MaxFileSizeInBytes)
+                throw new BadRequestException($"File size exceeds the allowed {_fileConfiguration.MaxFileSizeInBytes / (1024 * 1024)} MB limit.");
+
+            string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!_fileConfiguration.AllowedExtensions.Contains(ext))
+            {
+                _logger.LogWarning("Unauthorized file extension block triggered for: {Extension}", ext);
+                throw new BadRequestException($"File type extension '{ext}' is not authorized.");
+            }
+
+            if (_fileConfiguration.MagicNumbers.TryGetValue(ext, out string? hexSignature) && !string.IsNullOrWhiteSpace(hexSignature))
+            {
+                byte[] expectedSignature = Convert.FromHexString(hexSignature);
+                byte[] actualHeader = new byte[expectedSignature.Length];
+
+                using (Stream stream = file.OpenReadStream())
+                {
+                    await stream.ReadExactlyAsync(actualHeader, 0, expectedSignature.Length);
+                }
+
+                if (!actualHeader.SequenceEqual(expectedSignature))
+                {
+                    _logger.LogWarning("Security: File contents for {FileName} do not match hex signature {Hex}!", file.FileName, hexSignature);
+                    throw new BadRequestException("The file contents do not match its true file type extension signature safely.");
+                }
+            }
+
+            string uniqueId = Guid.NewGuid().ToString("N");
+            string datePrefix = DateTime.UtcNow.ToString("yyyy/MM/dd");
+            string storedFileName = $"{datePrefix}/{uniqueId}{ext}"; 
+            string diskSafeFileName = storedFileName.Replace("/", "_");
+            string filePath = Path.Combine(_rootPath, diskSafeFileName);
             
-            await fileStream.CopyToAsync(output);
-            
-            return diskSafeFileName; 
+            try
+            {
+                using FileStream output = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                using Stream fileStream = file.OpenReadStream();
+                await fileStream.CopyToAsync(output);
+                
+                return diskSafeFileName; 
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Physical disk IO failure saving file {OriginalFileName}", file.FileName);
+                throw;
+            }
         }
-        catch (Exception ex)
+
+        public async Task<(Stream FileStream, string ContentType, string OriginalFileName)> OpenAsync(int id)
         {
-            _logger.LogError(ex, "Physical disk IO failure saving file {OriginalFileName}", originalFileName);
-            throw;
+            SubmissionFile? metadata = await _context.SubmissionFiles.FindAsync(id);
+            if (metadata == null)
+            {
+                throw new ExceptionFileNotFound();
+            }
+
+            string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
+            if (!File.Exists(filePath))
+            {
+                throw new ExceptionFileNotFound();
+            }
+
+            FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
+        
+            return (fileStream, metadata.ContentType, metadata.OriginalFileName);
         }
-    }
 
-    public Task<Stream> OpenReadAsync(string storageFileName)
-    {
-        string filePath = Path.Combine(_rootPath, storageFileName);
-
-        if (!File.Exists(filePath))
+        public async Task<bool> Exists(int submissionId, IFormFile file)
         {
-            throw new ExceptionFileNotFound();
+            using SHA256 sha256 = SHA256.Create();
+            using Stream read = file.OpenReadStream();
+            byte[] hashBytes = await sha256.ComputeHashAsync(read);
+            string checksum = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();  
+            bool isDuplicate = await _context.SubmissionFiles
+                .AsNoTracking()
+                .AnyAsync(s => 
+                    s.SubmissionId == submissionId &&
+                    s.Checksum == checksum);               
+            return isDuplicate;
         }
 
-        return Task.FromResult<Stream>(new FileStream(filePath, FileMode.Open, FileAccess.Read));
-    }
-
-    public Task<bool> ExistsAsync(string storageFileName)
-    {
-        string filePath = Path.Combine(_rootPath, storageFileName);
-        return Task.FromResult(File.Exists(filePath));
-    }
-
-    public Task DeleteAsync(string storageFileName)
-    {
-        string filePath = Path.Combine(_rootPath, storageFileName);
-
-        if (File.Exists(filePath))
+        public async Task<bool> DeleteAsync(int id)
         {
-            File.Delete(filePath);
-            _logger.LogInformation("Physical storage asset successfully deleted: {FileName}", storageFileName);
-        }
+            SubmissionFile? metadata = await _context.SubmissionFiles.FindAsync(id);
+            if (metadata == null)
+            {
+                throw new ExceptionFileNotFound();
+            }
+            string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
 
-        return Task.CompletedTask;
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    File.Delete(filePath);
+                    _logger.LogInformation("Physical storage file successfully deleted: {FileName}", metadata.StorageFileName);
+                }
+                catch (IOException ex)
+                {
+                    _logger.LogError(ex, "Failed to delete physical file {FileName} from disk storage.", metadata.StorageFileName);
+                    return false;
+                }
+            }
+             _context.SubmissionFiles.Remove(metadata);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
-}

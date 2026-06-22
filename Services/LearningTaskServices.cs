@@ -14,16 +14,11 @@ public class LearningTaskService : ILearningTaskService
 
     private readonly ILogger<LearningTaskService> _logger;
 
-    private readonly ICacheService _cacheService;
-
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
-
     
-    public LearningTaskService(AppDbContext context, ILogger<LearningTaskService> logger,ICacheService cacheService)
+    public LearningTaskService(AppDbContext context, ILogger<LearningTaskService> logger)
     {
         _logger = logger;
         _context = context;
-        _cacheService = cacheService;
     }
 
     public LearningTaskResposeDto MapToResponseDto(LearningTask learningTask)
@@ -53,15 +48,7 @@ public class LearningTaskService : ILearningTaskService
     {
         _logger.LogDebug("Fetching all learning-tasks from the database");
 
-        string cacheKey = "LearningTasks:All";
-        IEnumerable<LearningTaskResposeDto>? cached = await _cacheService.GetAsync<IEnumerable<LearningTaskResposeDto>>(cacheKey);
-        if (cached != null)
-        {
-            _logger.LogDebug("Returning learning-tasks from cache");
-            return cached;
-        }
-
-        IEnumerable<LearningTaskResposeDto>? learningTaskResposes = await _context.LearningTasks
+        return await _context.LearningTasks
             .AsNoTracking()
             .Select(Lt => new LearningTaskResposeDto(
                 Lt.Id,
@@ -71,23 +58,11 @@ public class LearningTaskService : ILearningTaskService
                 Lt.DueDate,
                 Lt.Status
             )).ToListAsync();
-
-        await _cacheService.SetAsync(cacheKey, learningTaskResposes, CacheTtl);
-
-        return learningTaskResposes;
     }
 
     public async Task<LearningTaskResposeDto> GetLearningTaskByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving learning-task profile with ID: {TaskId}", id);
-
-        string cacheKey = $"LearningTask:{id}";
-        LearningTaskResposeDto? cached = await _cacheService.GetAsync<LearningTaskResposeDto>(cacheKey);
-        if (cached != null)
-        {
-            _logger.LogDebug("Returning learning-tasks from cache");
-            return cached;
-        }
         
         LearningTaskResposeDto? dto = await _context.LearningTasks
             .AsNoTracking()
@@ -106,7 +81,6 @@ public class LearningTaskService : ILearningTaskService
             _logger.LogWarning("LearningTask with ID {TaskId} was not found during target DTO projection.", id);
             throw new NotFoundException("LearningTask");
         }
-        await _cacheService.SetAsync(cacheKey, dto, CacheTtl);
 
         return dto;
     }
@@ -126,8 +100,6 @@ public class LearningTaskService : ILearningTaskService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Successfully created new learning-task with ID {TaskId} and Title {Title}", learningTask.Id, learningTask.Title);
-        
-        await _cacheService.RemoveAsync("LearningTasks:All");
 
         return MapToResponseDto(learningTask);
     }
@@ -140,9 +112,6 @@ public class LearningTaskService : ILearningTaskService
         
         _context.LearningTasks.Remove(learningTask);
         await _context.SaveChangesAsync();
-
-        await _cacheService.RemoveAsync("LearningTasks:All");
-        await _cacheService.RemoveAsync($"LearningTask:{id}");
 
         _logger.LogInformation("Successfully deleted learning-task record with ID {TaskId}", id);
     }
@@ -161,9 +130,6 @@ public class LearningTaskService : ILearningTaskService
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Successfully updated learning-task ID {TaskId}", id);
-
-        await _cacheService.RemoveAsync("LearningTasks:All");
-        await _cacheService.RemoveAsync($"LearningTask:{id}");
 
         return MapToResponseDto(learningTask);
     }

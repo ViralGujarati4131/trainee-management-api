@@ -15,15 +15,10 @@ public class ReviewService : IReviewService
 
     private readonly ILogger<ReviewService> _logger;
 
-    private readonly ICacheService _cacheService;
-
-     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
-
-    public ReviewService(AppDbContext context, ILogger<ReviewService> logger, ICacheService cacheService)
+    public ReviewService(AppDbContext context, ILogger<ReviewService> logger)
     {
         _context = context;
         _logger = logger;
-        _cacheService = cacheService;
     }
 
     private ReviewResponseDto MapToResponseDto(Review review)
@@ -56,8 +51,6 @@ public class ReviewService : IReviewService
 
         _logger.LogInformation("Successfully created new review with ID {ReviewId}", review.Id);
 
-        await _cacheService.RemoveAsync("Reviews:All");
-
         return MapToResponseDto(review);
     }
 
@@ -65,15 +58,7 @@ public class ReviewService : IReviewService
     {
         _logger.LogDebug("Fetching all reviews from the database");
 
-        string cacheKey = "Reviews:All";
-        IEnumerable<ReviewResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<ReviewResponseDto>>(cacheKey);
-        if (cached != null)
-        {
-            _logger.LogDebug("Returning reviews from cache");
-            return cached;
-        }
-
-        IEnumerable<ReviewResponseDto> reviews = await _context.Reviews
+        return await _context.Reviews
             .AsNoTracking()
             .Select(r => new ReviewResponseDto(
                 r.Id,
@@ -84,23 +69,11 @@ public class ReviewService : IReviewService
                 r.ReviewStatus,
                 r.ReviewedDate
             )).ToListAsync();
-
-        await _cacheService.SetAsync(cacheKey, reviews, CacheTtl);
-
-        return reviews;
     }
 
     public async Task<ReviewResponseDto> GetReviewByIdAsync(int id)
     {
         _logger.LogDebug("Retrieving review with ID: {ReviewId}", id);
-        
-        string cacheKey = $"Review:{id}";
-        ReviewResponseDto? cached = await _cacheService.GetAsync<ReviewResponseDto>(cacheKey);
-        if (cached != null)
-        {
-            _logger.LogDebug("Returning review from cache");
-            return cached;
-        }
 
         ReviewResponseDto? dto = await _context.Reviews
             .AsNoTracking()
@@ -120,8 +93,7 @@ public class ReviewService : IReviewService
             _logger.LogWarning("Review with ID {ReviewId} was not found during target DTO projection.", id);
             throw new NotFoundException("Review");
         }
-        await _cacheService.SetAsync(cacheKey, dto, CacheTtl);
-        
+       
         return dto;
     }
 }

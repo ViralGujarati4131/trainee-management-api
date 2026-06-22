@@ -3,35 +3,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TraineeManagementApi.GlobalExceptionMiddleware;
-using TraineeManagementApi.LearningTasks.Service;
-using TraineeManagementApi.LearningTasks.ServiceInterface;
-using TraineeManagementApi.Mentors.Service;
-using TraineeManagementApi.Mentors.ServiceInterface;
-using TraineeManagementApi.Trainees.Service;
-using TraineeManagementApi.Trainees.ServiceInterface;
-using TraineeManagementApi.Users.Service;
-using TraineeManagementApi.Users.ServiceInterface;
-using TraineeManagementApi.Utils.JwtService;
 using TraineeManagementApi.Utils.UserSeeder;
-using TraineeManagementApi.TaskAssignments.ServiceInterface;
-using TraineeManagementApi.TaskAssignments.Service;
-using TraineeManagementApi.Submissions.ServiceInterface;
-using TraineeManagementApi.Submissions.Service;
-using TraineeManagementApi.Reviews.ServiceInterface;
-using TraineeManagementApi.Reviews.Service;
 // using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using TraineeManagementApi.FileStorage.ServiceInterface;
-using TraineeManagementApi.FileStorage.Service;
-using TraineeManagementApi.SubmissionFiles.ServiceInterface;
-using TraineeManagementApi.SubmissionFiles.Service;
 using TraineeManagementApi.FileStorage.Configurations;
 using TraineeManagementApi.Constants;
-using TraineeManagementApi.RedisCaching.ServiceInterface;
-using TraineeManagementApi.RedisCaching.Service;
 using StackExchange.Redis;
 using System.Data;
 using MySqlConnector;
+
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -57,10 +37,10 @@ builder.Services.AddControllers()
        options.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error; 
     });
 
+
 // db connection
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
@@ -128,23 +108,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 builder.Services.Configure<FileStorageConfiguration>(
     builder.Configuration.GetSection(AppConstants.ConfigSections.FileStorage)
 );
 
-// scoped services
-builder.Services.AddScoped<ITraineeService, TraineeService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IMentorServices, MentorService>();
-builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
-builder.Services.AddScoped<ITaskAssignmentService, TaskAssignmentService>();
-builder.Services.AddScoped<ISubmissionService, SubmissionService>();
-builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<IFileStorageService,FileStorageService>();
-builder.Services.AddScoped<ISubmissionFileService,SubmissionFileService>();
-builder.Services.AddScoped<ICacheService,CacheService>();
+// Add your infrastructure/application services cleanly
+builder.Services.AddApplicationServices();
 
 // react origin
 string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
