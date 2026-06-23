@@ -7,5 +7,9 @@
   },
   "Redis":{
     "ConnectionString": "<Redis_url:port>"
-  } 
+  },
+  "RabbitMQ": {
+    "Username": <RabbitMQ_username>,
+    "Password": <RabbitMQ_password>
+  }
 }

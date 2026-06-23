@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using TraineeManagementApi.RedisCaching.ServiceInterface;
 using TraineeManagementApi.Submissions.DTOs;
 using TraineeManagementApi.Submissions.Models;
 using TraineeManagementApi.Submissions.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
+using TraineeManagementApi.RedisCaching.ServiceInterface;
 
 namespace TraineeManagementApi.Submissions.Service;
 
@@ -13,11 +14,14 @@ public class SubmissionService : ISubmissionService
 
     private readonly AppDbContext _context; 
 
+    private readonly ICacheService _cacheService;
 
-    public SubmissionService(ILogger<SubmissionService> logger, AppDbContext context)
+
+    public SubmissionService(ILogger<SubmissionService> logger, AppDbContext context, ICacheService cacheService)
     {
         _logger = logger;
         _context = context;
+        _cacheService = cacheService;
     }
 
     private SubmissionResponseDto MapToResponseDto(Submission submission)
@@ -71,6 +75,10 @@ public class SubmissionService : ISubmissionService
     {
         _logger.LogDebug("Retrieving submission with ID: {SubmissionId}", id);
 
+        SubmissionResponseDto? cached = await _cacheService.GetAsync<SubmissionResponseDto>(AppConstants.CacheKeys.Submission(id));
+        if (cached is not null)
+            return cached;
+
         SubmissionResponseDto? dto = await _context.Submissions
             .AsNoTracking()
             .Where(s => s.Id == id)
@@ -89,6 +97,8 @@ public class SubmissionService : ISubmissionService
             throw new NotFoundException("Submission");
         }
         
+        await _cacheService.SetAsync(AppConstants.CacheKeys.Submission(id), dto, TimeSpan.FromMinutes(10));
+
         return dto;
     }
 }

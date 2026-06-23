@@ -3,6 +3,7 @@ using TraineeManagementApi.SubmissionFiles.ServiceInterface;
 using System.Security.Cryptography;
 using TraineeManagementApi.SubmissionFiles.Models;
 using TraineeManagementApi.Constants;
+using TraineeManagementApi.Messaging.Contracts;
 
 namespace TraineeManagementApi.SubmissionFiles.Service;
 
@@ -14,11 +15,46 @@ public class SubmissionFileService : ISubmissionFileService
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public SubmissionFileService(AppDbContext context, ILogger<SubmissionFileService> logger,IHttpContextAccessor httpContextAccessor)
+    private readonly RabbitMqService _rabbitMqService;
+
+    public SubmissionFileService(AppDbContext context, ILogger<SubmissionFileService> logger,IHttpContextAccessor httpContextAccessor,RabbitMqService rabbitMqService)
     {
         _context = context;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
+        _rabbitMqService = rabbitMqService;
+    }
+
+    public PublishResult RequestProcessing(int submissionId, int fileId)
+    {
+        SubmissionProcessingRequested message = new SubmissionProcessingRequested
+        {
+            MessageId = Guid.NewGuid(),
+            CorrelationId = Guid.NewGuid(),
+            SubmissionId = submissionId,
+            FileId = fileId,
+            RequestedAt = DateTimeOffset.UtcNow,
+            ContractVersion = "1.0"
+        };
+        try
+        {
+            _rabbitMqService.Publish(message);
+            return new PublishResult
+            {
+                MessageId = message.MessageId,
+                CorrelationId = message.CorrelationId,
+                Success = true
+            };
+        }
+        catch
+        {
+            return new PublishResult
+            {
+                MessageId = message.MessageId,
+                CorrelationId = message.CorrelationId,
+                Success = false
+            };
+        }
     }
 
     public async Task<SubmissionFileResponseDto> AddSubmissionFileMetaDataAsync(int submissionId,IFormFile file,string storedName)
@@ -54,6 +90,7 @@ public class SubmissionFileService : ISubmissionFileService
         await _context.SaveChangesAsync();
 
         return new SubmissionFileResponseDto(
+                submissionFile.Id,
                 submissionFile.SubmissionId,
                 submissionFile.OriginalFileName,
                 submissionFile.ContentType,

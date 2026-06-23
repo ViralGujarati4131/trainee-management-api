@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagementApi.RedisCaching.ServiceInterface;
@@ -6,6 +5,7 @@ using TraineeManagementApi.Reviews.DTOs;
 using TraineeManagementApi.Reviews.Models;
 using TraineeManagementApi.Reviews.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Reviews.Service;
 
@@ -15,10 +15,13 @@ public class ReviewService : IReviewService
 
     private readonly ILogger<ReviewService> _logger;
 
-    public ReviewService(AppDbContext context, ILogger<ReviewService> logger)
+    private readonly ICacheService _cacheService;
+
+    public ReviewService(AppDbContext context, ILogger<ReviewService> logger,ICacheService cacheService)
     {
         _context = context;
         _logger = logger;
+        _cacheService = cacheService;
     }
 
     private ReviewResponseDto MapToResponseDto(Review review)
@@ -51,6 +54,8 @@ public class ReviewService : IReviewService
 
         _logger.LogInformation("Successfully created new review with ID {ReviewId}", review.Id);
 
+        await _cacheService.RemoveManyAsync(AppConstants.CacheKeys.AllReview());
+
         return MapToResponseDto(review);
     }
 
@@ -58,7 +63,11 @@ public class ReviewService : IReviewService
     {
         _logger.LogDebug("Fetching all reviews from the database");
 
-        return await _context.Reviews
+        IEnumerable<ReviewResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<ReviewResponseDto>>(AppConstants.CacheKeys.AllReview());
+        if (cached is not null)
+            return cached;
+
+        IEnumerable<ReviewResponseDto> reviews = await _context.Reviews
             .AsNoTracking()
             .Select(r => new ReviewResponseDto(
                 r.Id,
@@ -69,6 +78,10 @@ public class ReviewService : IReviewService
                 r.ReviewStatus,
                 r.ReviewedDate
             )).ToListAsync();
+        
+        await _cacheService.SetAsync(AppConstants.CacheKeys.AllReview(), reviews, TimeSpan.FromMinutes(10));
+
+        return reviews;
     }
 
     public async Task<ReviewResponseDto> GetReviewByIdAsync(int id)

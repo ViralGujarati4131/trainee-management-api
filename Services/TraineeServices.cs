@@ -41,16 +41,10 @@ public class TraineeService : ITraineeService
     {
         _logger.LogDebug("Fetching all trainees from the database");
 
-        IEnumerable<TraineeResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<TraineeResponseDto>>(AppConstants.CacheKeys.AllTrainees());
-        if (cached is not null)
-            return cached;
-
         List<TraineeResponseDto> trainees = await _context.Trainees
             .AsNoTracking()
             .Select(t => new TraineeResponseDto(t.Id, t.FirstName, t.LastName))
             .ToListAsync();
-
-        await _cacheService.SetAsync(AppConstants.CacheKeys.AllTrainees(), trainees, TimeSpan.FromMinutes(5));
 
         return trainees;
     }
@@ -93,10 +87,7 @@ public class TraineeService : ITraineeService
 
         _context.Trainees.Add(trainee);
         await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Successfully created new trainee with ID {TraineeId}", trainee.Id);
-
-        await _cacheService.RemoveManyAsync(AppConstants.CacheKeys.AllTrainees());
+        _logger.LogInformation("Successfully created new trainee with ID {TraineeId}", trainee.Id);    
 
         return MapToResponseDto(trainee);
     }
@@ -111,15 +102,16 @@ public class TraineeService : ITraineeService
         trainee.Email = updateTraineeDto.Email;
         trainee.TechStack = updateTraineeDto.TechStack;
         trainee.Status = updateTraineeDto.Status;
-
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully updated trainee profile for ID {TraineeId}", id);
-
-        await _cacheService.RemoveManyAsync(
-            AppConstants.CacheKeys.Trainee(id),
-            AppConstants.CacheKeys.AllTrainees()
-        );
-
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Successfully updated trainee profile for ID {TraineeId}", id);
+        }
+        finally
+        {
+            await _cacheService.RemoveAsync(AppConstants.CacheKeys.Trainee(id));
+        }
         return MapToResponseDto(trainee);
     }
 
@@ -128,14 +120,17 @@ public class TraineeService : ITraineeService
         _logger.LogDebug("Finding trainee with ID {TraineeId} for physical deletion", id);
         Trainee trainee = await FetchTraineeByIdInternalAsync(id);
 
-        _context.Trainees.Remove(trainee);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully deleted trainee record with ID {TraineeId}", id);
+        try
+        {    
+            _context.Trainees.Remove(trainee);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Successfully deleted trainee record with ID {TraineeId}", id);
+        }
+        finally
+        {
+            await _cacheService.RemoveAsync(AppConstants.CacheKeys.Trainee(id));
+        }
 
-        await _cacheService.RemoveManyAsync(
-            AppConstants.CacheKeys.Trainee(id),
-            AppConstants.CacheKeys.AllTrainees()
-        );
     }
 
     public async Task<IEnumerable<TraineeResponseDto>> SearchTraineesAsync(string searchTerm)

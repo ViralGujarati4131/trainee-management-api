@@ -108,10 +108,16 @@ public static class AppConstants
     }
     public static class CacheKeys
     {
-        public static string Trainee(int id)           => $"trainee:{id}";
-        public static string AllTrainees()             => "trainee:all";
-        public static string TaskAssignment(int id)    => $"task-assignment:{id}";
-        public static string AllTaskAssignments()      => "task-assignment:all";
-        public static string SubmissionSummary(int id) => $"submission-summary:{id}";
+        public static string Trainee(int id) => $"trainee:{id}";
+
+        public static string TaskAssignment(int id) => $"task-assignment:{id}";
+
+        public static string Submission(int id) => $"submission:{id}";
+
+        public static string AllLearningTask() => $"learnig-task:All";
+
+        public static string AllMentor() => $"mentor:All";
+
+        public static string AllReview() => $"review:All";
     }
 }

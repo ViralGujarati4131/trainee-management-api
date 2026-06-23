@@ -1,10 +1,10 @@
-using System.Collections;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagementApi.Mentors.DTOs;
 using TraineeManagementApi.Mentors.Models;
 using TraineeManagementApi.Mentors.ServiceInterface;
 using TraineeManagementApi.RedisCaching.ServiceInterface;
 using TraineeManagementApi.Utils.CustomException;
+using TraineeManagementApi.Constants;
 
 namespace TraineeManagementApi.Mentors.Service;
 
@@ -13,11 +13,14 @@ public class MentorService : IMentorServices
     private readonly AppDbContext _context;
 
     private readonly ILogger<MentorService> _logger;
+
+    private readonly ICacheService _cacheService;
     
-    public MentorService(AppDbContext context, ILogger<MentorService> logger)
+    public MentorService(AppDbContext context, ILogger<MentorService> logger,ICacheService cacheService)
     {
         _context = context;
         _logger = logger;
+        _cacheService = cacheService;
     }
 
     public MentorResponseDto MapToResponseDto(Mentor mentor)
@@ -39,11 +42,19 @@ public class MentorService : IMentorServices
     public async Task<IEnumerable<MentorResponseDto>> GetMentorsAsync()
     {
         _logger.LogDebug("Fetching all mentors from the database");
+
+        IEnumerable<MentorResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<MentorResponseDto>>(AppConstants.CacheKeys.AllMentor());
+        if (cached is not null)
+            return cached;
         
-        return await _context.Mentors
+        IEnumerable<MentorResponseDto> mentors = await _context.Mentors
             .AsNoTracking()
             .Select(m => new MentorResponseDto(m.Id, m.FirstName, m.LastName))
             .ToListAsync();
+
+        await _cacheService.SetAsync(AppConstants.CacheKeys.AllMentor(), mentors, TimeSpan.FromMinutes(10));
+
+        return mentors;
     }
 
     public async Task<MentorResponseDto> GetMentorByIdAsync(int id)
@@ -81,6 +92,8 @@ public class MentorService : IMentorServices
 
         _logger.LogInformation("Successfully created new mentor with ID {MentorId} and FirstName {FirstName}", mentor.Id, mentor.FirstName);
         
+        await _cacheService.RemoveManyAsync(AppConstants.CacheKeys.AllMentor());
+
         return MapToResponseDto(mentor);
     }
 
@@ -94,6 +107,8 @@ public class MentorService : IMentorServices
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Successfully deleted mentor record with ID {MentorId}", id);
+
+        await _cacheService.RemoveManyAsync(AppConstants.CacheKeys.AllMentor());
     }
 
     public async Task<MentorResponseDto> UpdateMentorByIdAsync(int id, MentorUpdateDto updateMentor)
@@ -110,6 +125,8 @@ public class MentorService : IMentorServices
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Successfully updated mentor profile for ID {MentorId}", id);
+
+        await _cacheService.RemoveManyAsync(AppConstants.CacheKeys.AllMentor());
         
         return MapToResponseDto(mentor);
     }

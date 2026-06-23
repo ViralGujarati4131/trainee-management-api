@@ -63,10 +63,7 @@ public class TaskAssignmentService : ITaskAssignmentService
 
         _context.TaskAssignments.Add(taskAssignment);
         await _context.SaveChangesAsync();
-
         _logger.LogInformation("Successfully created new taskAssignment with ID {AssignmentId}", taskAssignment.Id);
-
-        await _cacheService.RemoveManyAsync(AppConstants.CacheKeys.AllTaskAssignments());
 
         return MapToResponseDto(taskAssignment);
     }
@@ -74,10 +71,6 @@ public class TaskAssignmentService : ITaskAssignmentService
     public async Task<IEnumerable<TaskAssignmentResponseDto>> GetTaskAssignmentsAsync()
     {
         _logger.LogDebug("Fetching all taskAssignments from the database");
-
-        IEnumerable<TaskAssignmentResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<TaskAssignmentResponseDto>>(AppConstants.CacheKeys.AllTaskAssignments());
-        if (cached is not null)
-            return cached;
 
         List<TaskAssignmentResponseDto> taskAssignmentResponses = await _context.TaskAssignments
             .AsNoTracking()
@@ -91,8 +84,6 @@ public class TaskAssignmentService : ITaskAssignmentService
                 ta.Status,
                 ta.Remarks
             )).ToListAsync();
-
-        await _cacheService.SetAsync(AppConstants.CacheKeys.AllTaskAssignments(), taskAssignmentResponses, CacheTtl);
 
         return taskAssignmentResponses;
     }
@@ -137,14 +128,16 @@ public class TaskAssignmentService : ITaskAssignmentService
         TaskAssignment taskAssignment = await FetchTaskAssignmentByIdInternalAsync(id);
 
         taskAssignment.Status = updateTaskAssignmentDto.Status;
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Successfully updated taskAssignment for ID {AssignmentId}", id);
-
-        await _cacheService.RemoveManyAsync(
-            AppConstants.CacheKeys.TaskAssignment(id),
-            AppConstants.CacheKeys.AllTaskAssignments()
-        );
+        
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Successfully updated taskAssignment for ID {AssignmentId}", id);
+        }
+        finally
+        {
+            await _cacheService.RemoveAsync(AppConstants.CacheKeys.TaskAssignment(id));
+        }
 
         return MapToResponseDto(taskAssignment);
     }

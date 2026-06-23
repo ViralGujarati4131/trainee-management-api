@@ -10,6 +10,7 @@ using TraineeManagementApi.SubmissionFiles.DTOs;
 using TraineeManagementApi.SubmissionFiles.ServiceInterface;
 using TraineeManagementApi.FileStorage.Configurations;
 using Microsoft.Extensions.Options;
+using TraineeManagementApi.Messaging.Contracts;
 
 namespace TraineeManagementApi.SubmissionFiles.Controller;
 
@@ -24,17 +25,14 @@ public class SubmissionFilesController : ControllerBase
 
     private readonly IFileStorageService _fileStorageService;
 
-    private readonly FileStorageConfiguration _fileConfiguration;
-
     private readonly AppDbContext _context;
 
-    public SubmissionFilesController(ILogger<SubmissionFilesController> logger, IFileStorageService fileStorageService, AppDbContext context, ISubmissionFileService submissionFileService, IOptions<FileStorageConfiguration> fileConfiguration)
+    public SubmissionFilesController(ILogger<SubmissionFilesController> logger, IFileStorageService fileStorageService, AppDbContext context, ISubmissionFileService submissionFileService)
     {
         _logger = logger;
         _fileStorageService = fileStorageService;
         _context = context;
         _submissionFileService = submissionFileService;
-        _fileConfiguration = fileConfiguration.Value;
     }
 
     [HttpPost("{submissionId}/files")]
@@ -60,11 +58,38 @@ public class SubmissionFilesController : ControllerBase
         string storedName = await _fileStorageService.SaveAsync(submissionId,file);
         
         SubmissionFileResponseDto submissionFile = await _submissionFileService.AddSubmissionFileMetaDataAsync(submissionId,file,storedName);
-        
-        return ResponseBuilder.CreateSuccessResponse(
-            AppConstants.ApiResponse.Created,
-            submissionFile
-        );        
+
+        try
+        {
+            PublishResult publishResult = _submissionFileService.RequestProcessing(submissionId,submissionFile.Id);
+
+            _logger.LogInformation(
+                "Published SubmissionProcessingRequested: MessageId={MessageId}, CorrelationId={CorrelationId}, SubmissionId={SubmissionId}, Result={Result}",
+                publishResult.MessageId,
+                publishResult.CorrelationId,
+                submissionId,
+                publishResult.Success ? "Success" : "Failed"
+            );
+
+            if (!publishResult.Success)
+                return StatusCode(503, "Submission saved but could not be queued for processing.");
+
+            return Accepted(new
+            {
+                submission = submissionId,
+                message = "Submission accepted for asynchronous processing."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish submission {SubmissionId} to RabbitMQ", submissionId);
+            return StatusCode(503, "Submission saved but could not be queued for processing.");
+        }
+
+        // return ResponseBuilder.CreateSuccessResponse(
+        //     AppConstants.ApiResponse.Created,
+        //     submissionFile
+        // );        
     }
 
     [HttpGet("{id}/download")] 
