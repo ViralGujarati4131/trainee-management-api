@@ -105,12 +105,10 @@ git clone https://github.com/ViralGujarati4131/TraineeManagement.Api
 cd TraineeManagement.Api
 ```
 
-### 2. Restore NuGet Packages Clean Project And Build It
+### 2. Restore NuGet Packages Clean Project And Build It In Main Root Folder
 
 ```bash
-dotnet restore
-dotnet clean
-dotnet build
+dotnet build TraineeManagement.sln
 ```
 
 ---
@@ -129,27 +127,18 @@ CREATE DATABASE trainee_management_db;
 
 ## Configure `appsettings.Development.json`
 
-Refer `appsettings.Development.template.json` and add accordingly your react cors, connection string, File configuration and jwt credential in `appsettings.Development.json`
+Refer `appsettings.Development.template.json` in `TraineManagement.Api` WebApi & `TraineManagement.Api.Worker` Worker and add accordingly your db connection string, JWT key, define redis port and add credential for rabbbitMQ Accordingly to WebApi & Worker `appsettings.Development.json`
 
 
 ## Configure `docker-compose.yml`
 
 Refer `docker-compose.template.yml` and add the image of the redis, mysql and define port for mysql on your end and set database name also add your password credential in  `docker-compose.yml`
 
-
-**Linux :** 
-```bash
-export ASPNETCORE_ENVIRONMENT=Development 
-```
-
-**Windows :** 
-```bash
-set ASPNETCORE_ENVIRONMENT=Development
-```
-
 ---
 
 ## EF Core Migration Commands
+
+In TraineeManagement.Api.Data
 
 ```bash
 dotnet ef database update
@@ -161,12 +150,6 @@ dotnet ef database update
 
 ```bash
 dotnet run
-```
-
-Swagger UI is available at:
-
-```
-https://localhost:<port>/swagger
 ```
 
 ---
