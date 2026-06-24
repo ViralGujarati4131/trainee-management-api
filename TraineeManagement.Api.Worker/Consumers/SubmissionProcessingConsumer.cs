@@ -8,6 +8,11 @@ using TraineeManagement.Api.Data.AppDbContext;
 using TraineeManagement.Api.Data.TaskAssignmentModel;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
 using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheKey;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TraineeManagement.Api.Worker.SubmissionProcessingConsumer;
 
@@ -16,21 +21,37 @@ public class SubmissionProcessingConsumer : BackgroundService
     private readonly ILogger<SubmissionProcessingConsumer> _logger;
     private readonly RabbitConnection _connection;  
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ICacheService _cacheService;
 
-    public SubmissionProcessingConsumer(ILogger<SubmissionProcessingConsumer> logger, RabbitConnection connection,IServiceScopeFactory scopeFactory)
+    public SubmissionProcessingConsumer(
+        ILogger<SubmissionProcessingConsumer> logger, 
+        RabbitConnection connection,
+        IServiceScopeFactory scopeFactory,
+        ICacheService cacheService)
     {
         _logger = logger;
         _connection = connection;
         _scopeFactory = scopeFactory;
+        _cacheService = cacheService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await _connection.RegisterQueueAsync(AppConstants.RabbitMQ.SubmissionProcessing);
+
         if (_connection.Channel is null)
         {
-            _logger.LogError("RabbitMQ channel is not initialized.");
-        return;
+            _logger.LogError("RabbitMQ channel failed to initialize for queue: {Queue}", AppConstants.RabbitMQ.SubmissionProcessing);
+            return;
         }
+
+        await _connection.Channel.BasicQosAsync(
+            prefetchSize: 0, 
+            prefetchCount: 1, 
+            global: false, 
+            cancellationToken: stoppingToken
+        );
+
         var consumer = new AsyncEventingBasicConsumer(_connection.Channel);
 
         consumer.ReceivedAsync += async (model, ea) =>
@@ -74,6 +95,8 @@ public class SubmissionProcessingConsumer : BackgroundService
                             assignment.Status = TaskAssignmentStatus.Submitted; 
 
                             await dbContext.SaveChangesAsync(stoppingToken);
+
+                            await _cacheService.RemoveAsync(CacheKey.TaskAssignment(assignmentId));
                             
                             _logger.LogInformation("Successfully updated TaskAssignmentId={AssignmentId} Status to 2", assignmentId);
                         }
@@ -86,11 +109,11 @@ public class SubmissionProcessingConsumer : BackgroundService
 
                 await _connection.Channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
 
-                _logger.LogInformation("Successfully processed SubmissionId={SubmissionId}", message.SubmissionId);
+                _logger.LogInformation("Successfully processed and Acknowledged SubmissionId={SubmissionId}", message.SubmissionId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to process message: {Json}", json);
+                _logger.LogError(ex, "Failed to process message. Negative acknowledgment triggered: {Json}", json);
 
                 await _connection.Channel.BasicNackAsync(deliveryTag: ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: stoppingToken);
             }
@@ -98,7 +121,7 @@ public class SubmissionProcessingConsumer : BackgroundService
 
         await _connection.Channel.BasicConsumeAsync(
             queue: AppConstants.RabbitMQ.SubmissionProcessing,
-            autoAck: false,
+            autoAck: false, 
             consumer: consumer,
             cancellationToken: stoppingToken
         );

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
 using RabbitMQ.Client;
+using TraineeManagement.Api.Data.Constants;
 
 namespace TraineeManagement.Api.Messaging.RabbitMQPublisher;
 
@@ -35,7 +36,7 @@ public class RabbitMqService
 
         await _connection.Channel.BasicPublishAsync(
             exchange: "",
-            routingKey: "submission-processing",
+            routingKey: AppConstants.RabbitMQ.SubmissionProcessing,
             mandatory: false,
             basicProperties: properties,
             body: body

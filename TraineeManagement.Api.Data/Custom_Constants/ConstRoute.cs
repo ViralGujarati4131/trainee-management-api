@@ -12,5 +12,6 @@ public static class CustomConstRoute
     public const string SubmissionFiles = "api/submission-files";
     public const string Auth = "api/auth";
     public const string PaginationSearch = "paginationSearch";
+    public const string ProcessingJob = "api/processing-jobs";
     public const string Login = "login";
 }

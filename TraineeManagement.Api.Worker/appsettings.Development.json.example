@@ -5,6 +5,9 @@
   "RabbitMQ": {
     "Username": "<rabbitMQ_Username>",
     "Password": "<rabbitMQ_Password>"
+  },
+  "Redis":{
+    "ConnectionString": "127.0.0.1:<redis_port>"
   }
 }
 

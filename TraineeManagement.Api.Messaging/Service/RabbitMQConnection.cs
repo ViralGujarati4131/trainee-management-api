@@ -34,16 +34,20 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
         {
             _connection = await _factory.CreateConnectionAsync();
             _channel = await _connection.CreateChannelAsync();
+            _logger.LogInformation("RabbitMQ base connection and channel successfully established.");
+        }
 
-            await _channel.QueueDeclareAsync(
-                queue: _settings.QueueName,
-                durable: true,
+        public async Task RegisterQueueAsync(string queueName)
+        {
+            if (_channel is null) throw new InvalidOperationException("Channel is not initialized.");
+
+            await _channel.QueueDeclareAsync(   
+                queue: queueName,
+                durable: true,       
                 exclusive: false,
                 autoDelete: false,
                 arguments: null
             );
-
-            _logger.LogInformation("RabbitMQ async connection established to {Host}:{Port}", _settings.Host, _settings.Port);
         }
 
         public async ValueTask DisposeAsync()

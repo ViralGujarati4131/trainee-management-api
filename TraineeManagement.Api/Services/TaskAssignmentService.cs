@@ -137,7 +137,7 @@ public class TaskAssignmentService : ITaskAssignmentService
         }
         finally
         {
-            await _cacheService.RemoveAsync(CacheKey.TaskAssignment(id));
+            // await _cacheService.RemoveAsync(CacheKey.TaskAssignment(id));
         }
 
         return MapToResponseDto(taskAssignment);

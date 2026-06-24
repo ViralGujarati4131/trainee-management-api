@@ -8,6 +8,7 @@ using TraineeManagement.Api.Data.TaskAssignmentModel;
 using TraineeManagement.Api.Data.SubmissionModel;
 using TraineeManagement.Api.Data.ReviewModel;
 using TraineeManagement.Api.Data.SubmissionFileModel;
+using TraineeManagement.Api.Data.ProcessingJobModel;
 
 namespace TraineeManagement.Api.Data.AppDbContext;
 
@@ -58,6 +59,12 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<SubmissionFile> SubmissionFiles 
+    { 
+        get; 
+        set; 
+    }
+
+    public DbSet<ProcessingJob> ProcessingJobs 
     { 
         get; 
         set; 
