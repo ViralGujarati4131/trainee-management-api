@@ -1,0 +1,22 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "server=127.0.0.1;port=<docker_mysql_port>;database=trainee_management_db;user=root;password=<docker_mysql_password>;"
+  },
+  "JWT": {
+    "Key": "YOUR_JWT_KEY"
+  },
+  "Redis": {
+    "ConnectionString": "localhost:<docker_redis_port>"
+  },
+  "RabbitMQ": {
+    "Username": "<RabbitMQ_Username>",
+    "Password": "<RabbitMQ_Password>"
+  }
+}
+

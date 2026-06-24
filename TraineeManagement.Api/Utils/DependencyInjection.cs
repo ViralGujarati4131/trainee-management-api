@@ -1,28 +1,27 @@
 using Microsoft.Extensions.DependencyInjection;
-using TraineeManagementApi.LearningTasks.Service;
-using TraineeManagementApi.LearningTasks.ServiceInterface;
-using TraineeManagementApi.Mentors.Service;
-using TraineeManagementApi.Mentors.ServiceInterface;
-using TraineeManagementApi.Trainees.Service;
-using TraineeManagementApi.Trainees.ServiceInterface;
-using TraineeManagementApi.Users.Service;
-using TraineeManagementApi.Users.ServiceInterface;
-using TraineeManagementApi.TaskAssignments.ServiceInterface;
-using TraineeManagementApi.TaskAssignments.Service;
-using TraineeManagementApi.Submissions.ServiceInterface;
-using TraineeManagementApi.Submissions.Service;
-using TraineeManagementApi.Reviews.ServiceInterface;
-using TraineeManagementApi.Reviews.Service;
-using TraineeManagementApi.FileStorage.ServiceInterface;
-using TraineeManagementApi.FileStorage.Service;
-using TraineeManagementApi.SubmissionFiles.ServiceInterface;
-using TraineeManagementApi.SubmissionFiles.Service;
-using TraineeManagementApi.RedisCaching.ServiceInterface;
-using TraineeManagementApi.RedisCaching.Service;
-using TraineeManagementApi.Utils.JwtService;
+using TraineeManagement.Api.LearningTaskService;
+using TraineeManagement.Api.LearningTaskServiceInterface;
+using TraineeManagement.Api.MentorService;
+using TraineeManagement.Api.MentorServiceInterface;
+using TraineeManagement.Api.TraineeService;
+using TraineeManagement.Api.TraineeServiceInterface;
+using TraineeManagement.Api.UserService;
+using TraineeManagement.Api.UserServiceInterface;
+using TraineeManagement.Api.TaskAssignmentServiceInterface;
+using TraineeManagement.Api.TaskAssignmentService;
+using TraineeManagement.Api.SubmissionServiceInterface;
+using TraineeManagement.Api.SubmissionService;
+using TraineeManagement.Api.ReviewServiceInterface;
+using TraineeManagement.Api.ReviewService;
+using TraineeManagement.Api.FileStorageServiceInterface;
+using TraineeManagement.Api.FileStorageService;
+using TraineeManagement.Api.SubmissionFileServiceInterface;
+using TraineeManagement.Api.SubmissionFileService;
+using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.CacheService;
+using TraineeManagement.Api.JwtService;
 
 namespace Microsoft.Extensions.DependencyInjection; 
-
 
 public static class DependencyInjection
 {

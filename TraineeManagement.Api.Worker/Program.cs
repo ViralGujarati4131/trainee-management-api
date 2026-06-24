@@ -1,9 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.Contract.Settings;
-using TraineeManagement.Api.Worker.Consumers;   
-using TraineeManagement.Api.Data; 
+using TraineeManagement.Api.Messaging.RabbitMqConnectionSettings;
+using TraineeManagement.Api.Worker.SubmissionProcessingConsumer;   
+using TraineeManagement.Api.Data.AppDbContext;
+using TraineeManagement.Api.Messaging.RabbitMqConnection;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -14,9 +13,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
 
-builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
+builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
 
+builder.Services.AddSingleton<RabbitConnection>();
 builder.Services.AddHostedService<SubmissionProcessingConsumer>();
 
 var host = builder.Build();
+
+using (var scope = host.Services.CreateScope())
+{
+    var conn = scope.ServiceProvider.GetRequiredService<RabbitConnection>();
+    await conn.InitializeAsync();
+}
+
 await host.RunAsync();

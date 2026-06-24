@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.Models.TimestampInterface;
-using TraineeManagementApi.TaskAssignments.Models;
-using TraineeManagementApi.Reviews.Models;
+using TraineeManagement.Api.Data.ModelTimestampInterface;
+using TraineeManagement.Api.Data.TaskAssignmentModel;
+using TraineeManagement.Api.Data.ReviewModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Mentors.Models;
+namespace TraineeManagement.Api.Data.MentorModel;
 
 public class Mentor : ICreateTimestamp,IUpdateTimestamp
 {

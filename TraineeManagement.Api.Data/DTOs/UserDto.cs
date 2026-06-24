@@ -1,7 +1,7 @@
-using TraineeManagementApi.Users.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.UserModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Users.DTOs;
+namespace TraineeManagement.Api.Data.UserDTO;
 
 public record UserResponseDto
 (

@@ -1,7 +1,7 @@
-using TraineeManagementApi.TaskAssignments.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.TaskAssignmentModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.TaskAssignments.DTOs;
+namespace TraineeManagement.Api.Data.TaskAssignmentDTO;
 
 public record TaskAssignmentCreateDto
 (

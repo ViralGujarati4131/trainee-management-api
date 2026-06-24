@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.Trainees.Models;
-using TraineeManagementApi.Mentors.Models;
-using TraineeManagementApi.LearningTasks.Models;
-using TraineeManagementApi.Submissions.Models;
+using TraineeManagement.Api.Data.TraineeModel;
+using TraineeManagement.Api.Data.MentorModel;
+using TraineeManagement.Api.Data.LearningTaskModel;
+using TraineeManagement.Api.Data.SubmissionModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.TaskAssignments.Models;
+namespace TraineeManagement.Api.Data.TaskAssignmentModel;
 
 public class TaskAssignment
 {

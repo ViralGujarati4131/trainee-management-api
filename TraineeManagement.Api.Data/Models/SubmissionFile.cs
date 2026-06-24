@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagementApi.Models.TimestampInterface;
-using TraineeManagementApi.Submissions.Models;
+using TraineeManagement.Api.Data.ModelTimestampInterface;
+using TraineeManagement.Api.Data.SubmissionModel;
 
-namespace TraineeManagementApi.SubmissionFiles.Models;
+namespace TraineeManagement.Api.Data.SubmissionFileModel;
 
     public class SubmissionFile : ICreateTimestamp
     {

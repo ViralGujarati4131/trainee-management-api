@@ -1,4 +1,4 @@
-namespace TraineeManagementApi.SubmissionFiles.DTOs;
+namespace TraineeManagement.Api.Data.SubmissionFileDTO;
 
 public record SubmissionFileResponseDto 
 (

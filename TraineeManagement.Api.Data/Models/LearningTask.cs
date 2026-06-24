@@ -1,10 +1,10 @@
-using TraineeManagementApi.Models.TimestampInterface;
+using TraineeManagement.Api.Data.ModelTimestampInterface;
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.TaskAssignments.Models;
+using TraineeManagement.Api.Data.TaskAssignmentModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.LearningTasks.Models;
+namespace TraineeManagement.Api.Data.LearningTaskModel;
 
 public class LearningTask : ICreateTimestamp,IUpdateTimestamp
 {

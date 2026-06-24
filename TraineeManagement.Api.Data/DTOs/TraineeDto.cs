@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.Trainees.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.TraineeModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Trainees.DTOs;
+namespace TraineeManagement.Api.Data.TraineeDTO;
 
 public record TraineeUpdateDto
 (

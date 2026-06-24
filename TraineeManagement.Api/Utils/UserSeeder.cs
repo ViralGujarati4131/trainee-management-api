@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagementApi.LearningTasks.Models;
-using TraineeManagementApi.Mentors.Models;
-using TraineeManagementApi.Trainees.Models;
-using TraineeManagementApi.Users.Models;
-using TraineeManagementApi.Constants;
-using TraineeManagementApi.Utils.CustomException;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Api.Data.LearningTaskModel;
+using TraineeManagement.Api.Data.MentorModel;
+using TraineeManagement.Api.Data.TraineeModel;
+using TraineeManagement.Api.Data.UserModel;
+using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.Data.CustomException;
+using TraineeManagement.Api.Data.AppDbContext;
 
-namespace TraineeManagementApi.Utils.UserSeeder;
+namespace TraineeManagement.Api.UserSeeder;
 
 public class UserSeeder
 {

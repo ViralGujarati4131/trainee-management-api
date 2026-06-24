@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagementApi.Models.TimestampInterface;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.ModelTimestampInterface;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Users.Models;
+namespace TraineeManagement.Api.Data.UserModel;
 
 public class User : ICreateTimestamp,IUpdateTimestamp
 {

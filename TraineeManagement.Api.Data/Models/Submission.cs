@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.TaskAssignments.Models;
-using TraineeManagementApi.Reviews.Models;
+using TraineeManagement.Api.Data.TaskAssignmentModel;
+using TraineeManagement.Api.Data.ReviewModel;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagementApi.Utils.CustomValidation;
-using TraineeManagementApi.SubmissionFiles.Models;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
+using TraineeManagement.Api.Data.SubmissionFileModel;
 
-namespace TraineeManagementApi.Submissions.Models;
+namespace TraineeManagement.Api.Data.SubmissionModel;
 
 public class Submission
 {

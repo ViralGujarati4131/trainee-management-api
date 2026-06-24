@@ -2,11 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using TraineeManagementApi.Utils.CustomException;
-using TraineeManagementApi.Users.Models;
-using TraineeManagementApi.Constants;
+using TraineeManagement.Api.Data.CustomException;
+using TraineeManagement.Api.Data.UserModel;
+using TraineeManagement.Api.Data.Constants;
 
-namespace TraineeManagementApi.Utils.JwtService;
+namespace TraineeManagement.Api.JwtService;
 
 public interface IJwtService
 {

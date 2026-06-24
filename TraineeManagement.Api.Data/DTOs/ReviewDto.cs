@@ -1,7 +1,7 @@
-using TraineeManagementApi.Reviews.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.ReviewModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Reviews.DTOs;
+namespace TraineeManagement.Api.Data.ReviewDTO;
 
 public record ReviewCreateDto
 (

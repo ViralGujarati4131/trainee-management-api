@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagementApi.Mentors.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.MentorModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Mentors.DTOs;
+namespace TraineeManagement.Api.Data.MentorDTO;
 
 public record MentorCreateDto
 (

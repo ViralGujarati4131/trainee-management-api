@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Api.Data.AppDbContext;
 
 #nullable disable
 

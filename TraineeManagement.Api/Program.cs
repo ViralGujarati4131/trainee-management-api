@@ -2,15 +2,16 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using TraineeManagementApi.GlobalExceptionMiddleware;
-using TraineeManagementApi.Utils.UserSeeder;
+using TraineeManagement.Api.GlobalExceptionMiddleware;
+using TraineeManagement.Api.UserSeeder;
 using Newtonsoft.Json;
-using TraineeManagementApi.FileStorage.Configurations;
-using TraineeManagementApi.Constants;
+using TraineeManagement.Api.FileStoreValidation;
 using StackExchange.Redis;
-using TraineeManagement.Api.Messaging;
-using TraineeManagement.Api.Contract.Settings;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Api.Messaging.RabbitMQPublisher;
+using TraineeManagement.Api.Messaging.RabbitMqConnectionSettings;
+using TraineeManagement.Api.Data.AppDbContext;
+using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.Messaging.RabbitMqConnection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +59,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 
 
 // rabbitMQ connection
+builder.Services.AddSingleton<RabbitConnection>();
+
 builder.Services.Configure<RabbitMqSettings>(
     builder.Configuration.GetSection("RabbitMQ"));
 builder.Services.AddSingleton<RabbitMqService>();
@@ -88,7 +91,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 
-builder.Services.Configure<FileStorageConfiguration>(
+builder.Services.Configure<CustomFileStoreValidation>(
     builder.Configuration.GetSection(AppConstants.ConfigSections.FileStorage)
 );
 
@@ -122,6 +125,14 @@ builder.Services.AddCors(options =>
 builder.Services.AddHttpContextAccessor();
 
 WebApplication app = builder.Build();
+
+
+// establish connection for the rabbit
+using (var scope = app.Services.CreateScope())
+{
+    var conn = scope.ServiceProvider.GetRequiredService<RabbitConnection>();
+    await conn.InitializeAsync();
+}
 
 // seed the user
 await UserSeeder.SeedAsync(app.Services);

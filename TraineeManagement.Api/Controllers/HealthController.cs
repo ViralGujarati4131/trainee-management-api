@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagementApi.Constants;
+using TraineeManagement.Api.Data.ConstRoute;
 
-namespace TraineeManagementApi.Health.Controller;
+namespace TraineeManagement.Api.HealthController;
 
 [ApiController]
-[Route(AppConstants.Routes.Health)]
+[Route(CustomConstRoute.Health)]
 public class HealthController : ControllerBase
 {
     private readonly ILogger<HealthController> _logger;

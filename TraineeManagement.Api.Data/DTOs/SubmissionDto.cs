@@ -1,7 +1,7 @@
-using TraineeManagementApi.Submissions.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.SubmissionModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.Submissions.DTOs;
+namespace TraineeManagement.Api.Data.SubmissionDTO;
 
 public record SubmissionCreateDto
 (

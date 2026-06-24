@@ -1,8 +1,10 @@
-using TraineeManagementApi.Utils.CustomException;
+using TraineeManagement.Api.Data.CustomException;
 using MySqlConnector;
-using TraineeManagementApi.Constants;
+using TraineeManagement.Api.Data.ResponseDescriptor;
+using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.Data.Response;
 
-namespace TraineeManagementApi.GlobalExceptionMiddleware;
+namespace TraineeManagement.Api.GlobalExceptionMiddleware;
 
 public class GlobalExceptionMiddleware
 {
@@ -33,12 +35,12 @@ public class GlobalExceptionMiddleware
             {
                 _logger.LogError("Database Constraint Violation Encountered. Error Code: {Num}", mysqlEx.Number);
                 
-                ApiResponseDescriptor dbDescriptor = mysqlEx.Number switch
+                CustomResponseDescriptor dbDescriptor = mysqlEx.Number switch
                 {
-                    AppConstants.Database.MySqlErrorCodes.NotFoundReference => AppConstants.ApiResponse.SqlReferenceConflict,
-                    AppConstants.Database.MySqlErrorCodes.DeleteReference => AppConstants.ApiResponse.SqlDeleteReferenceError,
-                    AppConstants.Database.MySqlErrorCodes.UsernameExists => AppConstants.ApiResponse.UsernameExists,
-                    _ => AppConstants.ApiResponse.InternalServerError
+                    AppConstants.Database.MySqlErrorCodes.NotFoundReference => CustomResponse.SqlReferenceConflict,
+                    AppConstants.Database.MySqlErrorCodes.DeleteReference => CustomResponse.SqlDeleteReferenceError,
+                    AppConstants.Database.MySqlErrorCodes.UsernameExists => CustomResponse.UsernameExists,
+                    _ => CustomResponse.InternalServerError
                 };
 
                 await WriteResponseAsync(context, dbDescriptor);
@@ -46,12 +48,12 @@ public class GlobalExceptionMiddleware
             else
             {
                 _logger.LogError(ex, "Unhandled system failure tracking to destination: {Path}", context.Request.Path);
-                await WriteResponseAsync(context, AppConstants.ApiResponse.InternalServerError);
+                await WriteResponseAsync(context, CustomResponse.InternalServerError);
             }
         }
     }
 
-    private static async Task WriteResponseAsync(HttpContext context, ApiResponseDescriptor descriptor, object? data = null)
+    private static async Task WriteResponseAsync(HttpContext context, CustomResponseDescriptor descriptor, object? data = null)
     {
         context.Response.StatusCode = descriptor.HttpStatusCode;
         context.Response.ContentType = "application/json";

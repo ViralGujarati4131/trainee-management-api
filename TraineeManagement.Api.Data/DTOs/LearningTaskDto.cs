@@ -1,7 +1,7 @@
-using TraineeManagementApi.LearningTasks.Models;
-using TraineeManagementApi.Utils.CustomValidation;
+using TraineeManagement.Api.Data.LearningTaskModel;
+using TraineeManagement.Api.Data.CustomDataAnnotation;
 
-namespace TraineeManagementApi.LearningTasks.DTOs;
+namespace TraineeManagement.Api.Data.LearningTaskDTO;
 
 public record LearningTaskCreateDto
 (

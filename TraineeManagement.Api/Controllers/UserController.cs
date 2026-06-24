@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagementApi.Users.DTOs;
-using TraineeManagementApi.Users.ServiceInterface;
-using TraineeManagementApi.Utils.ResponsesBuilder;
-using TraineeManagementApi.Constants;
+using TraineeManagement.Api.Data.UserDTO;
+using TraineeManagement.Api.UserServiceInterface;
+using TraineeManagement.Api.ResponsesBuilder;
+using TraineeManagement.Api.Data.ConstRoute;
+using TraineeManagement.Api.Data.Response;
 
-namespace TraineeManagementApi.Users.Controller;
+namespace TraineeManagement.Api.UserController;
 
 [ApiController]
-[Route(AppConstants.Routes.Auth)]
+[Route(CustomConstRoute.Auth)]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -20,12 +21,12 @@ public class UserController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost(AppConstants.Routes.Login)]
+    [HttpPost(CustomConstRoute.Login)]
     public async Task<ActionResult> LoginUser([FromBody] UserLoginDto userLoginDto)
     {
         if (!ModelState.IsValid)
         {
-            return ResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse();
         }
         _logger.LogInformation("Login attempt initiated for Username: {Username}", userLoginDto.Username);
 
@@ -33,8 +34,8 @@ public class UserController : ControllerBase
         
         _logger.LogInformation("Authentication successful. Session token issued for Username: {Username}", userLoginDto.Username);
         
-        return ResponseBuilder.CreateSuccessResponse(
-            AppConstants.ApiResponse.LoginSuccess,
+        return CustomResponseBuilder.CreateSuccessResponse(
+            CustomResponse.LoginSuccess,
             authenticationResult
         );
     }
