@@ -1,64 +1,62 @@
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
-using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.Data.DatabaseContext;
-using TraineeManagement.Api.Data.TaskAssignmentModel;
-using TraineeManagement.Api.Messaging.RabbitMqConnection;
-using TraineeManagement.Api.Data.Constants;
-using TraineeManagement.Api.CacheServiceInterface;
-using TraineeManagement.Api.Data.ProcessingJobModel;
-using TraineeManagement.Api.Data.CustomException;
-using TraineeManagement.Api.Data.SubmissionFileModel;
-using TraineeManagement.Api.FileStoreValidation;
 using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+using TraineeManagement.Api.Data.DatabaseContext; 
+using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.Data.CustomException;
+using TraineeManagement.Api.Data.ProcessingJobModel;
+using TraineeManagement.Api.Data.SubmissionFileModel;
+using TraineeManagement.Api.Data.TaskAssignmentModel;
+using TraineeManagement.Api.FileStoreValidation;
+using TraineeManagement.Api.Messaging.RabbitMqConnection;
+
 
 namespace TraineeManagement.Api.Worker.SubmissionProcessingConsumer;
 
 public class SubmissionProcessingConsumer : BackgroundService
 {
     private readonly ILogger<SubmissionProcessingConsumer> _logger;
-
-    private readonly string _rootPath;
-
-     private readonly CustomFileStoreValidation _fileConfiguration;
-
     private readonly RabbitConnection _connection;  
-
     private readonly IServiceScopeFactory _scopeFactory;
-
     private readonly ICacheService _cacheService;
+    private readonly string _rootPath;
     
     private const int MaxRetryAttempts = 3;
+    string QueueName = AppConstants.RabbitMQ.SubmissionProcessing;
 
-    public SubmissionProcessingConsumer(ILogger<SubmissionProcessingConsumer> logger, RabbitConnection connection, IServiceScopeFactory scopeFactory, ICacheService cacheService,IOptions<CustomFileStoreValidation> fileConfiguration)
+    public SubmissionProcessingConsumer(
+        ILogger<SubmissionProcessingConsumer> logger, 
+        RabbitConnection connection, 
+        IServiceScopeFactory scopeFactory, 
+        ICacheService cacheService,
+        IOptions<CustomFileStoreValidation> fileConfiguration)
     {
         _logger = logger;
         _connection = connection;
         _scopeFactory = scopeFactory;
         _cacheService = cacheService;
-        _fileConfiguration = fileConfiguration.Value;
 
-         if (string.IsNullOrWhiteSpace(_fileConfiguration.RootPath))
+        CustomFileStoreValidation config = fileConfiguration.Value ?? throw new FileStorageConfigurationException();
+        if (string.IsNullOrWhiteSpace(config.RootPath))
         {
             throw new FileStorageConfigurationException();
         }
             
-        string configuredPath = _fileConfiguration.RootPath; 
-        string basePath = _fileConfiguration.BasePath;
-
-        _rootPath = Path.Combine(basePath, configuredPath);
+        _rootPath = Path.Combine(config.BasePath, config.RootPath);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _connection.RegisterQueueAsync(AppConstants.RabbitMQ.SubmissionProcessing);
+        await _connection.RegisterQueueAsync(QueueName);
 
         if (_connection.Channel is null)
         {
-            _logger.LogError("RabbitMQ channel failed to initialize.");
+            _logger.LogError("RabbitMQ channel failed to initialize for queue: {Queue}", QueueName);
             return;
         }
 
@@ -79,155 +77,216 @@ public class SubmissionProcessingConsumer : BackgroundService
             SubmissionProcessingContract? message = null;
             try
             {
-                message = JsonSerializer.Deserialize<SubmissionProcessingContract>(json);
-                if (message == null) 
-                    throw new JsonConversionException();
+                message = JsonSerializer.Deserialize<SubmissionProcessingContract>(json) 
+                        ?? throw new JsonConversionException();
 
-                _logger.LogInformation("De-queuing MessageId={MessageId} for validation...", message.MessageId);
+                _logger.LogInformation("De-queuing MessageId={MessageId} from queue '{Queue}'", message.MessageId, QueueName);
 
-                using (IServiceScope scope = _scopeFactory.CreateScope())
-                {
-                    AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                await ProcessSubmissionInternalAsync(message, stoppingToken);
 
-                    ProcessingJob? existingJob = await dbContext.ProcessingJobs.FirstOrDefaultAsync(j => j.Id == message.ProcessingJobId);
-
-                    if (existingJob != null && existingJob.Status == ProcessingJobStatus.Completed) 
-                    {
-                        _logger.LogWarning("Alert: MessageId={MessageId} has already been processed.", message.MessageId);
-                        await _connection.Channel.BasicAckAsync(
-                            ea.DeliveryTag, 
-                            multiple: false, 
-                            stoppingToken
-                        );
-                        return;
-                    }
-
-                    if (existingJob != null && existingJob.Status == ProcessingJobStatus.Queued)
-                    {
-                        existingJob.Status = ProcessingJobStatus.Processing;
-                        existingJob.StartedAt = DateTime.UtcNow;
-                        existingJob.Attempts++;
-                    }
-                    await dbContext.SaveChangesAsync(stoppingToken);
-
-                    _logger.LogInformation("Executing background task for TaskAssignment={TaskAssignmentId}...", message.TaskAssignmentId);
-
-                    TaskAssignment? assignment = await dbContext.TaskAssignments.FirstOrDefaultAsync(a => a.Id == message.TaskAssignmentId, stoppingToken);
-                    
-                    if (assignment == null)
-                    {
-                        throw new NotFoundException("TaskAssignment Referance");
-                    }
-
-                    assignment.Status = TaskAssignmentStatus.Submitted;
-                    
-                    _logger.LogInformation("Executing background task for SubmissionFileId={SubmissionId}...", message.SubmissionFileId);
-
-                    SubmissionFile? newSubmissionFile = await dbContext.SubmissionFiles
-                        .Where(sf => sf.Id == message.SubmissionFileId)
-                        .FirstOrDefaultAsync();
-                    
-                    IEnumerable<SubmissionFile?> submissionFile = await dbContext.SubmissionFiles
-                        .Where(sf => sf.Checksum == newSubmissionFile!.Checksum && sf.Id != newSubmissionFile.Id)
-                        .ToListAsync();
-
-                    foreach(SubmissionFile? file in submissionFile)
-                    {
-                        string filePath = Path.Combine(_rootPath, file!.StorageFileName);
-                        if(File.Exists(filePath))
-                        {
-                            filePath = Path.Combine(_rootPath,newSubmissionFile!.StorageFileName);
-                            File.Delete(filePath);
-                            newSubmissionFile!.StorageFileName = file!.StorageFileName;
-                            break;
-                        }
-                    }
-
-                    existingJob!.Status = ProcessingJobStatus.Completed; 
-                    existingJob.CompletedAt = DateTime.UtcNow;
-                    
-                    await dbContext.SaveChangesAsync(stoppingToken);
-
-                    await _cacheService.RemoveAsync($"task-assignment:{assignment.Id}");
-                }
                 await _connection.Channel.BasicAckAsync(
                     deliveryTag: ea.DeliveryTag, 
                     multiple: false, 
                     cancellationToken: stoppingToken
                 );
+                
                 _logger.LogInformation("Successfully completed and acknowledged for MessageId={MessageId}", message.MessageId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception thrown while executing job processing.");
+                _logger.LogError(ex, "Exception thrown while processing asynchronous task thread.");
                 await HandleFailureAsync(ea, message, json, ex, stoppingToken);
             }
         };
+
         await _connection.Channel.BasicConsumeAsync(
-            queue: AppConstants.RabbitMQ.SubmissionProcessing, 
-            autoAck: false, 
+            queue: AppConstants.RabbitMQ.GetQueue(QueueName), 
+            autoAck: false,
             consumer: consumer, 
             cancellationToken: stoppingToken
         );
     }
 
-    private async Task HandleFailureAsync(BasicDeliverEventArgs ea, SubmissionProcessingContract? message, string json, Exception exception, CancellationToken stoppingToken)
+    private async Task ProcessSubmissionInternalAsync(SubmissionProcessingContract message, CancellationToken stoppingToken)
+    {
+        IServiceScope scope = _scopeFactory.CreateScope();
+        AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+
+
+
+
+
+
+
+
+
+
+        _logger.LogInformation("Resolving internal remote data context profiles...");
+
+    // 1. Resolve your typed HTTP client from the scoped provider
+    TrainingDirectoryClient directoryClient = scope.ServiceProvider.GetRequiredService<TrainingDirectoryClient>();
+
+    [cite_start]// 2. Call the service and propagate the cancellation token safely 
+    TraineeProfileDto? traineeProfile = await directoryClient.GetTraineeProfileAsync(assignment.TraineeId, stoppingToken);
+
+    [cite_start]// 3. Handle fallback processing if the service is down [cite: 423]
+    if (traineeProfile == null)
+    {
+        _logger.LogWarning("Fallback behavior activated: Remote profile service returned null. Processing with local database system states.");
+        [cite_start]// Your fallback behavior logic goes here (e.g., continue processing with fallback values) [cite: 423]
+    }
+    else
+    {
+        _logger.LogInformation("Successfully matched profile info data from remote service for: {FullName} ({TrainingStatus})", 
+            traineeProfile.FullName, traineeProfile.TrainingStatus);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ProcessingJob? existingJob = await dbContext.ProcessingJobs
+            .FirstOrDefaultAsync(j => j.Id == message.ProcessingJobId, stoppingToken);
+
+        if (existingJob?.Status == ProcessingJobStatus.Completed) 
+        {
+            _logger.LogWarning("MessageId={MessageId} already processed.", message.MessageId);
+            return;
+        }
+
+        existingJob!.Status = ProcessingJobStatus.Processing;
+        existingJob.StartedAt = DateTime.UtcNow;
+        existingJob.Attempts++;
+        
+        await dbContext.SaveChangesAsync(stoppingToken);
+
+        _logger.LogInformation("TaskAssignment={TaskAssignmentId} status map to Submitted...", message.TaskAssignmentId);
+        TaskAssignment assignment = await dbContext.TaskAssignments
+            .FirstOrDefaultAsync(a => a.Id == message.TaskAssignmentId, stoppingToken) 
+            ?? throw new NotFoundException("TaskAssignment Reference Identity Exception");
+
+        _logger.LogInformation("Evaluating file storage deduplication for SubmissionFileId={FileId}...", message.SubmissionFileId);
+        SubmissionFile newSubmissionFile = await dbContext.SubmissionFiles
+            .FirstOrDefaultAsync(sf => sf.Id == message.SubmissionFileId, stoppingToken)
+            ?? throw new NotFoundException("SubmissionFile Reference Error");
+
+        IEnumerable<SubmissionFile> duplicateFiles = await dbContext.SubmissionFiles
+            .Where(sf => sf.Checksum == newSubmissionFile.Checksum && sf.Id != newSubmissionFile.Id)
+            .ToListAsync(stoppingToken);
+
+        foreach (SubmissionFile file in duplicateFiles)
+        {
+            string filePath = Path.Combine(_rootPath, file.StorageFileName);
+            if (File.Exists(filePath))
+            {
+                string targetPathToDelete = Path.Combine(_rootPath, newSubmissionFile.StorageFileName);
+                
+                if (File.Exists(targetPathToDelete))
+                {
+                    File.Delete(targetPathToDelete);
+                }
+                
+                newSubmissionFile.StorageFileName = file.StorageFileName;
+                _logger.LogInformation("Deduplication Success: Re-mapped file pointer storage link targets to match physical file trace: '{FileName}'", file.StorageFileName);
+                break;
+            }
+        }
+
+        existingJob.Status = ProcessingJobStatus.Completed; 
+        existingJob.CompletedAt = DateTime.UtcNow;
+        
+        await dbContext.SaveChangesAsync(stoppingToken);
+
+        await _cacheService.RemoveAsync($"task-assignment:{assignment.Id}");
+    }
+
+    private async Task HandleFailureAsync(
+        BasicDeliverEventArgs ea, 
+        SubmissionProcessingContract? message, 
+        string json, 
+        Exception exception, 
+        CancellationToken stoppingToken)
     {
         try
         {
-            using (IServiceScope scope = _scopeFactory.CreateScope())
+            IServiceScope scope = _scopeFactory.CreateScope();
+            AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            bool isPermanentFailure = exception is JsonConversionException || 
+                                      exception is NotFoundException || 
+                                      exception is JsonException;
+
+            if (message != null)
             {
-                AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                bool isPermanentFailure = exception is JsonException || exception is KeyNotFoundException;
-
-                if (message != null)
+                ProcessingJob? job = await dbContext.ProcessingJobs
+                    .FirstOrDefaultAsync(j => j.Id == message.ProcessingJobId, stoppingToken);
+                
+                if (job != null)
                 {
-                    ProcessingJob? job = await dbContext.ProcessingJobs.FirstOrDefaultAsync(j => j.Id == message.ProcessingJobId, stoppingToken);
-                    
-                    if (job != null)
+                    job.ErrorSummary = exception.Message;
+                
+                    if (isPermanentFailure || job.Attempts >= MaxRetryAttempts)
                     {
-                        job.ErrorSummary = exception.Message;
-                    
-                        if (isPermanentFailure || job.Attempts >= MaxRetryAttempts)
-                        {
-                            job.Status = ProcessingJobStatus.Failed; 
-                            job.CompletedAt = DateTime.UtcNow;
-                            _logger.LogError("Job Failure: MessageId={MessageId} FAILED permanently.", message.MessageId);
-                        }
-                        else
-                        {
-                            job.Status = ProcessingJobStatus.Queued; 
-                            _logger.LogWarning("Transient Failure: MessageId={MessageId} scheduled for retry.", message.MessageId);
-                        }
-                        
-                        await dbContext.SaveChangesAsync(stoppingToken);
+                        job.Status = ProcessingJobStatus.Failed; 
+                        job.CompletedAt = DateTime.UtcNow;
+                        _logger.LogError("MessageId={MessageId} permanently as FAILED.", message.MessageId);
                     }
+                    else
+                    {
+                        job.Status = ProcessingJobStatus.Queued; 
+                        _logger.LogWarning("Transient Failure: MessageId={MessageId} returning back to queue.", message.MessageId);
+                    }
+                    
+                    await dbContext.SaveChangesAsync(stoppingToken);
                 }
+            }
 
-                if (isPermanentFailure)
-                {
-                    await _connection.Channel!.BasicNackAsync(
-                        ea.DeliveryTag, 
-                        multiple: false, 
-                        requeue: false, 
-                        cancellationToken: stoppingToken
-                    );
-                }
-                else
-                {
-                    await _connection.Channel!.BasicNackAsync(
-                        ea.DeliveryTag, 
-                        multiple: false, 
-                        requeue: true, 
-                        cancellationToken: stoppingToken
-                    );
-                }
+            if (isPermanentFailure)
+            {
+                await _connection.Channel!.BasicNackAsync(
+                    deliveryTag: ea.DeliveryTag, 
+                    multiple: false, 
+                    requeue: false, 
+                    cancellationToken: stoppingToken
+                );
+            }
+            else
+            {
+                await _connection.Channel!.BasicNackAsync(
+                    deliveryTag: ea.DeliveryTag, 
+                    multiple: false, 
+                    requeue: true, 
+                    cancellationToken: stoppingToken
+                );
             }
         }
         catch (Exception criticalDbException)
         {
-            _logger.LogCritical(criticalDbException, "processing handler fault occur.");
+            _logger.LogCritical(criticalDbException, "Fatal Crash Error: Critical infrastructure database failure tracking boundary collapsed.");
         }
+    }
+
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Background worker shutting down.");
+        
+        if (_connection.Channel is not null)
+        {
+            await _connection.Channel.DisposeAsync();
+        }
+
+        await base.StopAsync(cancellationToken);
     }
 }

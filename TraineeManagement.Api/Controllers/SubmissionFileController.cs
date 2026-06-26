@@ -47,7 +47,7 @@ public class SubmissionFilesController : ControllerBase
             throw new BadRequestException("No files were attached to the upload request.");
         }
 
-        bool isDuplicates = await _fileStorageService.Exists(submissionId,file);
+        bool isDuplicates = await _fileStorageService.ExistsAsync(submissionId,file);
         if(isDuplicates)
         {
             throw new BadRequestException("This file is already uploaded");

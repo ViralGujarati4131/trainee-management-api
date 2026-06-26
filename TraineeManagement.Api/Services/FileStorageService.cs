@@ -119,7 +119,7 @@
             return (fileStream, metadata.ContentType, metadata.OriginalFileName);
         }
 
-        public async Task<bool> Exists(int submissionId, IFormFile file)
+        public async Task<bool> ExistsAsync(int submissionId, IFormFile file)
         {
             using SHA256 sha256 = SHA256.Create();
             using Stream read = file.OpenReadStream();

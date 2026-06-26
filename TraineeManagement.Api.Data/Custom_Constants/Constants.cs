@@ -38,7 +38,15 @@ public static class AppConstants
 
     public static class RabbitMQ
     {
-        public const string SubmissionProcessing = "submission-processing";
+        public static string SubmissionProcessing = "submission-processing";
+
+        public static string GetExchange(string queueName) => $"{queueName}.exchange";
+        public static string GetQueue(string queueName) => $"{queueName}.queue";
+        public static string GetRoutingKey(string queueName) => $"{queueName}.routing-key";
+        
+        public static string GetDlxExchange(string queueName) => $"{queueName}.dlx";
+        public static string GetDlxQueue(string queueName) => $"{queueName}.failed";
+        public static string GetDlxRoutingKey(string queueName) => $"{queueName}.failed.routing-key";
     }
 
 }

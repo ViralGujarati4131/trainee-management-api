@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraineeManagement.Api.Worke
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraineeManagement.Api", "TraineeManagement.Api\TraineeManagement.Api.csproj", "{0ED02404-5CAF-4505-A4E4-5933154F96A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainingDirectory.Api", "TrainingDirectory.Api\TrainingDirectory.Api.csproj", "{1E9BBFB7-C241-478C-A688-2F8683890C4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,5 +43,9 @@ Global
 		{0ED02404-5CAF-4505-A4E4-5933154F96A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0ED02404-5CAF-4505-A4E4-5933154F96A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0ED02404-5CAF-4505-A4E4-5933154F96A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E9BBFB7-C241-478C-A688-2F8683890C4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E9BBFB7-C241-478C-A688-2F8683890C4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E9BBFB7-C241-478C-A688-2F8683890C4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E9BBFB7-C241-478C-A688-2F8683890C4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

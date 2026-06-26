@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using TraineeManagement.Api.Messaging.RabbitMqConnectionSettings;
+using TraineeManagement.Api.Data.Constants;
 
 namespace TraineeManagement.Api.Messaging.RabbitMqConnection
 {
@@ -42,13 +43,63 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
         {
             if (_channel is null) throw new InvalidOperationException("Channel is not initialized.");
 
-            await _channel.QueueDeclareAsync(   
-                queue: queueName,
-                durable: true,       
-                exclusive: false,
-                autoDelete: false,
+            string mainExchange       = AppConstants.RabbitMQ.GetExchange(queueName);
+            string mainQueue       = AppConstants.RabbitMQ.GetQueue(queueName);
+            string mainRoutingKey     = AppConstants.RabbitMQ.GetRoutingKey(queueName);
+            
+            string deadLetterExchange   = AppConstants.RabbitMQ.GetDlxExchange(queueName);
+            string deadLetterQueue      = AppConstants.RabbitMQ.GetDlxQueue(queueName);
+            string deadLetterRoutingKey = AppConstants.RabbitMQ.GetDlxRoutingKey(queueName);
+
+            _logger.LogInformation("Initializing configuration pipeline");
+
+            await _channel.ExchangeDeclareAsync(
+                exchange: deadLetterExchange, 
+                type: ExchangeType.Direct, 
+                durable: true
+            );
+            
+            await _channel.QueueDeclareAsync(
+                queue: deadLetterQueue, 
+                durable: true, 
+                exclusive: false, 
+                autoDelete: false, 
                 arguments: null
             );
+            
+            await _channel.QueueBindAsync(
+                queue: deadLetterQueue, 
+                exchange: deadLetterExchange, 
+                routingKey: deadLetterRoutingKey
+            );
+
+            Dictionary<string, object?> mainQueueArgs = new Dictionary<string, object?>
+            {
+                { "x-dead-letter-exchange", deadLetterExchange },
+                { "x-dead-letter-routing-key", deadLetterRoutingKey }
+            };
+
+            await _channel.ExchangeDeclareAsync(
+                exchange: mainExchange, 
+                type: ExchangeType.Direct, 
+                durable: true
+            );
+
+            await _channel.QueueDeclareAsync(
+                queue: mainQueue, 
+                durable: true, 
+                exclusive: false, 
+                autoDelete: false, 
+                arguments: mainQueueArgs
+            );
+            
+            await _channel.QueueBindAsync(
+                queue: mainQueue, 
+                exchange: mainExchange, 
+                routingKey: mainRoutingKey
+            );
+
+            _logger.LogInformation("Queue initialization successfully.");
         }
 
         public async ValueTask DisposeAsync()

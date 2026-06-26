@@ -34,10 +34,13 @@ public class RabbitMqService
             DeliveryMode = DeliveryModes.Persistent
         };
 
+        string targetExchange = AppConstants.RabbitMQ.GetExchange(AppConstants.RabbitMQ.SubmissionProcessing);
+        string targetRoutingKey = AppConstants.RabbitMQ.GetRoutingKey(AppConstants.RabbitMQ.SubmissionProcessing);
+
         await _connection.Channel.BasicPublishAsync(
-            exchange: "",
-            routingKey: AppConstants.RabbitMQ.SubmissionProcessing,
-            mandatory: false,
+            exchange: targetExchange,
+            routingKey: targetRoutingKey,
+            mandatory: true,
             basicProperties: properties,
             body: body
         );
