@@ -7,6 +7,9 @@ using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
 using System.Net;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.Data.ResponseDTO;
+using System.Text.Json;
 
 namespace TraineeManagement.Api.TraineeService;
 
@@ -37,7 +40,7 @@ public class TraineeService : ITraineeService
         if (trainee == null)
         {
             _logger.LogWarning("Trainee with ID {TraineeId} was not found in the database layer.", id);
-            throw new NotFoundException("Trainee");
+            throw new NotFoundException(CustomResponse.NotFound,"Trainee");
         }
         return trainee;
     }
@@ -56,29 +59,47 @@ public class TraineeService : ITraineeService
 
     public async Task<TraineeResponseDto?> GetTraineeByIdAsync(int id,CancellationToken cancellationToken)
     {
+        TraineeResponseDto? cached = await _cacheService.GetAsync<TraineeResponseDto>(CacheKey.Trainee(id));
+        if (cached is not null)
+            return cached;
+
+        TraineeResponseDto? trainee = null;
+
         _logger.LogDebug("Retrieving trainee profile with ID: {TraineeId}", id); 
  
         _logger.LogInformation("Executing synchronous HTTP GET request for TraineeId={TraineeId}", id);
 
-        HttpResponseMessage response = await _httpClient.GetAsync($"/api/directory/trainee/{id}", cancellationToken);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            return await response.Content.ReadFromJsonAsync<TraineeResponseDto>(cancellationToken: cancellationToken);
-        }
+            HttpResponseMessage response = await _httpClient.GetAsync($"/api/directory/trainee/{id}", cancellationToken);
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
+            if (response.IsSuccessStatusCode)
+            {
+                InterServiceCommunicationResponse<TraineeResponseDto>? responseData = await response.Content.ReadFromJsonAsync<InterServiceCommunicationResponse<TraineeResponseDto>>(
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                    cancellationToken
+                );
+
+                if (responseData is null || responseData.Data is null)
+                {  
+                    throw new NotFoundException(CustomResponse.NotFound);
+                }
+                    
+                trainee = responseData.Data;
+                
+                await _cacheService.SetAsync(CacheKey.Trainee(id), trainee, TimeSpan.FromMinutes(10));
+            }
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Trainee was not found in downstream Directory Service.");
+                throw new NotFoundException(CustomResponse.NotFound, "Trainee");
+            }
+        }
+        catch
         {
-            throw new NotFoundException();
+            throw;
         }
-
-        if (response.StatusCode == HttpStatusCode.BadRequest)
-        {
-            throw new BadRequestException("Validation Failed");
-        }
-
-        _logger.LogError("Directory Service returned {StatusCode} for trainee {TraineeId}", response.StatusCode, id);
-        throw new HttpRequestException($"Unexpected status code: {response.StatusCode}");
+        return trainee;
     }
 
     public async Task<TraineeResponseDto> CreateTraineeAsync(TraineeCreateDto createTraineeDto)

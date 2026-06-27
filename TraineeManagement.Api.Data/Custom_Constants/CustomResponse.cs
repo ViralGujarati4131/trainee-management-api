@@ -7,69 +7,99 @@ namespace TraineeManagement.Api.Data.Response;
     public static readonly CustomResponseDescriptor LoginSuccess = 
         new(200, "2000", "User authenticated successfully. Security token issued.");
 
-    public static readonly CustomResponseDescriptor Success = 
-        new(200, "2000", "Data retrieved successfully");
+    public static readonly CustomResponseDescriptor DataRetrivedSuccess = 
+        new(200, "2002", "Data retrieved successfully");
         
-    public static readonly CustomResponseDescriptor Created = 
-        new(201, "2010", "Data created successfully");
+    public static readonly CustomResponseDescriptor DataInsertedSuccess = 
+        new(201, "2001", "Data inserted successfully");
             
-    public static readonly CustomResponseDescriptor Updated = 
-        new(200, "2030", "Data updated successfully");
+    public static readonly CustomResponseDescriptor DataUpdatedSuccess = 
+        new(200, "2003", "Data updated successfully");
 
-    public static readonly CustomResponseDescriptor NoContent = 
-        new(204, "2040", "No content found for this request");
+    public static readonly CustomResponseDescriptor DataDeletedNoContent = 
+        new(204, "2004", "No content Data deleted succesfully");
 
-    public static readonly CustomResponseDescriptor Successlly_Uploaded = 
-        new(202, "2020", "File Uploaded Successfully");
+    public static readonly CustomResponseDescriptor FileUploadAccepted = 
+        new(202, "2005", "File Upload Accepted Successfully");
+    
+    public static readonly CustomResponseDescriptor StatusTrack = 
+        new(200, "2006", "Current Status");
 
 
     //  CLIENT SIDE ERRORS  
 
     public static readonly CustomResponseDescriptor BadRequest = 
-        new(400, "4000", "Invalid request arguments or operation rules");
+        new(400, "3001", "Invalid request argument.");
             
-    public static readonly CustomResponseDescriptor ValidationError = 
-        new(400, "4010", "Validation failed for the request data");
+    public static readonly CustomResponseDescriptor UnprocessableEntity = 
+        new(422, "3002", "Request data fails the validation rule.");
             
     public static readonly CustomResponseDescriptor Unauthorized = 
-        new(401, "4030", "Invalid credential or authorization missing");
+        new(401, "3000", "Invalid credential or authorization missing.");
             
     public static readonly CustomResponseDescriptor NotFound = 
-        new(404, "4040", "Requested data was not found");
+        new(404, "3003", "Requested data was not found.");
             
     public static readonly CustomResponseDescriptor FileNotFound = 
-        new(404, "4045", "The requested physical file could not be located");
+        new(404, "3004", "The requested file could not be located.");
+
+    public static readonly CustomResponseDescriptor DataEntryNotFound = 
+        new(404, "3005", "Data not found for requested id.");
+
+    public static readonly CustomResponseDescriptor FileNotAttached = 
+        new(400, "3006", "No files were attached to the upload request.");
+
+    public static readonly CustomResponseDescriptor FileEmpty = 
+        new(400, "3007", "File can not be empty.");
+
+    public static readonly CustomResponseDescriptor FileSizeExcced = 
+        new(400, "3008", "File size exceeds the allow limit.");
+
+    public static readonly CustomResponseDescriptor FileExtentionNotAllowed = 
+        new(400, "3009", "File extention is not allowed.");
+
+    public static readonly CustomResponseDescriptor FileContentMismatch = 
+        new(400, "3010", "File conent not match with provided extention.");
 
 
     //  DATABASE SPECIFIC CLIENT ERRORS 
 
     public static readonly CustomResponseDescriptor SqlReferenceConflict = 
-        new(400, "4610", "Some of the provided reference identifiers conflict with data rules");
+        new(409, "6001", "Some of the provided reference identifiers conflict with data rules");
         
     public static readonly CustomResponseDescriptor SqlDeleteReferenceError = 
-        new(400, "4620", "Delete operation could not be completed because of existing data references");
+        new(409, "6002", "Delete operation could not be completed because of existing data references");
         
     public static readonly CustomResponseDescriptor UsernameExists = 
-        new(400, "4630", "Username already exists within the trainee network");
+        new(409, "6000", "Username already exists.");
+
+    public static readonly CustomResponseDescriptor FileAlreadyUploaded = 
+        new(409, "6003", "This file is already uploaded.");
 
     
     // SERVER ERRORS 
     
     public static readonly CustomResponseDescriptor InternalServerError = 
-        new(500, "5010", "Something went wrong internally, please try again");
+        new(500, "5000", "Something went wrong internally, please try again");
             
-    public static readonly CustomResponseDescriptor JwtAuthError = 
-        new(500, "5020", "An unexpected error occurred while processing encryption signatures");
-            
-    public static readonly CustomResponseDescriptor JwtSecretMissing = 
-        new(500, "5030", "Critical configuration mismatch: JWT Secret Key not configured");
+    public static readonly CustomResponseDescriptor JwtOperationError = 
+        new(500, "5001", "An unexpected error occurred while processing jwt Token");
 
-    public static readonly CustomResponseDescriptor FileStorageConfigError = 
-        new(500, "5040", "File storage subsystem is misconfigured.");
+    public static readonly CustomResponseDescriptor ConfigurationMissingError = 
+        new(500, "5002", "Configuration mismatch: Configuration was not found");
             
     public static readonly CustomResponseDescriptor DataSeedingError = 
-        new(500, "5050", "System data seeding failed.");
+        new(500, "5003", "Data seeding failed.");
 
     public static readonly CustomResponseDescriptor JsonConversionError = 
-        new(500, "5060", "Json Conversion Failed");
+        new(500, "5004", "Json Conversion Failed");
+
+    public static readonly CustomResponseDescriptor IOFail = 
+        new(500, "5005", "Exception occur while doing the IO Operation");
+    
+     public static readonly CustomResponseDescriptor ChannelNotInitialized = 
+        new(500, "5005", "Channel is not initialized.");
+
+    public static readonly CustomResponseDescriptor UnavailableRabbitMQService = 
+        new(503, "5006", "Submission saved but could not be queued for processing.");
 }

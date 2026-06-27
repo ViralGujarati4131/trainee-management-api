@@ -31,7 +31,7 @@ public class LearningTasksController : ControllerBase
         IEnumerable<LearningTaskResposeDto> learningTasks = await _learningTaskService.GetLearningTaskAsync();
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             learningTasks
         );
     }
@@ -39,16 +39,20 @@ public class LearningTasksController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetLearningTaskById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking learning-task service to retrieve for TaskId: {TaskId}", id);
 
         LearningTaskResposeDto learningTask = await _learningTaskService.GetLearningTaskByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             learningTask
         );
     }
@@ -58,14 +62,14 @@ public class LearningTasksController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking learning-task service to add a new task");
 
         LearningTaskResposeDto createdTask = await _learningTaskService.CreateLearningTaskAsync(createTaskDto);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Created, 
+            CustomResponse.DataInsertedSuccess, 
             createdTask
         );
     }
@@ -73,32 +77,40 @@ public class LearningTasksController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteLearningTask(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking learning-task service to delete task for TaskId: {TaskId}", id);
 
         await _learningTaskService.DeleteLearningTaskByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.NoContent
+            CustomResponse.DataDeletedNoContent
         );
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateLearningTask(int id, [FromBody] LearningTaskUpdateDto updateTaskDto)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking learning-task service to modify task for TaskId: {TaskId}", id);
 
         LearningTaskResposeDto updatedTask = await _learningTaskService.UpdateLearningTaskByIdAsync(id, updateTaskDto);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Updated, 
+            CustomResponse.DataUpdatedSuccess, 
             updatedTask
         );
     }

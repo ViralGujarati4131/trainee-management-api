@@ -27,13 +27,13 @@ public class ProcessingJobsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
 
         ProcessingJobResponseDto jobTrack = await _processingJobService.GetProcessingJobByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             jobTrack
         ); 
     }

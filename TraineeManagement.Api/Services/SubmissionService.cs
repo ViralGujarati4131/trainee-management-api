@@ -6,6 +6,8 @@ using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.CacheServiceInterface;
 using TraineeManagement.Api.Data.DatabaseContext;
+using TraineeManagement.Api.Data.Response;
+
 
 namespace TraineeManagement.Api.SubmissionService;
 
@@ -95,7 +97,7 @@ public class SubmissionService : ISubmissionService
         if (dto == null)
         {
             _logger.LogWarning("Submission with ID {SubmissionId} was not found during target DTO projection.", id);
-            throw new NotFoundException("Submission");
+            throw new NotFoundException(CustomResponse.NotFound,"Submission");
         }
         
         await _cacheService.SetAsync(CacheKey.Submission(id), dto, TimeSpan.FromMinutes(10));

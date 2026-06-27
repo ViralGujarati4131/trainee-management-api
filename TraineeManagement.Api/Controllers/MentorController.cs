@@ -31,7 +31,7 @@ public class MentorController : ControllerBase
         IEnumerable<MentorResponseDto> mentors = await _mentorService.GetMentorsAsync();
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             mentors
         );
     }
@@ -39,16 +39,20 @@ public class MentorController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetMentorById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking mentor service to retrieve profile for MentorId: {MentorId}", id);
 
         MentorResponseDto mentor = await _mentorService.GetMentorByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             mentor
         );
     }
@@ -58,14 +62,14 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");
 
         MentorResponseDto createdMentor = await _mentorService.CreateMentorAsync(createMentorDto);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Created,
+            CustomResponse.DataInsertedSuccess,
             createdMentor
         );
     }
@@ -73,32 +77,40 @@ public class MentorController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteMentorById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking mentor service to delete record for MentorId: {MentorId}", id);
 
         await _mentorService.DeleteMentorByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.NoContent
+            CustomResponse.DataDeletedNoContent
         );
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateMentorById(int id, [FromBody] MentorUpdateDto updateMentorDto)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking mentor service to modify records for MentorId: {MentorId}", id);
 
         MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id, updateMentorDto);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Updated,
+            CustomResponse.DataUpdatedSuccess,
             updatedMentor
         );
     }

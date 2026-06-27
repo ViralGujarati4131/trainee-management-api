@@ -3,6 +3,8 @@ using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.ProcessingJobDto;
 using TraineeManagement.Api.ProcessingJobServiceInterface;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.ProcessingJobService;
 
@@ -34,7 +36,7 @@ public class ProcessingJobService : IProcessingJobService
 
         if (jobTrack == null)
         {
-            throw new NotFoundException("Processing Job");
+            throw new NotFoundException(CustomResponse.NotFound,"Processing Job");
         }
 
         return jobTrack;

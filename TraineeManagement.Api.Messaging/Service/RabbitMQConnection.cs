@@ -3,18 +3,18 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using TraineeManagement.Api.Messaging.RabbitMqConnectionSettings;
 using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.Data.CustomException;
 
 namespace TraineeManagement.Api.Messaging.RabbitMqConnection
 {
     public class RabbitConnection : IAsyncDisposable
     {
-        private IConnection? _connection;
-        private IChannel? _channel;
+        private IConnection? _connection;    
         private readonly ILogger<RabbitConnection> _logger;
         private readonly RabbitMqSettings _settings;
         private readonly ConnectionFactory _factory;
-
-        public IChannel? Channel => _channel;
+        public IConnection? Connection => _connection;
 
         public RabbitConnection(IOptions<RabbitMqSettings> options, ILogger<RabbitConnection> logger)
         {
@@ -35,17 +35,20 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
         public async Task InitializeAsync()
         {
             _connection = await _factory.CreateConnectionAsync();
-            _channel = await _connection.CreateChannelAsync();
             _logger.LogInformation("RabbitMQ base connection and channel successfully established.");
         }
 
         public async Task RegisterQueueAsync(string queueName)
         {
-            if (_channel is null) throw new InvalidOperationException("Channel is not initialized.");
+            if(_connection == null)
+                throw new NotFoundException(CustomResponse.NotFound);
+                
+            using IChannel _channel = await _connection.CreateChannelAsync();
+            if (_channel is null) throw new OperationException(CustomResponse.ChannelNotInitialized);
 
-            string mainExchange       = AppConstants.RabbitMQ.GetExchange(queueName);
-            string mainQueue       = AppConstants.RabbitMQ.GetQueue(queueName);
-            string mainRoutingKey     = AppConstants.RabbitMQ.GetRoutingKey(queueName);
+            string mainExchange = AppConstants.RabbitMQ.GetExchange(queueName);
+            string mainQueue = AppConstants.RabbitMQ.GetQueue(queueName);
+            string mainRoutingKey = AppConstants.RabbitMQ.GetRoutingKey(queueName);
             
             string deadLetterExchange   = AppConstants.RabbitMQ.GetDlxExchange(queueName);
             string deadLetterQueue      = AppConstants.RabbitMQ.GetDlxQueue(queueName);
@@ -104,12 +107,8 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
 
         public async ValueTask DisposeAsync()
         {
-            if (_channel != null && _channel.IsOpen)
-                await _channel.CloseAsync();
-
             if (_connection != null && _connection.IsOpen)
                 await _connection.CloseAsync();
-
             _logger.LogInformation("RabbitMQ async connection closed.");
         }
     }

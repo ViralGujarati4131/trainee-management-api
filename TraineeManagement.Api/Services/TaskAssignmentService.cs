@@ -6,6 +6,9 @@ using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.CacheServiceInterface;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
+using TraineeManagement.Api.Data.Response;
+
+
 
 namespace TraineeManagement.Api.TaskAssignmentService;
 
@@ -44,7 +47,7 @@ public class TaskAssignmentService : ITaskAssignmentService
         if (taskAssignment == null)
         {
             _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
-            throw new NotFoundException("TaskAssignment");
+            throw new NotFoundException(CustomResponse.NotFound,"TaskAssignment");
         }
         return taskAssignment;
     }
@@ -114,7 +117,7 @@ public class TaskAssignmentService : ITaskAssignmentService
         if (dto == null)
         {
             _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found during target DTO projection.", id);
-            throw new NotFoundException("TaskAssignment");
+            throw new NotFoundException(CustomResponse.NotFound,"TaskAssignment");
         }
 
         await _cacheService.SetAsync(CacheKey.TaskAssignment(id), dto, CacheTtl);

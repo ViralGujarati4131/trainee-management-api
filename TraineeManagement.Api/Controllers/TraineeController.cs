@@ -26,16 +26,20 @@ public class TraineesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetTraineeById(int id,CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to retrieve profile for TraineeId: {TraineeId}", id);
         
         TraineeResponseDto? trainee = await _traineeService.GetTraineeByIdAsync(id,cancellationToken);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             trainee
         );
     }
@@ -45,14 +49,14 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking trainee service to establish a new trainee registration");
         
         TraineeResponseDto createdTrainee = await _traineeService.CreateTraineeAsync(createTraineeDto);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Created,
+            CustomResponse.DataInsertedSuccess,
             createdTrainee
         );
     }
@@ -60,16 +64,20 @@ public class TraineesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateTraineeById(int id, [FromBody] TraineeUpdateDto updateTraineeDto)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to modify records for TraineeId: {TraineeId}", id);
         
         TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Updated,
+            CustomResponse.DataUpdatedSuccess,
             updatedTrainee
         );
     }
@@ -77,16 +85,20 @@ public class TraineesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteTraineeById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to delete records for TraineeId: {TraineeId}", id);
         
         await _traineeService.DeleteTraineeByIdAsync(id);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.NoContent
+            CustomResponse.DataDeletedNoContent
         );
     }
 
@@ -100,7 +112,7 @@ public class TraineesController : ControllerBase
             IEnumerable<TraineeResponseDto> trainees = await _traineeService.GetTraineesAsync();
 
             return CustomResponseBuilder.CreateSuccessResponse(
-                CustomResponse.Success,
+                CustomResponse.DataRetrivedSuccess,
                 trainees
             );
         }
@@ -109,26 +121,32 @@ public class TraineesController : ControllerBase
         IEnumerable<TraineeResponseDto> searchResults = await _traineeService.SearchTraineesAsync(searchTrainee);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             searchResults
         );
     }
 
     [HttpGet(CustomConstRoute.PaginationSearch)]
-    public async Task<ActionResult> PaginationSearchTrainee([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string? name, [FromQuery] string? status)
+    public async Task<ActionResult> PaginationSearchTrainee([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string name, [FromQuery] string status)
     {
-        if (pageNumber <= 0 || pageSize <= 0 || name == null || status == null)
+        if (!ModelState.IsValid)
         {
             _logger.LogWarning("Pagination request processing aborted due to missing or invalid filter arguments");
 
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if (pageNumber < 1 || pageSize < 1)
+        {
+            _logger.LogWarning("Pagination request processing aborted due to missing or invalid filter arguments");
+
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to generate paginated lookup - Name: {FilterName}, Status: {FilterStatus}, Page: {PageNumber}, Size: {PageSize}", name, status, pageNumber, pageSize);
         
         TraineePaginationSearchDto? pagedData = await _traineeService.GetPagedAndSearchedTraineesAsync(pageNumber, pageSize, name, status);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             pagedData
         );
     }

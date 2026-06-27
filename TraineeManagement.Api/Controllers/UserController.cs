@@ -26,7 +26,7 @@ public class UserController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogInformation("Login attempt initiated for Username: {Username}", userLoginDto.Username);
 

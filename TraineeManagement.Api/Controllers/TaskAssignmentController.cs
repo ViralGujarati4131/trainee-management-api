@@ -28,14 +28,14 @@ public class TaskAssignmentsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking task-assignment service to add a new task-assignment");
 
         TaskAssignmentResponseDto createdTaskAssignment = await _taskAssignmentService.CreateTaskAssignmentAsync(createTaskAssignmentDto);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Created,
+            CustomResponse.DataInsertedSuccess,
             createdTaskAssignment
         );
     }
@@ -48,7 +48,7 @@ public class TaskAssignmentsController : ControllerBase
         IEnumerable<TaskAssignmentResponseDto> taskAssignments = await _taskAssignmentService.GetTaskAssignmentsAsync();
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             taskAssignments
         );
     }
@@ -56,16 +56,20 @@ public class TaskAssignmentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetTaskAssignmentById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking task-assignment service to retrieve assignments for AssignmentId: {AssignmentId}", id);
 
         TaskAssignmentResponseDto taskAssignment = await _taskAssignmentService.GetTaskAssignmentByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             taskAssignment
         );
     }
@@ -73,16 +77,20 @@ public class TaskAssignmentsController : ControllerBase
     [HttpPut("{id}/status")]
     public async Task<ActionResult> UpdateTaskAssignmentById(int id, [FromBody] TaskAssignmentUpdateDto updateTaskAssignmentDto)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking task-assignment service to modify records for AssignmentId: {AssignmentId}", id);
         
         TaskAssignmentResponseDto updatedTaskAssignment = await _taskAssignmentService.UpdateTaskAssignmentAsync(id, updateTaskAssignmentDto);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Updated,
+            CustomResponse.DataUpdatedSuccess,
             updatedTaskAssignment
         );
     }

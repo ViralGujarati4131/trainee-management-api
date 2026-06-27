@@ -6,6 +6,8 @@ using TraineeManagement.Api.Data.UserModel;
 using TraineeManagement.Api.UserServiceInterface;
 using TraineeManagement.Api.JwtService;
 using TraineeManagement.Api.Data.DatabaseContext;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.UserService;
 
@@ -53,7 +55,7 @@ public class UserService : IUserService
         if (user == null)
         {
             _logger.LogWarning("User with Username {Username} was not found in the database", username);
-            throw new NotFoundException("User");
+            throw new NotFoundException(CustomResponse.NotFound,"User");
         }
         return user;
     }
@@ -73,7 +75,7 @@ public class UserService : IUserService
             {
                 _logger.LogWarning("Invalid password credential provided for Username: {Username}", userLoginDto.Username);
 
-                throw new UnauthorizedException();
+                throw new UnauthorizedException(CustomResponse.Unauthorized);
             }
 
             _logger.LogInformation("Password successfully verified. Initiating JWT token generation for Username: {Username}", user.Username);
@@ -89,7 +91,7 @@ public class UserService : IUserService
         {
             _logger.LogWarning("Login attempt failed due to invalid username sequence: {Username}", userLoginDto.Username);
             
-            throw new UnauthorizedException();
+            throw new UnauthorizedException(CustomResponse.Unauthorized);
         }
     }
 }

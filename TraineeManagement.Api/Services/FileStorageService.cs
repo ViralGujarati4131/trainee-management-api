@@ -7,7 +7,9 @@
     using TraineeManagement.Api.Data.SubmissionModel;
     using TraineeManagement.Api.Data.CustomException;
     using TraineeManagement.Api.Data.DatabaseContext;
-
+    using TraineeManagement.Api.Data.Response;
+    using TraineeManagement.Api.ResponsesBuilder;
+   
     namespace TraineeManagement.Api.FileStorageService;
 
     public class FileStorageService : IFileStorageService
@@ -28,7 +30,7 @@
 
             if (string.IsNullOrWhiteSpace(_fileConfiguration.RootPath))
             {
-                throw new FileStorageConfigurationException();
+                throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
             }
             
             string configuredPath = _fileConfiguration.RootPath; 
@@ -46,22 +48,20 @@
         {
             Submission? submission = await _context.Submissions.FindAsync(submissionId);
             if (submission == null)
-            {
-                throw new BadRequestException("The referenced submission profile does not exist.");
-            }
+                throw new BadRequestException(CustomResponse.DataEntryNotFound);
 
-            if (file == null || file.Length == 0)
-                throw new BadRequestException("Empty file uploads are not allowed.");
+            if (file.Length == 0)
+                throw new BadRequestException(CustomResponse.FileEmpty);
 
             if (file.Length > _fileConfiguration.MaxFileSizeInBytes)
-                throw new BadRequestException($"File size exceeds the allowed {_fileConfiguration.MaxFileSizeInBytes / (1024 * 1024)} MB limit.");
+                throw new BadRequestException(CustomResponse.FileSizeExcced);
 
             string ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
             if (!_fileConfiguration.AllowedExtensions.Contains(ext))
             {
                 _logger.LogWarning("Unauthorized file extension block triggered for: {Extension}", ext);
-                throw new BadRequestException($"File type extension '{ext}' is not authorized.");
+                throw new BadRequestException(CustomResponse.FileExtentionNotAllowed);
             }
 
             if (_fileConfiguration.MagicNumbers.TryGetValue(ext, out string? hexSignature) && !string.IsNullOrWhiteSpace(hexSignature))
@@ -77,7 +77,7 @@
                 if (!actualHeader.SequenceEqual(expectedSignature))
                 {
                     _logger.LogWarning("Security: File contents for {FileName} do not match hex signature {Hex}!", file.FileName, hexSignature);
-                    throw new BadRequestException("The file contents do not match its true file type extension signature safely.");
+                    throw new BadRequestException(CustomResponse.FileContentMismatch);
                 }
             }
 
@@ -96,7 +96,7 @@
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Physical disk IO failure saving file {OriginalFileName}", file.FileName);
-                throw;
+                throw new IOError(CustomResponse.IOFail);
             }
         }
 
@@ -105,13 +105,13 @@
             SubmissionFile? metadata = await _context.SubmissionFiles.FindAsync(id);
             if (metadata == null)
             {
-                throw new ExceptionFileNotFound();
+                throw new BadRequestException(CustomResponse.DataEntryNotFound);
             }
 
             string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
             if (!File.Exists(filePath))
             {
-                throw new ExceptionFileNotFound();
+                throw new FileNotFoundError(CustomResponse.FileNotFound);
             }
 
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
@@ -133,12 +133,12 @@
             return isDuplicate;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
             SubmissionFile? metadata = await _context.SubmissionFiles.FindAsync(id);
             if (metadata == null)
             {
-                throw new ExceptionFileNotFound();
+                throw new BadRequestException(CustomResponse.DataEntryNotFound);
             }
             string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
 
@@ -149,14 +149,13 @@
                     File.Delete(filePath);
                     _logger.LogInformation("Physical storage file successfully deleted: {FileName}", metadata.StorageFileName);
                 }
-                catch (IOException ex)
+                catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to delete physical file {FileName} from disk storage.", metadata.StorageFileName);
-                    return false;
+                    throw new IOError(CustomResponse.IOFail);
                 }
             }
              _context.SubmissionFiles.Remove(metadata);
             await _context.SaveChangesAsync();
-            return true;
         }
     }

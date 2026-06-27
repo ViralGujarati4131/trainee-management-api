@@ -14,6 +14,7 @@ using TraineeManagement.Api.Data.SubmissionFileModel;
 using TraineeManagement.Api.Data.TaskAssignmentModel;
 using TraineeManagement.Api.FileStoreValidation;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
+using TraineeManagement.Api.Data.Response;
 
 
 namespace TraineeManagement.Api.Worker.SubmissionProcessingConsumer;
@@ -25,6 +26,7 @@ public class SubmissionProcessingConsumer : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ICacheService _cacheService;
     private readonly string _rootPath;
+    private IChannel? channel;
     
     private const int MaxRetryAttempts = 3;
     string QueueName = AppConstants.RabbitMQ.SubmissionProcessing;
@@ -41,10 +43,10 @@ public class SubmissionProcessingConsumer : BackgroundService
         _scopeFactory = scopeFactory;
         _cacheService = cacheService;
 
-        CustomFileStoreValidation config = fileConfiguration.Value ?? throw new FileStorageConfigurationException();
+        CustomFileStoreValidation config = fileConfiguration.Value ?? throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
         if (string.IsNullOrWhiteSpace(config.RootPath))
         {
-            throw new FileStorageConfigurationException();
+            throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
         }
             
         _rootPath = Path.Combine(config.BasePath, config.RootPath);
@@ -52,22 +54,33 @@ public class SubmissionProcessingConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        IConnection connection = _connection.Connection!;
+
+        if (connection == null || !connection.IsOpen)
+        {
+            _logger.LogError("RabbitMQ underlying connection is down or uninitialized.");
+            return;
+        }
+
+        await using IChannel _channel = await connection.CreateChannelAsync();
+        channel = _channel;
+        
         await _connection.RegisterQueueAsync(QueueName);
 
-        if (_connection.Channel is null)
+        if (channel is null)
         {
             _logger.LogError("RabbitMQ channel failed to initialize for queue: {Queue}", QueueName);
             return;
         }
 
-        await _connection.Channel.BasicQosAsync(
+        await channel.BasicQosAsync(
             prefetchSize: 0, 
             prefetchCount: 1, 
             global: false, 
             cancellationToken: stoppingToken
         );
 
-        AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_connection.Channel);
+        AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(channel);
 
         consumer.ReceivedAsync += async (model, ea) =>
         {
@@ -78,13 +91,13 @@ public class SubmissionProcessingConsumer : BackgroundService
             try
             {
                 message = JsonSerializer.Deserialize<SubmissionProcessingContract>(json) 
-                        ?? throw new JsonConversionException();
+                        ?? throw new JsonConversionException(CustomResponse.JsonConversionError);
 
                 _logger.LogInformation("De-queuing MessageId={MessageId} from queue '{Queue}'", message.MessageId, QueueName);
 
                 await ProcessSubmissionInternalAsync(message, stoppingToken);
 
-                await _connection.Channel.BasicAckAsync(
+                await channel.BasicAckAsync(
                     deliveryTag: ea.DeliveryTag, 
                     multiple: false, 
                     cancellationToken: stoppingToken
@@ -99,7 +112,7 @@ public class SubmissionProcessingConsumer : BackgroundService
             }
         };
 
-        await _connection.Channel.BasicConsumeAsync(
+        await channel.BasicConsumeAsync(
             queue: AppConstants.RabbitMQ.GetQueue(QueueName), 
             autoAck: false,
             consumer: consumer, 
@@ -130,12 +143,12 @@ public class SubmissionProcessingConsumer : BackgroundService
         _logger.LogInformation("TaskAssignment={TaskAssignmentId} status map to Submitted...", message.TaskAssignmentId);
         TaskAssignment assignment = await dbContext.TaskAssignments
             .FirstOrDefaultAsync(a => a.Id == message.TaskAssignmentId, stoppingToken) 
-            ?? throw new NotFoundException("TaskAssignment Reference Identity Exception");
+            ?? throw new NotFoundException(CustomResponse.NotFound,"TaskAssignment");
 
         _logger.LogInformation("Evaluating file storage deduplication for SubmissionFileId={FileId}...", message.SubmissionFileId);
         SubmissionFile newSubmissionFile = await dbContext.SubmissionFiles
             .FirstOrDefaultAsync(sf => sf.Id == message.SubmissionFileId, stoppingToken)
-            ?? throw new NotFoundException("SubmissionFile Reference Error");
+            ?? throw new NotFoundException(CustomResponse.NotFound,"SubmissionFile");
 
         IEnumerable<SubmissionFile> duplicateFiles = await dbContext.SubmissionFiles
             .Where(sf => sf.Checksum == newSubmissionFile.Checksum && sf.Id != newSubmissionFile.Id)
@@ -210,7 +223,7 @@ public class SubmissionProcessingConsumer : BackgroundService
 
             if (isPermanentFailure)
             {
-                await _connection.Channel!.BasicNackAsync(
+                await channel!.BasicNackAsync(
                     deliveryTag: ea.DeliveryTag, 
                     multiple: false, 
                     requeue: false, 
@@ -219,7 +232,7 @@ public class SubmissionProcessingConsumer : BackgroundService
             }
             else
             {
-                await _connection.Channel!.BasicNackAsync(
+                await channel!.BasicNackAsync(
                     deliveryTag: ea.DeliveryTag, 
                     multiple: false, 
                     requeue: true, 
@@ -237,9 +250,9 @@ public class SubmissionProcessingConsumer : BackgroundService
     {
         _logger.LogInformation("Background worker shutting down.");
         
-        if (_connection.Channel is not null)
+        if (channel is not null)
         {
-            await _connection.Channel.DisposeAsync();
+            await channel.DisposeAsync();
         }
 
         await base.StopAsync(cancellationToken);

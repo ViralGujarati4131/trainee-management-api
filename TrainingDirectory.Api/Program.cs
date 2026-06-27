@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
-using TraineeManagement.Api.CacheService;
-using TraineeManagement.Api.CacheServiceInterface;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TrainingDirectory.Api.DirectoryTraineeService;
 using TrainingDirectory.Api.DirectoryTraineeServiceInterface;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.Data.CustomException;
+using TraineeManagement.Api.GlobalExceptionMiddleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,21 +19,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 
-// redis connection
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    string configuration = builder.Configuration["Redis:ConnectionString"]!;
-    return ConnectionMultiplexer.Connect(configuration);
-});
-
-
-
 string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 if (allowedOrigin.Length == 0)
 {
-    throw new InvalidOperationException(
-        $"CORS configuration missing for environment: {builder.Environment.EnvironmentName}"
-    );
+    throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 }
 
 
@@ -48,17 +38,19 @@ builder.Services.AddCors(options =>
                       });
 });
 
-builder.Services.AddSingleton<ICacheService,CacheService>();
 builder.Services.AddScoped<IDirectoryTraineeService,DirectoryTraineeService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    });
 
 var app = builder.Build();
 
-app.UseAuthorization();
-
-app.MapControllers();
-
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
-
+app.UseCors(AllowedOriginsPolicy);
+app.UseAuthorization();
+app.MapControllers();
 app.Run();

@@ -21,9 +21,30 @@ public class RabbitMqService
     }
     public async Task PublishAsync(SubmissionProcessingContract message)
     {
-        if (_connection.Channel == null)
+        IConnection connection = _connection.Connection!;
+
+        if (connection == null || !connection.IsOpen)
         {
-            _logger.LogError("RabbitMQ channel is not initialized.");
+            _logger.LogError(
+                "RabbitMQ publish failed. Reason={Reason}",
+                "Connection unavailable");  
+            return;
+        }
+
+        // To get the acknowledgement if succed to publish
+        CreateChannelOptions channelOptions = new CreateChannelOptions(
+            publisherConfirmationsEnabled: true,
+            publisherConfirmationTrackingEnabled: true
+        );
+
+        await using IChannel channel = await connection.CreateChannelAsync(channelOptions);
+
+        
+        if (channel == null)
+        {
+            _logger.LogError(
+                "RabbitMQ publish failed. Reason={Reason}",
+                "Connection unavailable");
             return;
         }
 
@@ -32,12 +53,14 @@ public class RabbitMqService
         BasicProperties properties = new BasicProperties
         {
             DeliveryMode = DeliveryModes.Persistent
+            // CorrelationId = message.CorrelationId,
+            // MessageId = message.MessageId.ToString()
         };
 
         string targetExchange = AppConstants.RabbitMQ.GetExchange(AppConstants.RabbitMQ.SubmissionProcessing);
         string targetRoutingKey = AppConstants.RabbitMQ.GetRoutingKey(AppConstants.RabbitMQ.SubmissionProcessing);
 
-        await _connection.Channel.BasicPublishAsync(
+        await channel.BasicPublishAsync(
             exchange: targetExchange,
             routingKey: targetRoutingKey,
             mandatory: true,
@@ -46,8 +69,9 @@ public class RabbitMqService
         );
 
         _logger.LogInformation(
-            "Published message: MessageId={MessageId}, CorrelationId={CorrelationId}, SubmissionFileId={SubmissionFileId}",
-            message.MessageId, message.CorrelationId, message.SubmissionFileId
-        );
+            "RabbitMQ message published. MessageId={MessageId}, CorrelationId={CorrelationId}, SubmissionFileId={SubmissionFileId}",
+            message.MessageId,
+            message.CorrelationId,
+            message.SubmissionFileId);
     }
 }

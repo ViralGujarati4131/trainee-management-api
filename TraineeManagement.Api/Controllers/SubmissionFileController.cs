@@ -36,21 +36,25 @@ public class SubmissionFilesController : ControllerBase
     [HttpPost("/api/submission/{submissionId}/files")]
     public async Task<IActionResult> UploadFile(int submissionId, IFormFile file)
     {
-        if (!ModelState.IsValid || submissionId < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(submissionId < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         
-        if (file == null || file.Length == 0)
+        if (file == null)
         {
             _logger.LogWarning("Upload attempt blocked: No files found in the multipart form-data payload request.");
-            throw new BadRequestException("No files were attached to the upload request.");
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.FileNotAttached);
         }
 
         bool isDuplicates = await _fileStorageService.ExistsAsync(submissionId,file);
         if(isDuplicates)
         {
-            throw new BadRequestException("This file is already uploaded");
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.FileAlreadyUploaded);
         }
         
         string storedName = await _fileStorageService.SaveAsync(submissionId,file);
@@ -70,26 +74,30 @@ public class SubmissionFilesController : ControllerBase
             );
 
             if (!publishResult.Success)
-                return StatusCode(503, "Submission saved but could not be queued for processing.");
+                return CustomResponseBuilder.CreateSuccessResponse(CustomResponse.UnavailableRabbitMQService);
 
             return CustomResponseBuilder.CreateSuccessResponse(
-                CustomResponse.Successlly_Uploaded,
+                CustomResponse.FileUploadAccepted,
                 publishResult.ProcessingJobId
             ); 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish submission {SubmissionId} to RabbitMQ", submissionId);
-            return StatusCode(503, "Submission saved but could not be queued for processing.");
+            _logger.LogError(ex, "Failed to publish submission {SubmissionId} to RabbitMQ", submissionId);            
+            return CustomResponseBuilder.CreateSuccessResponse(CustomResponse.UnavailableRabbitMQService);
         }       
     }
 
     [HttpGet("{id}/download")] 
     public async Task<ActionResult> DownloadFile(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         var (fileStream, contentType, originalFileName) = await _fileStorageService.OpenAsync(id);
         
@@ -99,18 +107,19 @@ public class SubmissionFilesController : ControllerBase
     [HttpDelete("{id}")] 
     public async Task<IActionResult> DeleteFile(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
 
-        bool isDeleted = await _fileStorageService.DeleteAsync(id);
-        if (!isDeleted)
-        {
-            throw new BadRequestException("File could not be removed or found.");
-        }
+        await _fileStorageService.DeleteAsync(id);
+   
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.NoContent
+            CustomResponse.DataDeletedNoContent
         );
     }
 }

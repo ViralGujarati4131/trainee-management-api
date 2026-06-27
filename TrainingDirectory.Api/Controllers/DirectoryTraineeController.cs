@@ -3,6 +3,7 @@ using TraineeManagement.Api.Data.ConstRoute;
 using TraineeManagement.Api.Data.TraineeDTO;
 using TraineeManagement.Api.ResponsesBuilder;
 using TrainingDirectory.Api.DirectoryTraineeServiceInterface;
+using TraineeManagement.Api.Data.Response;
 
 namespace TrainingDirectory.Api.TraineeControllers;
 
@@ -18,15 +19,22 @@ public class TraineeController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TraineeResponseDto>> GetTraineeProfileByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetTraineeProfileByIdAsync(int id, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
 
        TraineeResponseDto trainee = await _directoryTraineeService.GetTraineeByIdAsync(id,cancellationToken);
 
-        return trainee;        
+        return CustomResponseBuilder.CreateSuccessResponse(
+            CustomResponse.DataRetrivedSuccess,
+            trainee
+        );        
     }
 }

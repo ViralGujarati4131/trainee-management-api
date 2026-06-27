@@ -9,7 +9,7 @@ namespace TraineeManagement.Api.GlobalExceptionMiddleware;
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
-    
+
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
 
     public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
@@ -20,21 +20,35 @@ public class GlobalExceptionMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        string correlationId = context.TraceIdentifier;
+
         try
         {
             await _next(context);
         }
         catch (BaseApplicationException ex)
         {
-            _logger.LogWarning("{ExceptionType} Caught: {Message}", ex.GetType().Name, ex.Message);
+            _logger.LogWarning(
+                "Application exception caught. CorrelationId={CorrelationId}, ExceptionType={ExceptionType}, Path={Path}, StatusCode={StatusCode}, ErrorCode={ErrorCode}",
+                correlationId,
+                ex.GetType().Name,
+                context.Request.Path,
+                ex.Descriptor.HttpStatusCode,
+                ex.Descriptor.CustomCode);
+
             await WriteResponseAsync(context, ex.Descriptor);
         }
         catch (Exception ex)
         {
-            if (ex.InnerException is MySqlException mysqlEx)
+            if (ex is MySqlException mysqlEx || ex.InnerException is MySqlException { } nestedMysqlEx && (mysqlEx = nestedMysqlEx) != null)
             {
-                _logger.LogError("Database Constraint Violation Encountered. Error Code: {Num}", mysqlEx.Number);
-                
+                _logger.LogError(
+                    mysqlEx,
+                    "Database dependency failure. CorrelationId={CorrelationId}, Path={Path}, MySqlErrorCode={MySqlErrorCode}",
+                    correlationId,
+                    context.Request.Path,
+                    mysqlEx.Number);
+
                 CustomResponseDescriptor dbDescriptor = mysqlEx.Number switch
                 {
                     AppConstants.Database.MySqlErrorCodes.NotFoundReference => CustomResponse.SqlReferenceConflict,
@@ -47,13 +61,19 @@ public class GlobalExceptionMiddleware
             }
             else
             {
-                _logger.LogError(ex, "Unhandled system failure tracking to destination: {Path}", context.Request.Path);
+                _logger.LogError(
+                    ex,
+                    "Unhandled exception. CorrelationId={CorrelationId}, Path={Path}, Method={Method}",
+                    correlationId,
+                    context.Request.Path,
+                    context.Request.Method);
+
                 await WriteResponseAsync(context, CustomResponse.InternalServerError);
             }
         }
     }
 
-    private static async Task WriteResponseAsync(HttpContext context, CustomResponseDescriptor descriptor, object? data = null)
+    private static async Task WriteResponseAsync(HttpContext context, CustomResponseDescriptor descriptor)
     {
         context.Response.StatusCode = descriptor.HttpStatusCode;
         context.Response.ContentType = "application/json";
@@ -61,8 +81,7 @@ public class GlobalExceptionMiddleware
         await context.Response.WriteAsJsonAsync(new
         {
             Code = descriptor.CustomCode,
-            Message = descriptor.Message,
-            Data = data
+            Message = descriptor.Message
         });
     }
 }

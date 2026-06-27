@@ -6,6 +6,8 @@ using TraineeManagement.Api.CacheServiceInterface;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.LearningTaskService;
 
@@ -43,7 +45,7 @@ public class LearningTaskService : ILearningTaskService
         if (learningTask == null)
         {
             _logger.LogWarning("LearningTask with ID {TaskId} was not found", id);
-            throw new NotFoundException("LearningTask");
+            throw new NotFoundException(CustomResponse.NotFound,"LearningTask");
         }
         return learningTask;
     }
@@ -91,7 +93,7 @@ public class LearningTaskService : ILearningTaskService
         if (dto == null)
         {
             _logger.LogWarning("LearningTask with ID {TaskId} was not found during target DTO projection.", id);
-            throw new NotFoundException("LearningTask");
+            throw new NotFoundException(CustomResponse.NotFound,"LearningTask");
         }
 
         return dto;

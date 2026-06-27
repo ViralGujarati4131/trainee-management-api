@@ -28,14 +28,14 @@ public class ReviewsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking review service to add a new review");
 
         ReviewResponseDto createdReview = await _reviewService.CreateReviewAsync(createReviewDto);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Created,
+            CustomResponse.DataInsertedSuccess,
             createdReview
         );
     }
@@ -48,7 +48,7 @@ public class ReviewsController : ControllerBase
         IEnumerable<ReviewResponseDto> reviews = await _reviewService.GetReviewsAsync();
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             reviews
         );
     }
@@ -56,16 +56,20 @@ public class ReviewsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetReviewById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking review service to retrieve review for ReviewId: {ReviewId}", id);
 
         ReviewResponseDto review = await _reviewService.GetReviewByIdAsync(id);
         
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             review
         );
     }

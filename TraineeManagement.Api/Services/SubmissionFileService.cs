@@ -7,6 +7,10 @@ using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
 using TraineeManagement.Api.Messaging.RabbitMQPublisher;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.ProcessingJobModel;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.Data.CustomException;
+
+
 
 namespace TraineeManagement.Api.SubmissionFileService;
 
@@ -84,7 +88,7 @@ public class SubmissionFileService : ISubmissionFileService
         {
             _logger.LogError("Access Denied: Attempted to upload file metadata without a valid User ID claim in the bearer token.");
         
-            throw new UnauthorizedAccessException("User identification claim is missing or invalid.");
+            throw new UnauthorizedException(CustomResponse.Unauthorized);
         }
         
         string checksum;

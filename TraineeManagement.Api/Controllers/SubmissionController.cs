@@ -28,14 +28,14 @@ public class SubmissionsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking submission service to add a new submission");
 
         SubmissionResponseDto createdSubmission = await _submissionService.CreateSubmissionAsync(createSubmissionDto);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Created,
+            CustomResponse.DataInsertedSuccess,
             createdSubmission
         );
     }
@@ -48,7 +48,7 @@ public class SubmissionsController : ControllerBase
         IEnumerable<SubmissionResponseDto> submissions = await _submissionService.GetSubmissionsAsync();
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             submissions
         );
     }
@@ -56,16 +56,20 @@ public class SubmissionsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetSubmissionById(int id)
     {
-        if (!ModelState.IsValid || id < 1)
+        if (!ModelState.IsValid)
         {
-            return CustomResponseBuilder.CreateValidationErrorResponse();
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
+        }
+        if(id < 1)
+        {
+            return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking submission service to retrieve submission for SubmissionId: {SubmissionId}", id);
 
         SubmissionResponseDto submission = await _submissionService.GetSubmissionByIdAsync(id);
 
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.Success,
+            CustomResponse.DataRetrivedSuccess,
             submission
         );
     }

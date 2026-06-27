@@ -1,15 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.ResponseDescriptor;
+using Microsoft.AspNetCore.Http;
 
 namespace TraineeManagement.Api.ResponsesBuilder;
 
 public static class CustomResponseBuilder
 {
-    public static ActionResult CreateValidationErrorResponse()
+    public static ActionResult CreateValidationErrorResponse(CustomResponseDescriptor descriptor)
     {
-        CustomResponseDescriptor descriptor = CustomResponse.ValidationError;
-
         return new ObjectResult(new
         {
             Code = descriptor.CustomCode,
@@ -21,9 +20,16 @@ public static class CustomResponseBuilder
     }
     public static ActionResult CreateSuccessResponse(CustomResponseDescriptor descriptor, object? data = null)
     {
-        if (descriptor.HttpStatusCode == StatusCodes.Status204NoContent)
+        if (descriptor.HttpStatusCode == StatusCodes.Status204NoContent ||  data == null)
         {
-            return new StatusCodeResult(StatusCodes.Status204NoContent);
+            return new ObjectResult(new
+            {
+                Code = descriptor.CustomCode,
+                Message = descriptor.Message
+            })
+            {
+                StatusCode = descriptor.HttpStatusCode
+            };
         }
 
         return new ObjectResult(new

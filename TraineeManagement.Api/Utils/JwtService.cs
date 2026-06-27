@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.UserModel;
 using TraineeManagement.Api.Data.Constants;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.JwtService;
 
@@ -30,7 +32,7 @@ public class JwtService : IJwtService
 
         IConfigurationSection jwtSettings = _configuration.GetSection("Jwt");
         
-        string secretKey = jwtSettings["Key"] ?? throw new JwtSecretMissingException();
+        string secretKey = jwtSettings["Key"] ?? throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 
         if (!int.TryParse(jwtSettings["ExpiryMinutes"], out expiryMinutes))
         {
@@ -63,7 +65,7 @@ public class JwtService : IJwtService
         
         if (string.IsNullOrWhiteSpace(generatedToken))
         {
-            throw new JwtOperationException();
+            throw new JwtOperationException(CustomResponse.JwtOperationError);
         }
 
         _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user.Id);

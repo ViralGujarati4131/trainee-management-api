@@ -44,10 +44,8 @@ builder.Services.Configure<CustomFileStoreValidation>(
 
 IHost host = builder.Build();
 
-using (IServiceScope scope = host.Services.CreateScope())
-{
-    RabbitConnection conn = scope.ServiceProvider.GetRequiredService<RabbitConnection>();
-    await conn.InitializeAsync();
-}
+
+RabbitConnection conn = host.Services.GetRequiredService<RabbitConnection>();
+await conn.InitializeAsync();
 
 await host.RunAsync();

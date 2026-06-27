@@ -7,6 +7,8 @@ using TraineeManagement.Api.ReviewServiceInterface;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.ReviewService;
 
@@ -105,7 +107,7 @@ public class ReviewService : IReviewService
         if (dto == null)
         {
             _logger.LogWarning("Review with ID {ReviewId} was not found during target DTO projection.", id);
-            throw new NotFoundException("Review");
+            throw new NotFoundException(CustomResponse.NotFound,"Review");
         }
        
         return dto;

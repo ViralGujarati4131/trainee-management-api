@@ -17,6 +17,8 @@ using Polly.Extensions.Http;
 using TraineeManagement.Api.TraineeService;
 using System.Net;
 using TraineeManagement.Api.TraineeServiceInterface;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.Data.CustomException;
 
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -37,15 +39,12 @@ builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
-    });
-
-
-// to do not allow any extra field with new name and value
-builder.Services.AddControllers()
+    })
     .AddNewtonsoftJson(options =>
     {
        options.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error; 
     });
+// to do not allow any extra field with new name and value
 
 
 // db connection
@@ -69,12 +68,13 @@ builder.Services.AddSingleton<RabbitConnection>();
 
 builder.Services.Configure<RabbitMqSettings>(
     builder.Configuration.GetSection("RabbitMQ"));
+
 builder.Services.AddSingleton<RabbitMqService>();
 
 
 // to validate the bearer token
 IConfigurationSection jwtSettings = builder.Configuration.GetSection("JWT");
-string jwtKeyString = jwtSettings["Key"] ?? throw new InvalidOperationException("JWT Key is missing from configuration.");
+string jwtKeyString = jwtSettings["Key"] ?? throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 byte[] tokenSigningKey = Encoding.UTF8.GetBytes(jwtKeyString);
 
 builder.Services.AddAuthentication(options =>
@@ -114,7 +114,7 @@ builder.Services.AddHttpClient<ITraineeService,TraineeService>((sp, client) =>
     IConfiguration config = sp.GetRequiredService<IConfiguration>();
     string? baseUrl = config["DirectoryService:BaseUrl"];
     if (string.IsNullOrWhiteSpace(baseUrl))
-        throw new InvalidOperationException("DirectoryService:BaseUrl is not configured");
+        throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 
     client.BaseAddress = new Uri(baseUrl);
 
@@ -147,9 +147,7 @@ builder.Services.AddApplicationServices();
 string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 if (allowedOrigin.Length == 0)
 {
-    throw new InvalidOperationException(
-        $"CORS configuration missing for environment: {builder.Environment.EnvironmentName}"
-    );
+    throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 }
 
 builder.Services.AddCors(options =>
@@ -164,8 +162,6 @@ builder.Services.AddCors(options =>
                       });
 });
 
-
-builder.Services.AddHttpContextAccessor();
 
 WebApplication app = builder.Build();
 

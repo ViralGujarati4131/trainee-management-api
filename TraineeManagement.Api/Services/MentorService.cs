@@ -6,6 +6,8 @@ using TraineeManagement.Api.CacheServiceInterface;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
+using TraineeManagement.Api.Data.Response;
+using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.MentorService;
 
@@ -35,7 +37,7 @@ public class MentorService : IMentorServices
         if (mentor == null)
         {
             _logger.LogWarning("Mentor with ID {MentorId} was not found", id);
-            throw new NotFoundException("Mentor");
+            throw new NotFoundException(CustomResponse.NotFound,"Mentor");
         }
         return mentor;
     }
@@ -71,7 +73,7 @@ public class MentorService : IMentorServices
         if (dto == null)
         {
             _logger.LogWarning("Mentor with ID {MentorId} was not found during target DTO projection.", id);
-            throw new NotFoundException("Mentor");
+            throw new NotFoundException(CustomResponse.NotFound,"Mentor");
         }
         
         return dto;
