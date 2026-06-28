@@ -4,7 +4,7 @@ using TraineeManagement.Api.Data.SubmissionModel;
 using TraineeManagement.Api.SubmissionServiceInterface;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.Response;
 
@@ -53,7 +53,7 @@ public class SubmissionService : ISubmissionService
         _context.Submissions.Add(submission);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully created new submission with ID {SubmissionId}", submission.Id);
+        _logger.LogInformation("State transition: Created submission record. Id: {SubmissionId}", submission.Id);
         
         return MapToResponseDto(submission);
     }
@@ -78,14 +78,20 @@ public class SubmissionService : ISubmissionService
     {
         _logger.LogDebug("Retrieving submission with ID: {SubmissionId}", id);
 
-        SubmissionResponseDto? cached = await _cacheService.GetAsync<SubmissionResponseDto>(CacheKey.Submission(id));
+        string cacheKey = CacheKey.Submission(id);
+        SubmissionResponseDto? cached = await _cacheService.GetAsync<SubmissionResponseDto>(cacheKey);
         if (cached is not null)
+        {
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
             return cached;
+        }
+
+        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
 
         SubmissionResponseDto? dto = await _context.Submissions
             .AsNoTracking()
             .Where(s => s.Id == id)
-            .Select(s => new SubmissionResponseDto(
+            .Select(s => s == null ? null : new SubmissionResponseDto(
                 s.Id,
                 s.TaskAssignmentId,
                 s.SubmissionUrl,
@@ -96,12 +102,13 @@ public class SubmissionService : ISubmissionService
 
         if (dto == null)
         {
-            _logger.LogWarning("Submission with ID {SubmissionId} was not found during target DTO projection.", id);
+            _logger.LogWarning("Dependency failure: DTO projection missing. Id: {SubmissionId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"Submission");
         }
         
-        await _cacheService.SetAsync(CacheKey.Submission(id), dto, TimeSpan.FromMinutes(10));
+        await _cacheService.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(10));
 
+        _logger.LogInformation("State check: Bulk fetch submissions success. Id: {SubmissionId}", id);
         return dto;
     }
 }

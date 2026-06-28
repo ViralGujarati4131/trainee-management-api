@@ -28,12 +28,14 @@ public class SubmissionsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking submission service to add a new submission");
 
         SubmissionResponseDto createdSubmission = await _submissionService.CreateSubmissionAsync(createSubmissionDto);
 
+        _logger.LogInformation("State check: Submission creation success. Id: {SubmissionId}", createdSubmission.Id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataInsertedSuccess,
             createdSubmission
@@ -47,6 +49,7 @@ public class SubmissionsController : ControllerBase
 
         IEnumerable<SubmissionResponseDto> submissions = await _submissionService.GetSubmissionsAsync();
 
+        _logger.LogInformation("State check: Bulk fetch submissions success.");
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             submissions
@@ -58,16 +61,19 @@ public class SubmissionsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {SubmissionId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking submission service to retrieve submission for SubmissionId: {SubmissionId}", id);
 
         SubmissionResponseDto submission = await _submissionService.GetSubmissionByIdAsync(id);
 
+        _logger.LogInformation("State check: Fetch submission by ID success. Id: {SubmissionId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             submission

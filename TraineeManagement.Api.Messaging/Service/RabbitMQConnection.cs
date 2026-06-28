@@ -34,17 +34,32 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
 
         public async Task InitializeAsync()
         {
-            _connection = await _factory.CreateConnectionAsync();
-            _logger.LogInformation("RabbitMQ base connection and channel successfully established.");
+            try
+            {
+                _connection = await _factory.CreateConnectionAsync();
+                _logger.LogInformation("Publish/consume connection initialized successfully. Host: {Host}", _settings.Host);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Dependency failure opening connection. Host: {Host}", _settings.Host);
+                throw;
+            }
         }
 
         public async Task RegisterQueueAsync(string queueName)
         {
             if(_connection == null)
+            {
+                _logger.LogError("Dependency failure: Connection uninitialized.");
                 throw new NotFoundException(CustomResponse.NotFound);
+            }
                 
             using IChannel _channel = await _connection.CreateChannelAsync();
-            if (_channel is null) throw new OperationException(CustomResponse.ChannelNotInitialized);
+            if (_channel is null) 
+            {
+                _logger.LogError("Dependency failure: Channel allocation failed.");
+                throw new OperationException(CustomResponse.ChannelNotInitialized);
+            }
 
             string mainExchange = AppConstants.RabbitMQ.GetExchange(queueName);
             string mainQueue = AppConstants.RabbitMQ.GetQueue(queueName);
@@ -102,14 +117,16 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
                 routingKey: mainRoutingKey
             );
 
-            _logger.LogInformation("Queue initialization successfully.");
+            _logger.LogInformation("Queue initialization successfully. TargetQueue: {Queue}", mainQueue);
         }
 
         public async ValueTask DisposeAsync()
         {
             if (_connection != null && _connection.IsOpen)
+            {
                 await _connection.CloseAsync();
-            _logger.LogInformation("RabbitMQ async connection closed.");
+                _logger.LogInformation("State transition: Connection closed asynchronously.");
+            }
         }
     }
 }

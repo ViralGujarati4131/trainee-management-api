@@ -13,8 +13,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.16" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.16" />
     <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
     <PackageReference Include="StackExchange.Redis" Version="3.0.7" />
   </ItemGroup>
@@ -23,6 +21,5 @@
     <ProjectReference Include="..\TraineeManagement.Api.Contract\TraineeManagement.Api.Contract.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Data\TraineeManagement.Api.Data.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Messaging\TraineeManagement.Api.Messaging.csproj" />
-    <ProjectReference Include="..\TraineeManagement.Api\TraineeManagement.Api.csproj" />
   </ItemGroup>
 </Project>

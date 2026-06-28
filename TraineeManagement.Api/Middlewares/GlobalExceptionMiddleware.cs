@@ -38,6 +38,24 @@ public class GlobalExceptionMiddleware
 
             await WriteResponseAsync(context, ex.Descriptor);
         }
+        catch (TaskCanceledException)
+        {
+            _logger.LogWarning("Upstream timeout. Path={Path}", context.Request.Path);
+            context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
+            await context.Response.WriteAsJsonAsync(new { Status = 504, Message = "Upstream service timed out." });
+        }
+        catch (Exception ex) when (ex.GetType().Name == "BrokenCircuitException")
+        {
+            _logger.LogError("Circuit breaker open. Path={Path}", context.Request.Path);
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            await context.Response.WriteAsJsonAsync(new { Status = 503, Message = "Service temporarily unavailable." });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Upstream connection failure. Path={Path}", context.Request.Path);
+            context.Response.StatusCode = StatusCodes.Status502BadGateway;
+            await context.Response.WriteAsJsonAsync(new { Status = 502, Message = "Upstream service unreachable." });
+        }
         catch (Exception ex)
         {
             if (ex is MySqlException mysqlEx || ex.InnerException is MySqlException { } nestedMysqlEx && (mysqlEx = nestedMysqlEx) != null)

@@ -28,16 +28,19 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {TraineeId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to retrieve profile for TraineeId: {TraineeId}", id);
         
         TraineeResponseDto? trainee = await _traineeService.GetTraineeByIdAsync(id,cancellationToken);
         
+        _logger.LogInformation("State check: Fetch trainee by ID success. Id: {TraineeId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             trainee
@@ -49,12 +52,14 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking trainee service to establish a new trainee registration");
         
         TraineeResponseDto createdTrainee = await _traineeService.CreateTraineeAsync(createTraineeDto);
         
+        _logger.LogInformation("State check: Trainee creation success. Id: {TraineeId}", createdTrainee.Id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataInsertedSuccess,
             createdTrainee
@@ -66,16 +71,19 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {TraineeId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to modify records for TraineeId: {TraineeId}", id);
         
         TraineeResponseDto updatedTrainee = await _traineeService.UpdateTraineeAsync(id, updateTraineeDto);
         
+        _logger.LogInformation("State check: Trainee modification success. Id: {TraineeId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataUpdatedSuccess,
             updatedTrainee
@@ -87,16 +95,19 @@ public class TraineesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {TraineeId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking trainee service to delete records for TraineeId: {TraineeId}", id);
         
         await _traineeService.DeleteTraineeByIdAsync(id);
         
+        _logger.LogInformation("State check: Trainee deletion success. Id: {TraineeId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataDeletedNoContent
         );
@@ -111,6 +122,7 @@ public class TraineesController : ControllerBase
 
             IEnumerable<TraineeResponseDto> trainees = await _traineeService.GetTraineesAsync();
 
+            _logger.LogInformation("State check: Bulk fetch trainees success.");
             return CustomResponseBuilder.CreateSuccessResponse(
                 CustomResponse.DataRetrivedSuccess,
                 trainees
@@ -120,6 +132,7 @@ public class TraineesController : ControllerBase
         
         IEnumerable<TraineeResponseDto> searchResults = await _traineeService.SearchTraineesAsync(searchTrainee);
         
+        _logger.LogInformation("State check: Trainee lookup matching search query completed.");
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             searchResults
@@ -145,6 +158,7 @@ public class TraineesController : ControllerBase
         
         TraineePaginationSearchDto? pagedData = await _traineeService.GetPagedAndSearchedTraineesAsync(pageNumber, pageSize, name, status);
         
+        _logger.LogInformation("State check: Paginated search results generated successfully.");
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             pagedData

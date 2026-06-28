@@ -4,20 +4,25 @@ using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.TraineeDTO;
 using TrainingDirectory.Api.DirectoryTraineeServiceInterface;
 using TraineeManagement.Api.Data.Response;
+using Microsoft.Extensions.Logging;
 
 namespace TrainingDirectory.Api.DirectoryTraineeService;
 
 public class DirectoryTraineeService : IDirectoryTraineeService
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<DirectoryTraineeService> _logger;
 
-    public DirectoryTraineeService(AppDbContext context)
+    public DirectoryTraineeService(AppDbContext context, ILogger<DirectoryTraineeService> logger)
     {
         _context = context;
+        _logger = logger;
     }
     
     public async Task<TraineeResponseDto> GetTraineeByIdAsync(int id, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Fetching trainee record. Id: {TraineeId}", id);
+
         TraineeResponseDto? trainee = await _context.Trainees
             .AsNoTracking()
             .Where(t => t.Id == id)
@@ -26,8 +31,11 @@ public class DirectoryTraineeService : IDirectoryTraineeService
 
         if (trainee == null)
         {
+            _logger.LogWarning("Trainee record missing. Id: {TraineeId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"Trainee");
         }
+
+        _logger.LogInformation("Trainee record found. Id: {TraineeId}", id);
         return trainee;
     }
 }

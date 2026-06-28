@@ -1,7 +1,7 @@
-    using System.Security.Cryptography;
+using System.Security.Cryptography;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Options;
-    using TraineeManagement.Api.FileStoreValidation;
+    using TraineeManagement.Api.Data.FileStoreValidation;
     using TraineeManagement.Api.FileStorageServiceInterface;
     using TraineeManagement.Api.Data.SubmissionFileModel;
     using TraineeManagement.Api.Data.SubmissionModel;
@@ -60,7 +60,7 @@
 
             if (!_fileConfiguration.AllowedExtensions.Contains(ext))
             {
-                _logger.LogWarning("Unauthorized file extension block triggered for: {Extension}", ext);
+                _logger.LogWarning("Dependency failure: Unauthorized extension block. Extension: {Extension}", ext);
                 throw new BadRequestException(CustomResponse.FileExtentionNotAllowed);
             }
 
@@ -76,7 +76,7 @@
 
                 if (!actualHeader.SequenceEqual(expectedSignature))
                 {
-                    _logger.LogWarning("Security: File contents for {FileName} do not match hex signature {Hex}!", file.FileName, hexSignature);
+                    _logger.LogWarning("Dependency failure: Integrity check mismatched verification payload.");
                     throw new BadRequestException(CustomResponse.FileContentMismatch);
                 }
             }
@@ -91,11 +91,13 @@
                 using FileStream output = new FileStream(filePath, FileMode.Create, FileAccess.Write);
                 using Stream fileStream = file.OpenReadStream();
                 await fileStream.CopyToAsync(output);
+                
+                _logger.LogInformation("File write complete. SubmissionId: {SubmissionId}", submissionId);
                 return diskSafeFileName;  
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Physical disk IO failure saving file {OriginalFileName}", file.FileName);
+                _logger.LogError(ex, "Dependency failure: Physical disk IO failure writing file stream. SubmissionId: {SubmissionId}", submissionId);
                 throw new IOError(CustomResponse.IOFail);
             }
         }
@@ -111,11 +113,13 @@
             string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
             if (!File.Exists(filePath))
             {
+                _logger.LogWarning("Dependency failure: Physical file missing from disk store. FileId: {FileId}", id);
                 throw new FileNotFoundError(CustomResponse.FileNotFound);
             }
 
             FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
         
+            _logger.LogInformation("File read access initialization complete. FileId: {FileId}", id);
             return (fileStream, metadata.ContentType, metadata.OriginalFileName);
         }
 
@@ -147,11 +151,11 @@
                 try
                 {
                     File.Delete(filePath);
-                    _logger.LogInformation("Physical storage file successfully deleted: {FileName}", metadata.StorageFileName);
+                    _logger.LogInformation("Physical storage file successfully deleted. FileId: {FileId}", id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to delete physical file {FileName} from disk storage.", metadata.StorageFileName);
+                    _logger.LogError(ex, "Dependency failure: Erase operation failed on physical disk. FileId: {FileId}", id);
                     throw new IOError(CustomResponse.IOFail);
                 }
             }

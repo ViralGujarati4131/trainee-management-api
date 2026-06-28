@@ -34,7 +34,7 @@ public class UserService : IUserService
 
     private LoginTokenResponseDto MapToLoginResponseDto(string token, int expiresInSeconds, User user)
     {
-        _logger.LogInformation("Creating response object for successful login session of Username: {Username}", user.Username);
+        _logger.LogInformation("Creating response mapping. UserId: {UserId}", user.Id);
         
         return new LoginTokenResponseDto
         (
@@ -54,7 +54,7 @@ public class UserService : IUserService
         User? user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         if (user == null)
         {
-            _logger.LogWarning("User with Username {Username} was not found in the database", username);
+            _logger.LogWarning("Identity missing. Target record not located in store.");
             throw new NotFoundException(CustomResponse.NotFound,"User");
         }
         return user;
@@ -64,32 +64,32 @@ public class UserService : IUserService
     {
         try
         {
-            _logger.LogDebug("Attempting to find user record for Username: {Username}", userLoginDto.Username);
+            _logger.LogDebug("Evaluating authentication database context verification lookups.");
 
             User user = await FetchUserByUsernameInternalAsync(userLoginDto.Username);
 
-            _logger.LogDebug("Verifying password credentials for Username: {Username}", userLoginDto.Username);
+            _logger.LogDebug("Evaluating verification criteria against matching database record hashes.");
             PasswordVerificationResult verificationResult = VerifyPassword(user, userLoginDto.Password, user.PasswordHash);
 
             if (verificationResult != PasswordVerificationResult.Success)
             {
-                _logger.LogWarning("Invalid password credential provided for Username: {Username}", userLoginDto.Username);
+                _logger.LogWarning("Dependency failure: Secure comparison failed due to invalid credential match. UserId: {UserId}", user.Id);
 
                 throw new UnauthorizedException(CustomResponse.Unauthorized);
             }
 
-            _logger.LogInformation("Password successfully verified. Initiating JWT token generation for Username: {Username}", user.Username);
+            _logger.LogInformation("Credentials matched. Initiating security token factory workflows. UserId: {UserId}", user.Id);
             
             string token = _jwtService.GenerateJwtToken(user, out int expiryMinutes);
             int expiresInSeconds = expiryMinutes * 60;
             
-            _logger.LogInformation("JWT Token successfully generated. Expiry: {ExpiryMinutes} minutes", expiryMinutes);
+            _logger.LogInformation("Security token generation completed. DurationMinutes: {Duration}", expiryMinutes);
             
             return MapToLoginResponseDto(token, expiresInSeconds, user);
         }
         catch (NotFoundException)
         {
-            _logger.LogWarning("Login attempt failed due to invalid username sequence: {Username}", userLoginDto.Username);
+            _logger.LogWarning("Dependency failure: Secure comparison failed due to unmatched identifier key sequences.");
             
             throw new UnauthorizedException(CustomResponse.Unauthorized);
         }

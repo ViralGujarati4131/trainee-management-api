@@ -1,8 +1,9 @@
 using System.Text.Json;
 using StackExchange.Redis;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
+using Microsoft.Extensions.Logging;
 
-namespace TraineeManagement.Api.CacheService;
+namespace TraineeManagement.Api.Data.CacheService;
 
 public class CacheService : ICacheService
 {
@@ -21,7 +22,7 @@ public class CacheService : ICacheService
         {
             if (!_connection.IsConnected)
             {
-                _logger.LogWarning("Redis unavailable. Cache MISS for key: {Key}", key);
+                _logger.LogWarning("Dependency failure: Redis unavailable. Cache miss. CacheKey: {CacheKey}", key);
                 return default;
             }
 
@@ -29,16 +30,16 @@ public class CacheService : ICacheService
 
             if (value.IsNullOrEmpty)
             {
-                _logger.LogDebug("Cache MISS for key: {Key}", key);
+                _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", key);
                 return default;
             }
 
-            _logger.LogDebug("Cache HIT for key: {Key}", key);
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", key);
             return JsonSerializer.Deserialize<T>(value!);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Cache GET failed for key: {Key}. Falling back to DB", key);
+            _logger.LogError(ex, "Dependency failure: Cache GET failed. CacheKey: {CacheKey}", key);
             return default;
         }
     }
@@ -49,18 +50,18 @@ public class CacheService : ICacheService
         {
             if (!_connection.IsConnected)
             {
-                _logger.LogWarning("Redis unavailable. Skipping cache SET for key: {Key}", key);
+                _logger.LogWarning("Dependency failure: Redis unavailable. Skipping cache SET. CacheKey: {CacheKey}", key);
                 return;
             }
 
             string json = JsonSerializer.Serialize(value);
             await _connection.GetDatabase().StringSetAsync(key, json, ttl);
 
-            _logger.LogDebug("Cache SET for key: {Key} with TTL: {TTL}", key, ttl);
+            _logger.LogDebug("Cache set. CacheKey: {CacheKey}, TTL: {TTL}", key, ttl);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Cache SET failed for key: {Key}. Continuing without cache", key);
+            _logger.LogError(ex, "Dependency failure: Cache SET failed. CacheKey: {CacheKey}", key);
         }
     }
 
@@ -70,16 +71,16 @@ public class CacheService : ICacheService
         {
             if (!_connection.IsConnected)
             {
-                _logger.LogWarning("Redis unavailable. Skipping cache REMOVE for key: {Key}", key);
+                _logger.LogWarning("Dependency failure: Redis unavailable. Skipping cache REMOVE. CacheKey: {CacheKey}", key);
                 return;
             }
 
             await _connection.GetDatabase().KeyDeleteAsync(key);
-            _logger.LogDebug("Cache INVALIDATED for key: {Key}", key);
+            _logger.LogDebug("Cache evict. CacheKey: {CacheKey}", key);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Cache REMOVE failed for key: {Key}", key);
+            _logger.LogError(ex, "Dependency failure: Cache REMOVE failed. CacheKey: {CacheKey}", key);
         }
     }
 

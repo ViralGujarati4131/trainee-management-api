@@ -3,7 +3,7 @@ using TraineeManagement.Api.TaskAssignmentServiceInterface;
 using TraineeManagement.Api.Data.TaskAssignmentDTO;
 using TraineeManagement.Api.Data.TaskAssignmentModel;
 using TraineeManagement.Api.Data.CustomException;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.Response;
@@ -46,7 +46,7 @@ public class TaskAssignmentService : ITaskAssignmentService
         TaskAssignment? taskAssignment = await _context.TaskAssignments.FindAsync(id);
         if (taskAssignment == null)
         {
-            _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found", id);
+            _logger.LogWarning("Dependency failure: Record missing. Id: {AssignmentId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"TaskAssignment");
         }
         return taskAssignment;
@@ -67,7 +67,7 @@ public class TaskAssignmentService : ITaskAssignmentService
 
         _context.TaskAssignments.Add(taskAssignment);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully created new taskAssignment with ID {AssignmentId}", taskAssignment.Id);
+        _logger.LogInformation("State transition: Created assignment record. Id: {AssignmentId}", taskAssignment.Id);
 
         return MapToResponseDto(taskAssignment);
     }
@@ -89,6 +89,7 @@ public class TaskAssignmentService : ITaskAssignmentService
                 ta.Remarks
             )).ToListAsync();
 
+        _logger.LogInformation("State check: Bulk fetch task assignments success.");
         return taskAssignmentResponses;
     }
 
@@ -96,9 +97,15 @@ public class TaskAssignmentService : ITaskAssignmentService
     {
         _logger.LogDebug("Retrieving taskAssignment with ID: {AssignmentId}", id);
 
-        TaskAssignmentResponseDto? cached = await _cacheService.GetAsync<TaskAssignmentResponseDto>(CacheKey.TaskAssignment(id));
+        string cacheKey = CacheKey.TaskAssignment(id);
+        TaskAssignmentResponseDto? cached = await _cacheService.GetAsync<TaskAssignmentResponseDto>(cacheKey);
         if (cached is not null)
+        {
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
             return cached;
+        }
+
+        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
 
         TaskAssignmentResponseDto? dto = await _context.TaskAssignments
             .AsNoTracking()
@@ -116,11 +123,11 @@ public class TaskAssignmentService : ITaskAssignmentService
 
         if (dto == null)
         {
-            _logger.LogWarning("TaskAssignment with ID {AssignmentId} was not found during target DTO projection.", id);
+            _logger.LogWarning("Dependency failure: DTO projection missing. Id: {AssignmentId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"TaskAssignment");
         }
 
-        await _cacheService.SetAsync(CacheKey.TaskAssignment(id), dto, CacheTtl);
+        await _cacheService.SetAsync(cacheKey, dto, CacheTtl);
 
         return dto;
     }
@@ -136,7 +143,7 @@ public class TaskAssignmentService : ITaskAssignmentService
         try
         {
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Successfully updated taskAssignment for ID {AssignmentId}", id);
+            _logger.LogInformation("State transition: Modified assignment record. Id: {AssignmentId}", id);
         }
         finally
         {

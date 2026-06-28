@@ -1,6 +1,6 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Data.ReviewDTO;
 using TraineeManagement.Api.Data.ReviewModel;
 using TraineeManagement.Api.ReviewServiceInterface;
@@ -55,9 +55,11 @@ public class ReviewService : IReviewService
         _context.Reviews.Add(review);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully created new review with ID {ReviewId}", review.Id);
+        _logger.LogInformation("State transition: Created review record. Id: {ReviewId}", review.Id);
 
-        await _cacheService.RemoveManyAsync(CacheKey.AllReview());
+        string cacheKey = CacheKey.AllReview();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
 
         return MapToResponseDto(review);
     }
@@ -66,9 +68,15 @@ public class ReviewService : IReviewService
     {
         _logger.LogDebug("Fetching all reviews from the database");
 
-        IEnumerable<ReviewResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<ReviewResponseDto>>(CacheKey.AllReview());
+        string cacheKey = CacheKey.AllReview();
+        IEnumerable<ReviewResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<ReviewResponseDto>>(cacheKey);
         if (cached is not null)
+        {
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
             return cached;
+        }
+
+        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
 
         IEnumerable<ReviewResponseDto> reviews = await _context.Reviews
             .AsNoTracking()
@@ -82,7 +90,7 @@ public class ReviewService : IReviewService
                 r.ReviewedDate
             )).ToListAsync();
         
-        await _cacheService.SetAsync(CacheKey.AllReview(), reviews, TimeSpan.FromMinutes(10));
+        await _cacheService.SetAsync(cacheKey, reviews, TimeSpan.FromMinutes(10));
 
         return reviews;
     }
@@ -106,7 +114,7 @@ public class ReviewService : IReviewService
 
         if (dto == null)
         {
-            _logger.LogWarning("Review with ID {ReviewId} was not found during target DTO projection.", id);
+            _logger.LogWarning("Dependency failure: DTO projection missing. Id: {ReviewId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"Review");
         }
        

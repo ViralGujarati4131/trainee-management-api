@@ -28,7 +28,7 @@ public class JwtService : IJwtService
 
     public string GenerateJwtToken(User user, out int expiryMinutes)
     {
-        _logger.LogInformation("Retrieving configuration settings and claims to generate JWT token for UserId: {UserId}", user.Id);
+        _logger.LogInformation("Generating token parameters. UserId: {UserId}", user.Id);
 
         IConfigurationSection jwtSettings = _configuration.GetSection("Jwt");
         
@@ -65,10 +65,11 @@ public class JwtService : IJwtService
         
         if (string.IsNullOrWhiteSpace(generatedToken))
         {
+            _logger.LogError("Dependency failure: Generation failed. UserId: {UserId}", user.Id);
             throw new JwtOperationException(CustomResponse.JwtOperationError);
         }
 
-        _logger.LogInformation("JWT token successfully generated for UserId: {UserId}", user.Id);
+        _logger.LogInformation("Token generation complete. UserId: {UserId}", user.Id);
         return generatedToken;
     }
 }

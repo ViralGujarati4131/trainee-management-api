@@ -17,7 +17,7 @@ public class HealthController : ControllerBase
     [HttpGet]
     public IActionResult GetMessage()
     {
-        _logger.LogInformation("System health status requested.");
+        _logger.LogInformation("State check: Processing request.");
         
         return Ok(new
         {

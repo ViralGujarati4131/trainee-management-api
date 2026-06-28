@@ -10,7 +10,7 @@ using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.ResponsesBuilder;
 
-namespace TraineeManagement.Api.UserSeeder;
+namespace TraineeManagement.Api.Extensions;
 
 public class UserSeeder
 {
@@ -80,7 +80,7 @@ public class UserSeeder
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failure during user seeding routines.");
+            logger.LogError(ex, "Dependency failure: Failure during user seeding routines.");
             
             throw new DataSeedingException(CustomResponse.DataSeedingError);
         }

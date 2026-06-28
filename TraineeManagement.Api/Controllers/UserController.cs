@@ -26,13 +26,14 @@ public class UserController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
-        _logger.LogInformation("Login attempt initiated for Username: {Username}", userLoginDto.Username);
+        _logger.LogInformation("State transition: Processing credentials validation thread entry.");
 
         LoginTokenResponseDto authenticationResult = await _userService.LoginUserAsync(userLoginDto);
         
-        _logger.LogInformation("Authentication successful. Session token issued for Username: {Username}", userLoginDto.Username);
+        _logger.LogInformation("Publish outcome: Authentication successful. Identity verification complete.");
         
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.LoginSuccess,

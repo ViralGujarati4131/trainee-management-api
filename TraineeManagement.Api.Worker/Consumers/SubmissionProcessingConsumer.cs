@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
 using TraineeManagement.Api.Data.DatabaseContext; 
 using TraineeManagement.Api.Data.Constants;
@@ -12,7 +12,7 @@ using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.ProcessingJobModel;
 using TraineeManagement.Api.Data.SubmissionFileModel;
 using TraineeManagement.Api.Data.TaskAssignmentModel;
-using TraineeManagement.Api.FileStoreValidation;
+using TraineeManagement.Api.Data.FileStoreValidation;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
 using TraineeManagement.Api.Data.Response;
 
@@ -82,7 +82,7 @@ public class SubmissionProcessingConsumer : BackgroundService
 
         AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(channel);
 
-        consumer.ReceivedAsync += async (model, ea) =>
+        consumer.ReceivedAsync += async (object model, BasicDeliverEventArgs ea) =>
         {
             byte[] body = ea.Body.ToArray();
             string json = Encoding.UTF8.GetString(body);
@@ -93,21 +93,25 @@ public class SubmissionProcessingConsumer : BackgroundService
                 message = JsonSerializer.Deserialize<SubmissionProcessingContract>(json) 
                         ?? throw new JsonConversionException(CustomResponse.JsonConversionError);
 
-                _logger.LogInformation("De-queuing MessageId={MessageId} from queue '{Queue}'", message.MessageId, QueueName);
+                // Correlation scope groups all down-stream operations inside this unique execution path
+                using (IDisposable? scope = _logger.BeginScope(new Dictionary<string, object> { ["MessageId"] = message.MessageId, ["Queue"] = QueueName }))
+                {
+                    _logger.LogInformation("Consume message started.");
 
-                await ProcessSubmissionInternalAsync(message, stoppingToken);
+                    await ProcessSubmissionInternalAsync(message, stoppingToken);
 
-                await channel.BasicAckAsync(
-                    deliveryTag: ea.DeliveryTag, 
-                    multiple: false, 
-                    cancellationToken: stoppingToken
-                );
-                
-                _logger.LogInformation("Successfully completed and acknowledged for MessageId={MessageId}", message.MessageId);
+                    await channel.BasicAckAsync(
+                        deliveryTag: ea.DeliveryTag, 
+                        multiple: false, 
+                        cancellationToken: stoppingToken
+                    );
+                    
+                    _logger.LogInformation("Consume message acknowledged successfully.");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception thrown while processing asynchronous task thread.");
+                _logger.LogError(ex, "Dependency failure processing asynchronous subscriber execution stream.");
                 await HandleFailureAsync(ea, message, json, ex, stoppingToken);
             }
         };
@@ -118,6 +122,7 @@ public class SubmissionProcessingConsumer : BackgroundService
             consumer: consumer, 
             cancellationToken: stoppingToken
         );
+        await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
     private async Task ProcessSubmissionInternalAsync(SubmissionProcessingContract message, CancellationToken stoppingToken)
@@ -130,7 +135,7 @@ public class SubmissionProcessingConsumer : BackgroundService
 
         if (existingJob?.Status == ProcessingJobStatus.Completed) 
         {
-            _logger.LogWarning("MessageId={MessageId} already processed.", message.MessageId);
+            _logger.LogWarning("State transition ignored. Job already finished. JobId: {JobId}", message.ProcessingJobId);
             return;
         }
 
@@ -138,12 +143,15 @@ public class SubmissionProcessingConsumer : BackgroundService
         existingJob.StartedAt = DateTime.UtcNow;
         existingJob.Attempts++;
         
+        _logger.LogInformation("State transition: Processing. JobId: {JobId}, Attempt: {Attempt}", message.ProcessingJobId, existingJob.Attempts);
         await dbContext.SaveChangesAsync(stoppingToken);
 
         _logger.LogInformation("TaskAssignment={TaskAssignmentId} status map to Submitted...", message.TaskAssignmentId);
         TaskAssignment assignment = await dbContext.TaskAssignments
             .FirstOrDefaultAsync(a => a.Id == message.TaskAssignmentId, stoppingToken) 
             ?? throw new NotFoundException(CustomResponse.NotFound,"TaskAssignment");
+        
+        assignment.Status = TaskAssignmentStatus.Submitted;
 
         _logger.LogInformation("Evaluating file storage deduplication for SubmissionFileId={FileId}...", message.SubmissionFileId);
         SubmissionFile newSubmissionFile = await dbContext.SubmissionFiles
@@ -175,9 +183,12 @@ public class SubmissionProcessingConsumer : BackgroundService
         existingJob.Status = ProcessingJobStatus.Completed; 
         existingJob.CompletedAt = DateTime.UtcNow;
         
+        _logger.LogInformation("State transition: Completed. JobId: {JobId}", existingJob.Id);
         await dbContext.SaveChangesAsync(stoppingToken);
 
-        await _cacheService.RemoveAsync($"task-assignment:{assignment.Id}");
+        string cacheKey = $"task-assignment:{assignment.Id}";
+        await _cacheService.RemoveAsync(cacheKey);
+        _logger.LogInformation("Cache evict. Key: {CacheKey}", cacheKey);
     }
 
     private async Task HandleFailureAsync(
@@ -209,12 +220,12 @@ public class SubmissionProcessingConsumer : BackgroundService
                     {
                         job.Status = ProcessingJobStatus.Failed; 
                         job.CompletedAt = DateTime.UtcNow;
-                        _logger.LogError("MessageId={MessageId} permanently as FAILED.", message.MessageId);
+                        _logger.LogError("State transition: Failed. Permanent or max retry reached. JobId: {JobId}, Attempt: {Attempt}", job.Id, job.Attempts);
                     }
                     else
                     {
                         job.Status = ProcessingJobStatus.Queued; 
-                        _logger.LogWarning("Transient Failure: MessageId={MessageId} returning back to queue.", message.MessageId);
+                        _logger.LogWarning("State transition: Re-queued. Transient failure pattern detected. JobId: {JobId}, Attempt: {Attempt}", job.Id, job.Attempts);
                     }
                     
                     await dbContext.SaveChangesAsync(stoppingToken);
@@ -229,6 +240,7 @@ public class SubmissionProcessingConsumer : BackgroundService
                     requeue: false, 
                     cancellationToken: stoppingToken
                 );
+                _logger.LogWarning("Publish outcome: Dead-lettered/Dropped. DeliveryTag: {DeliveryTag}", ea.DeliveryTag);
             }
             else
             {
@@ -238,6 +250,7 @@ public class SubmissionProcessingConsumer : BackgroundService
                     requeue: true, 
                     cancellationToken: stoppingToken
                 );
+                _logger.LogWarning("Publish outcome: Re-queued to broker. DeliveryTag: {DeliveryTag}", ea.DeliveryTag);
             }
         }
         catch (Exception criticalDbException)

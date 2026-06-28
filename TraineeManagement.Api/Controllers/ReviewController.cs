@@ -28,12 +28,14 @@ public class ReviewsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking review service to add a new review");
 
         ReviewResponseDto createdReview = await _reviewService.CreateReviewAsync(createReviewDto);
 
+        _logger.LogInformation("State check: Review creation success. Id: {ReviewId}", createdReview.Id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataInsertedSuccess,
             createdReview
@@ -47,6 +49,7 @@ public class ReviewsController : ControllerBase
 
         IEnumerable<ReviewResponseDto> reviews = await _reviewService.GetReviewsAsync();
 
+        _logger.LogInformation("State check: Bulk fetch reviews success.");
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             reviews
@@ -58,16 +61,19 @@ public class ReviewsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {ReviewId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking review service to retrieve review for ReviewId: {ReviewId}", id);
 
         ReviewResponseDto review = await _reviewService.GetReviewByIdAsync(id);
         
+        _logger.LogInformation("State check: Fetch review by ID success. Id: {ReviewId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             review

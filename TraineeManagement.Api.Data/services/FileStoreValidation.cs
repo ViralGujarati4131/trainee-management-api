@@ -1,4 +1,4 @@
-namespace TraineeManagement.Api.FileStoreValidation;
+namespace TraineeManagement.Api.Data.FileStoreValidation;
 
 public class CustomFileStoreValidation
 {

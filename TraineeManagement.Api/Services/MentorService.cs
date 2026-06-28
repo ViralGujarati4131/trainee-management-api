@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data.MentorDTO;
 using TraineeManagement.Api.Data.MentorModel;
 using TraineeManagement.Api.MentorServiceInterface;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
@@ -36,7 +36,7 @@ public class MentorService : IMentorServices
         Mentor? mentor = await _context.Mentors.FindAsync(id);
         if (mentor == null)
         {
-            _logger.LogWarning("Mentor with ID {MentorId} was not found", id);
+            _logger.LogWarning("Dependency failure: Record missing. Id: {MentorId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"Mentor");
         }
         return mentor;
@@ -46,16 +46,22 @@ public class MentorService : IMentorServices
     {
         _logger.LogDebug("Fetching all mentors from the database");
 
-        IEnumerable<MentorResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<MentorResponseDto>>(CacheKey.AllMentor());
+        string cacheKey = CacheKey.AllMentor();
+        IEnumerable<MentorResponseDto>? cached = await _cacheService.GetAsync<IEnumerable<MentorResponseDto>>(cacheKey);
         if (cached is not null)
+        {
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
             return cached;
+        }
         
+        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
+
         IEnumerable<MentorResponseDto> mentors = await _context.Mentors
             .AsNoTracking()
             .Select(m => new MentorResponseDto(m.Id, m.FirstName, m.LastName))
             .ToListAsync();
 
-        await _cacheService.SetAsync(CacheKey.AllMentor(), mentors, TimeSpan.FromMinutes(10));
+        await _cacheService.SetAsync(cacheKey, mentors, TimeSpan.FromMinutes(10));
 
         return mentors;
     }
@@ -72,7 +78,7 @@ public class MentorService : IMentorServices
 
         if (dto == null)
         {
-            _logger.LogWarning("Mentor with ID {MentorId} was not found during target DTO projection.", id);
+            _logger.LogWarning("Dependency failure: DTO projection missing. Id: {MentorId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"Mentor");
         }
         
@@ -93,9 +99,11 @@ public class MentorService : IMentorServices
         _context.Mentors.Add(mentor);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully created new mentor with ID {MentorId} and FirstName {FirstName}", mentor.Id, mentor.FirstName);
+        _logger.LogInformation("State transition: Created mentor record. Id: {MentorId}", mentor.Id);
         
-        await _cacheService.RemoveManyAsync(CacheKey.AllMentor());
+        string cacheKey = CacheKey.AllMentor();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
 
         return MapToResponseDto(mentor);
     }
@@ -109,9 +117,11 @@ public class MentorService : IMentorServices
         _context.Mentors.Remove(mentor);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully deleted mentor record with ID {MentorId}", id);
+        _logger.LogInformation("State transition: Deleted mentor record. Id: {MentorId}", id);
 
-        await _cacheService.RemoveManyAsync(CacheKey.AllMentor());
+        string cacheKey = CacheKey.AllMentor();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
     }
 
     public async Task<MentorResponseDto> UpdateMentorByIdAsync(int id, MentorUpdateDto updateMentor)
@@ -127,9 +137,11 @@ public class MentorService : IMentorServices
         mentor.Status = updateMentor.Status;
 
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully updated mentor profile for ID {MentorId}", id);
+        _logger.LogInformation("State transition: Modified mentor record. Id: {MentorId}", id);
 
-        await _cacheService.RemoveManyAsync(CacheKey.AllMentor());
+        string cacheKey = CacheKey.AllMentor();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
         
         return MapToResponseDto(mentor);
     }

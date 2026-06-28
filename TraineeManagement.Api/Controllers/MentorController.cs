@@ -30,6 +30,7 @@ public class MentorController : ControllerBase
 
         IEnumerable<MentorResponseDto> mentors = await _mentorService.GetMentorsAsync();
 
+        _logger.LogInformation("State check: Bulk fetch mentors success.");
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             mentors
@@ -41,16 +42,19 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {MentorId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking mentor service to retrieve profile for MentorId: {MentorId}", id);
 
         MentorResponseDto mentor = await _mentorService.GetMentorByIdAsync(id);
 
+        _logger.LogInformation("State check: Fetch mentor by ID success. Id: {MentorId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             mentor
@@ -62,12 +66,14 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         _logger.LogDebug("Invoking mentor service to establish a new mentor registration");
 
         MentorResponseDto createdMentor = await _mentorService.CreateMentorAsync(createMentorDto);
 
+        _logger.LogInformation("State check: Mentor creation success. Id: {MentorId}", createdMentor.Id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataInsertedSuccess,
             createdMentor
@@ -79,16 +85,19 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {MentorId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking mentor service to delete record for MentorId: {MentorId}", id);
 
         await _mentorService.DeleteMentorByIdAsync(id);
 
+        _logger.LogInformation("State check: Mentor deletion success. Id: {MentorId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataDeletedNoContent
         );
@@ -99,16 +108,19 @@ public class MentorController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. Id: {MentorId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         _logger.LogDebug("Invoking mentor service to modify records for MentorId: {MentorId}", id);
 
         MentorResponseDto updatedMentor = await _mentorService.UpdateMentorByIdAsync(id, updateMentorDto);
         
+        _logger.LogInformation("State check: Mentor modification success. Id: {MentorId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataUpdatedSuccess,
             updatedMentor

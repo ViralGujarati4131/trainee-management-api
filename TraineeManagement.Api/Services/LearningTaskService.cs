@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data.LearningTaskDTO;
 using TraineeManagement.Api.Data.LearningTaskModel;
 using TraineeManagement.Api.LearningTaskServiceInterface;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.CacheKey;
 using TraineeManagement.Api.Data.DatabaseContext;
@@ -44,7 +44,7 @@ public class LearningTaskService : ILearningTaskService
         LearningTask? learningTask = await _context.LearningTasks.FindAsync(id);
         if (learningTask == null)
         {
-            _logger.LogWarning("LearningTask with ID {TaskId} was not found", id);
+            _logger.LogWarning("Dependency failure: Record missing. Id: {TaskId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"LearningTask");
         }
         return learningTask;
@@ -54,9 +54,15 @@ public class LearningTaskService : ILearningTaskService
     {
         _logger.LogDebug("Fetching all learning-tasks from the database");
 
-        IEnumerable<LearningTaskResposeDto>? cached = await _cacheService.GetAsync<IEnumerable<LearningTaskResposeDto>>(CacheKey.AllLearningTask());
+        string cacheKey = CacheKey.AllLearningTask();
+        IEnumerable<LearningTaskResposeDto>? cached = await _cacheService.GetAsync<IEnumerable<LearningTaskResposeDto>>(cacheKey);
         if (cached is not null)
+        {
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
             return cached;
+        }
+
+        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
 
         IEnumerable<LearningTaskResposeDto> learningTasks = await _context.LearningTasks
             .AsNoTracking()
@@ -69,7 +75,7 @@ public class LearningTaskService : ILearningTaskService
                 Lt.Status
             )).ToListAsync();
         
-        await _cacheService.SetAsync(CacheKey.AllLearningTask(), learningTasks, TimeSpan.FromMinutes(10));
+        await _cacheService.SetAsync(cacheKey, learningTasks, TimeSpan.FromMinutes(10));
 
         return learningTasks;
     }
@@ -92,7 +98,7 @@ public class LearningTaskService : ILearningTaskService
 
         if (dto == null)
         {
-            _logger.LogWarning("LearningTask with ID {TaskId} was not found during target DTO projection.", id);
+            _logger.LogWarning("Dependency failure: DTO projection missing. Id: {TaskId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"LearningTask");
         }
 
@@ -113,9 +119,11 @@ public class LearningTaskService : ILearningTaskService
         _context.LearningTasks.Add(learningTask);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully created new learning-task with ID {TaskId} and Title {Title}", learningTask.Id, learningTask.Title);
+        _logger.LogInformation("State transition: Created task record. Id: {TaskId}", learningTask.Id);
 
-        await _cacheService.RemoveManyAsync(CacheKey.AllLearningTask());
+        string cacheKey = CacheKey.AllLearningTask();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
 
         return MapToResponseDto(learningTask);
     }
@@ -129,9 +137,11 @@ public class LearningTaskService : ILearningTaskService
         _context.LearningTasks.Remove(learningTask);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully deleted learning-task record with ID {TaskId}", id);
+        _logger.LogInformation("State transition: Deleted task record. Id: {TaskId}", id);
 
-        await _cacheService.RemoveManyAsync(CacheKey.AllLearningTask());
+        string cacheKey = CacheKey.AllLearningTask();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
     }
 
     public async Task<LearningTaskResposeDto> UpdateLearningTaskByIdAsync(int id, LearningTaskUpdateDto updateTask)
@@ -147,9 +157,11 @@ public class LearningTaskService : ILearningTaskService
         learningTask.Status = updateTask.Status;
 
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully updated learning-task ID {TaskId}", id);
+        _logger.LogInformation("State transition: Modified task record. Id: {TaskId}", id);
 
-        await _cacheService.RemoveManyAsync(CacheKey.AllLearningTask());
+        string cacheKey = CacheKey.AllLearningTask();
+        await _cacheService.RemoveManyAsync(cacheKey);
+        _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
 
         return MapToResponseDto(learningTask);
     }

@@ -46,6 +46,8 @@ public class SubmissionFileService : ISubmissionFileService
         _context.ProcessingJobs.Add(processingJob);
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("State transition: Queued. JobId: {JobId}, MessageId: {MessageId}", processingJob.Id, processingJob.MessageId);
+
         SubmissionProcessingContract message = new SubmissionProcessingContract
         (
             ProcessingJobId: processingJob.Id,
@@ -59,6 +61,8 @@ public class SubmissionFileService : ISubmissionFileService
         try
         {
             await _rabbitMqService.PublishAsync(message);
+            
+            _logger.LogInformation("Publish success. MessageId: {MessageId}", message.MessageId);
             return new SubmissionPublishResult
             (
                 processingJob.Id,
@@ -67,9 +71,12 @@ public class SubmissionFileService : ISubmissionFileService
                 true
             );
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Publish failed. Dependency failure. Reverting state. MessageId: {MessageId}", message.MessageId);
+            
             _context.ProcessingJobs.Remove(processingJob);
+            await _context.SaveChangesAsync();
             return new SubmissionPublishResult
             (
                 0,
@@ -111,6 +118,8 @@ public class SubmissionFileService : ISubmissionFileService
         };
          _context.SubmissionFiles.Add(submissionFile);
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Metadata saved successfully. FileId: {FileId}, SubmissionId: {SubmissionId}", submissionFile.Id, submissionId);
 
         return new SubmissionFileResponseDto(
                 submissionFile.Id,

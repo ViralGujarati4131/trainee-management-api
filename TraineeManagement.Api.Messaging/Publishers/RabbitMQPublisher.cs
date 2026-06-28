@@ -25,9 +25,7 @@ public class RabbitMqService
 
         if (connection == null || !connection.IsOpen)
         {
-            _logger.LogError(
-                "RabbitMQ publish failed. Reason={Reason}",
-                "Connection unavailable");  
+            _logger.LogError("Dependency failure: RabbitMQ publish failed. Reason: {Reason}", "Connection unavailable");  
             return;
         }
 
@@ -42,9 +40,7 @@ public class RabbitMqService
         
         if (channel == null)
         {
-            _logger.LogError(
-                "RabbitMQ publish failed. Reason={Reason}",
-                "Connection unavailable");
+            _logger.LogError("Dependency failure: RabbitMQ publish failed. Reason: {Reason}", "Connection unavailable");
             return;
         }
 
@@ -60,13 +56,23 @@ public class RabbitMqService
         string targetExchange = AppConstants.RabbitMQ.GetExchange(AppConstants.RabbitMQ.SubmissionProcessing);
         string targetRoutingKey = AppConstants.RabbitMQ.GetRoutingKey(AppConstants.RabbitMQ.SubmissionProcessing);
 
-        await channel.BasicPublishAsync(
-            exchange: targetExchange,
-            routingKey: targetRoutingKey,
-            mandatory: true,
-            basicProperties: properties,
-            body: body
-        );
+        try
+        {
+            await channel.BasicPublishAsync(
+                exchange: targetExchange,
+                routingKey: targetRoutingKey,
+                mandatory: true,
+                basicProperties: properties,
+                body: body
+            );
+
+            _logger.LogInformation("Publish success. MessageId: {MessageId}, Exchange: {Exchange}", message.MessageId, targetExchange);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Publish failed. MessageId: {MessageId}, Exchange: {Exchange}", message.MessageId, targetExchange);
+            throw;
+        }
 
         _logger.LogInformation(
             "RabbitMQ message published. MessageId={MessageId}, CorrelationId={CorrelationId}, SubmissionFileId={SubmissionFileId}",

@@ -38,10 +38,12 @@ public class SubmissionFilesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(submissionId < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. SubmissionId: {SubmissionId}", submissionId);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
         
@@ -54,6 +56,7 @@ public class SubmissionFilesController : ControllerBase
         bool isDuplicates = await _fileStorageService.ExistsAsync(submissionId,file);
         if(isDuplicates)
         {
+            _logger.LogWarning("Upload duplicate rejected. SubmissionId: {SubmissionId}, FileName: {FileName}", submissionId, file.FileName);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.FileAlreadyUploaded);
         }
         
@@ -74,8 +77,12 @@ public class SubmissionFilesController : ControllerBase
             );
 
             if (!publishResult.Success)
+            {
+                _logger.LogWarning("Publish failed. MessageId: {MessageId}, SubmissionId: {SubmissionId}", publishResult.MessageId, submissionId);
                 return CustomResponseBuilder.CreateSuccessResponse(CustomResponse.UnavailableRabbitMQService);
+            }
 
+            _logger.LogInformation("Publish success. MessageId: {MessageId}, JobId: {JobId}", publishResult.MessageId, publishResult.ProcessingJobId);
             return CustomResponseBuilder.CreateSuccessResponse(
                 CustomResponse.FileUploadAccepted,
                 publishResult.ProcessingJobId
@@ -83,7 +90,7 @@ public class SubmissionFilesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish submission {SubmissionId} to RabbitMQ", submissionId);            
+            _logger.LogError(ex, "Dependency failure publishing task event. SubmissionId: {SubmissionId}", submissionId);            
             return CustomResponseBuilder.CreateSuccessResponse(CustomResponse.UnavailableRabbitMQService);
         }       
     }
@@ -93,14 +100,17 @@ public class SubmissionFilesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. FileId: {FileId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
-        var (fileStream, contentType, originalFileName) = await _fileStorageService.OpenAsync(id);
+        (Stream fileStream, string contentType, string originalFileName) = await _fileStorageService.OpenAsync(id);
         
+        _logger.LogInformation("State check: File download stream accessed. FileId: {FileId}", id);
         return File(fileStream, contentType, originalFileName);
     }
 
@@ -109,15 +119,18 @@ public class SubmissionFilesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("Request failed validation. Invalid model state.");
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.UnprocessableEntity);
         }
         if(id < 1)
         {
+            _logger.LogWarning("Request failed validation. Invalid ID range. FileId: {FileId}", id);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.BadRequest);
         }
 
         await _fileStorageService.DeleteAsync(id);
    
+        _logger.LogInformation("State check: File erased from physical store tracking. FileId: {FileId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataDeletedNoContent
         );

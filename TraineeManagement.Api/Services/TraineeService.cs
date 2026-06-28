@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.CacheServiceInterface;
+using TraineeManagement.Api.Data.CacheServiceInterface;
 using TraineeManagement.Api.Data.TraineeDTO;
 using TraineeManagement.Api.Data.TraineeModel;
 using TraineeManagement.Api.TraineeServiceInterface;
@@ -13,15 +13,15 @@ using System.Text.Json;
 
 namespace TraineeManagement.Api.TraineeService;
 
-public class TraineeService : ITraineeService
+public class TraineeServices : ITraineeService
 {
     private readonly AppDbContext _context;
-    private readonly ILogger<TraineeService> _logger;
+    private readonly ILogger<TraineeServices> _logger;
     private readonly ICacheService _cacheService;
 
     private readonly HttpClient _httpClient;
 
-    public TraineeService(AppDbContext context, ILogger<TraineeService> logger, ICacheService cacheService,HttpClient httpClient)
+    public TraineeServices(AppDbContext context, ILogger<TraineeServices> logger, ICacheService cacheService,HttpClient httpClient)
     {
         _context = context;
         _logger = logger;
@@ -39,7 +39,7 @@ public class TraineeService : ITraineeService
         Trainee? trainee = await _context.Trainees.FindAsync(id);
         if (trainee == null)
         {
-            _logger.LogWarning("Trainee with ID {TraineeId} was not found in the database layer.", id);
+            _logger.LogWarning("Dependency failure: Record missing. Id: {TraineeId}", id);
             throw new NotFoundException(CustomResponse.NotFound,"Trainee");
         }
         return trainee;
@@ -54,14 +54,21 @@ public class TraineeService : ITraineeService
             .Select(t => new TraineeResponseDto(t.Id, t.FirstName, t.LastName))
             .ToListAsync();
 
+        _logger.LogInformation("State check: Bulk fetch trainees success.");
         return trainees;
     }
 
     public async Task<TraineeResponseDto?> GetTraineeByIdAsync(int id,CancellationToken cancellationToken)
     {
-        TraineeResponseDto? cached = await _cacheService.GetAsync<TraineeResponseDto>(CacheKey.Trainee(id));
+        string cacheKey = CacheKey.Trainee(id);
+        TraineeResponseDto? cached = await _cacheService.GetAsync<TraineeResponseDto>(cacheKey);
         if (cached is not null)
+        {
+            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
             return cached;
+        }
+
+        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
 
         TraineeResponseDto? trainee = null;
 
@@ -82,16 +89,17 @@ public class TraineeService : ITraineeService
 
                 if (responseData is null || responseData.Data is null)
                 {  
+                    _logger.LogWarning("Dependency failure: Empty body payload from proxy connection. Id: {TraineeId}", id);
                     throw new NotFoundException(CustomResponse.NotFound);
                 }
                     
                 trainee = responseData.Data;
                 
-                await _cacheService.SetAsync(CacheKey.Trainee(id), trainee, TimeSpan.FromMinutes(10));
+                await _cacheService.SetAsync(cacheKey, trainee, TimeSpan.FromMinutes(10));
             }
             else if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                _logger.LogWarning("Trainee was not found in downstream Directory Service.");
+                _logger.LogWarning("Dependency failure: Remote resource missing from service. Id: {TraineeId}", id);
                 throw new NotFoundException(CustomResponse.NotFound, "Trainee");
             }
         }
@@ -115,7 +123,7 @@ public class TraineeService : ITraineeService
 
         _context.Trainees.Add(trainee);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Successfully created new trainee with ID {TraineeId}", trainee.Id);    
+        _logger.LogInformation("State transition: Created trainee record. Id: {TraineeId}", trainee.Id);    
 
         return MapToResponseDto(trainee);
     }
@@ -134,11 +142,13 @@ public class TraineeService : ITraineeService
         try
         {
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Successfully updated trainee profile for ID {TraineeId}", id);
+            _logger.LogInformation("State transition: Modified trainee record. Id: {TraineeId}", id);
         }
         finally
         {
-            await _cacheService.RemoveAsync(CacheKey.Trainee(id));
+            string cacheKey = CacheKey.Trainee(id);
+            await _cacheService.RemoveAsync(cacheKey);
+            _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
         }
         return MapToResponseDto(trainee);
     }
@@ -152,11 +162,13 @@ public class TraineeService : ITraineeService
         {    
             _context.Trainees.Remove(trainee);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Successfully deleted trainee record with ID {TraineeId}", id);
+            _logger.LogInformation("State transition: Deleted trainee record. Id: {TraineeId}", id);
         }
         finally
         {
-            await _cacheService.RemoveAsync(CacheKey.Trainee(id));
+            string cacheKey = CacheKey.Trainee(id);
+            await _cacheService.RemoveAsync(cacheKey);
+            _logger.LogInformation("Cache evict. CacheKey: {CacheKey}", cacheKey);
         }
 
     }
@@ -165,7 +177,7 @@ public class TraineeService : ITraineeService
     {
         _logger.LogDebug("Executing text search match for: {SearchTerm}", searchTerm);
 
-        return await _context.Trainees
+        List<TraineeResponseDto> results = await _context.Trainees
             .AsNoTracking()
             .Where(t =>
                 t.FirstName.Contains(searchTerm) ||
@@ -175,6 +187,9 @@ public class TraineeService : ITraineeService
             )
             .Select(t => new TraineeResponseDto(t.Id, t.FirstName, t.LastName))
             .ToListAsync();
+
+        _logger.LogInformation("State check: Trainee list search completed.");
+        return results;
     }
 
     public async Task<TraineePaginationSearchDto> GetPagedAndSearchedTraineesAsync(int pageNumber, int pageSize, string name, string status)
@@ -200,6 +215,7 @@ public class TraineeService : ITraineeService
             .Select(t => new TraineeResponseDto(t.Id, t.FirstName, t.LastName))
             .ToListAsync();
 
+        _logger.LogInformation("State check: Paged search calculation complete.");
         return new TraineePaginationSearchDto(pageNumber, responseData.Count, totalRecords, responseData);
     }
 }

@@ -7,25 +7,33 @@ using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.GlobalExceptionMiddleware;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Setup structural bootstrapper logger
+using ILoggerFactory loggerFactory = LoggerFactory.Create(logging => logging.AddConsole());
+ILogger logger = loggerFactory.CreateLogger("Program");
+
+logger.LogInformation("Initializing application setup.");
 
 const string AllowedOriginsPolicy = "_myAllowSpecificOrigins";
 
 // db connection
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
+
+logger.LogInformation("Configuring database context. Version: {ServerVersion}", serverVersion);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
 
-
 string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 if (allowedOrigin.Length == 0)
 {
+    logger.LogCritical("Dependency failure: CORS configuration is missing.");
     throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 }
 
-
+logger.LogInformation("Configuring CORS policy. AllowedOriginsCount: {Count}", allowedOrigin.Length);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowedOriginsPolicy,
@@ -46,11 +54,15 @@ builder.Services.AddControllers()
         options.SuppressModelStateInvalidFilter = true;
     });
 
-var app = builder.Build();
+WebApplication app = builder.Build();
+
+logger.LogInformation("State transition: Building application pipeline.");
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors(AllowedOriginsPolicy);
 app.UseAuthorization();
 app.MapControllers();
+
+logger.LogInformation("State transition: Starting host application.");
 app.Run();
