@@ -9,7 +9,7 @@ using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.ProcessingJobModel;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.CustomException;
-
+using TraineeManagement.Api.CorrelationId;
 
 
 namespace TraineeManagement.Api.SubmissionFileService;
@@ -24,19 +24,23 @@ public class SubmissionFileService : ISubmissionFileService
 
     private readonly RabbitMqService _rabbitMqService;
 
-    public SubmissionFileService(AppDbContext context, ILogger<SubmissionFileService> logger,IHttpContextAccessor httpContextAccessor,RabbitMqService rabbitMqService)
+    private readonly ICorrelationIdAccessor _correlationIdAccessor;
+
+    public SubmissionFileService(AppDbContext context, ILogger<SubmissionFileService> logger,IHttpContextAccessor httpContextAccessor,RabbitMqService rabbitMqService,ICorrelationIdAccessor correlationIdAccessor)
     {
         _context = context;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
         _rabbitMqService = rabbitMqService;
+        _correlationIdAccessor = correlationIdAccessor;
     }
 
     public async Task<SubmissionPublishResult> RequestProcessing(int submissionId, int submissionFileId)
     {
+        Guid correlationId = Guid.Parse(_correlationIdAccessor.Get());
          ProcessingJob processingJob = new ProcessingJob{
                 MessageId = Guid.NewGuid(),
-                CorrelationId = Guid.NewGuid(),
+                CorrelationId = correlationId,
                 SubmissionId = submissionId,
                 SubmissionFileId = submissionFileId,
                 Status = ProcessingJobStatus.Queued, 
@@ -48,12 +52,17 @@ public class SubmissionFileService : ISubmissionFileService
 
         _logger.LogInformation("State transition: Queued. JobId: {JobId}, MessageId: {MessageId}", processingJob.Id, processingJob.MessageId);
 
+        int TaskId = _context.Submissions
+            .Where(s => s.Id == submissionId)
+            .Select(s => s.TaskAssignmentId)
+            .FirstOrDefault();
+
         SubmissionProcessingContract message = new SubmissionProcessingContract
         (
             ProcessingJobId: processingJob.Id,
             MessageId: processingJob.MessageId,
             CorrelationId: processingJob.CorrelationId,
-            TaskAssignmentId: processingJob.SubmissionId,
+            TaskAssignmentId: TaskId,
             SubmissionFileId: processingJob.SubmissionFileId,
             RequestedAt: DateTimeOffset.UtcNow,
             ContractVersion: "1.0"

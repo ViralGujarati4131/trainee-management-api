@@ -10,6 +10,7 @@ using System.Net;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.ResponseDTO;
 using System.Text.Json;
+using TraineeManagement.Api.CorrelationId;
 
 namespace TraineeManagement.Api.TraineeService;
 
@@ -21,12 +22,15 @@ public class TraineeServices : ITraineeService
 
     private readonly HttpClient _httpClient;
 
-    public TraineeServices(AppDbContext context, ILogger<TraineeServices> logger, ICacheService cacheService,HttpClient httpClient)
+    private readonly ICorrelationIdAccessor _correlationIdAccessor;
+
+    public TraineeServices(AppDbContext context, ILogger<TraineeServices> logger, ICacheService cacheService,HttpClient httpClient, ICorrelationIdAccessor correlationIdAccessor)
     {
         _context = context;
         _logger = logger;
         _cacheService = cacheService;
         _httpClient = httpClient;
+        _correlationIdAccessor = correlationIdAccessor;
     }
 
     private TraineeResponseDto MapToResponseDto(Trainee trainee)
@@ -58,57 +62,57 @@ public class TraineeServices : ITraineeService
         return trainees;
     }
 
-    public async Task<TraineeResponseDto?> GetTraineeByIdAsync(int id,CancellationToken cancellationToken)
+    public async Task<TraineeResponseDto?> GetTraineeByIdAsync(int id, CancellationToken cancellationToken)
+{
+    string correlationId = _correlationIdAccessor.Get();
+    string cacheKey = CacheKey.Trainee(id);
+
+    TraineeResponseDto? cached = await _cacheService.GetAsync<TraineeResponseDto>(cacheKey);
+    if (cached is not null)
     {
-        string cacheKey = CacheKey.Trainee(id);
-        TraineeResponseDto? cached = await _cacheService.GetAsync<TraineeResponseDto>(cacheKey);
-        if (cached is not null)
-        {
-            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", cacheKey);
-            return cached;
-        }
-
-        _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", cacheKey);
-
-        TraineeResponseDto? trainee = null;
-
-        _logger.LogDebug("Retrieving trainee profile with ID: {TraineeId}", id); 
- 
-        _logger.LogInformation("Executing synchronous HTTP GET request for TraineeId={TraineeId}", id);
-
-        try
-        {
-            HttpResponseMessage response = await _httpClient.GetAsync($"/api/directory/trainee/{id}", cancellationToken);
-
-            if (response.IsSuccessStatusCode)
-            {
-                InterServiceCommunicationResponse<TraineeResponseDto>? responseData = await response.Content.ReadFromJsonAsync<InterServiceCommunicationResponse<TraineeResponseDto>>(
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web),
-                    cancellationToken
-                );
-
-                if (responseData is null || responseData.Data is null)
-                {  
-                    _logger.LogWarning("Dependency failure: Empty body payload from proxy connection. Id: {TraineeId}", id);
-                    throw new NotFoundException(CustomResponse.NotFound);
-                }
-                    
-                trainee = responseData.Data;
-                
-                await _cacheService.SetAsync(cacheKey, trainee, TimeSpan.FromMinutes(10));
-            }
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                _logger.LogWarning("Dependency failure: Remote resource missing from service. Id: {TraineeId}", id);
-                throw new NotFoundException(CustomResponse.NotFound, "Trainee");
-            }
-        }
-        catch
-        {
-            throw;
-        }
-        return trainee;
+        _logger.LogDebug("Cache hit. CacheKey: {CacheKey}, CorrelationId: {CorrelationId}", cacheKey, correlationId);
+        return cached;
     }
+
+    _logger.LogDebug("Cache miss. CacheKey: {CacheKey}, CorrelationId: {CorrelationId}", cacheKey, correlationId);
+    _logger.LogInformation("Executing HTTP GET. TraineeId: {TraineeId}, CorrelationId: {CorrelationId}", id, correlationId);
+
+    try
+    {
+        HttpResponseMessage response = await _httpClient.GetAsync($"/api/directory/trainee/{id}", cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            InterServiceCommunicationResponse<TraineeResponseDto>? responseData = await response.Content.ReadFromJsonAsync<InterServiceCommunicationResponse<TraineeResponseDto>>(
+                new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                cancellationToken
+            );
+
+            if (responseData is null || responseData.Data is null)
+            {
+                _logger.LogWarning("Dependency failure: Empty body payload. TraineeId: {TraineeId}, CorrelationId: {CorrelationId}", id, correlationId);
+                throw new NotFoundException(CustomResponse.NotFound);
+            }
+
+            TraineeResponseDto trainee = responseData.Data;
+            await _cacheService.SetAsync(cacheKey, trainee, TimeSpan.FromMinutes(10));
+
+            _logger.LogInformation("HTTP GET success. TraineeId: {TraineeId}, CorrelationId: {CorrelationId}", id, correlationId);
+            return trainee;
+        }
+        else if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Dependency failure: Remote resource missing. TraineeId: {TraineeId}, CorrelationId: {CorrelationId}", id, correlationId);
+            throw new NotFoundException(CustomResponse.NotFound, "Trainee");
+        }
+    }
+    catch
+    {
+        throw;
+    }
+
+    return null;
+}
 
     public async Task<TraineeResponseDto> CreateTraineeAsync(TraineeCreateDto createTraineeDto)
     {

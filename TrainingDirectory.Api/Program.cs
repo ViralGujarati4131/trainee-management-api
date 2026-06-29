@@ -6,6 +6,8 @@ using TrainingDirectory.Api.DirectoryTraineeServiceInterface;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.GlobalExceptionMiddleware;
+using TraineeManagement.Api.CorrelationId;
+using TraineeManagement.Api.CorrelationIdMiddleware;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +28,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
 
-string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedRequest").Get<string[]>() ?? Array.Empty<string>();
 if (allowedOrigin.Length == 0)
 {
     logger.LogCritical("Dependency failure: CORS configuration is missing.");
@@ -48,6 +50,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<IDirectoryTraineeService,DirectoryTraineeService>();
 
+builder.Services.AddHttpContextAccessor();      
+builder.Services.AddScoped<ICorrelationIdAccessor, CorrelationIdAccessor>();
+
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -58,6 +63,7 @@ WebApplication app = builder.Build();
 
 logger.LogInformation("State transition: Building application pipeline.");
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors(AllowedOriginsPolicy);

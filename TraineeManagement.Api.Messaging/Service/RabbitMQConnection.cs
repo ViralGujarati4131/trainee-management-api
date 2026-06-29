@@ -65,8 +65,8 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
             string mainQueue = AppConstants.RabbitMQ.GetQueue(queueName);
             string mainRoutingKey = AppConstants.RabbitMQ.GetRoutingKey(queueName);
             
-            string deadLetterExchange   = AppConstants.RabbitMQ.GetDlxExchange(queueName);
-            string deadLetterQueue      = AppConstants.RabbitMQ.GetDlxQueue(queueName);
+            string deadLetterExchange = AppConstants.RabbitMQ.GetDlxExchange(queueName);
+            string deadLetterQueue = AppConstants.RabbitMQ.GetDlxQueue(queueName);
             string deadLetterRoutingKey = AppConstants.RabbitMQ.GetDlxRoutingKey(queueName);
 
             _logger.LogInformation("Initializing configuration pipeline");

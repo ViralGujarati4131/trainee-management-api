@@ -2,8 +2,6 @@ using TraineeManagement.Api.LearningTaskService;
 using TraineeManagement.Api.LearningTaskServiceInterface;
 using TraineeManagement.Api.MentorService;
 using TraineeManagement.Api.MentorServiceInterface;
-using TraineeManagement.Api.TraineeService;
-using TraineeManagement.Api.TraineeServiceInterface;
 using TraineeManagement.Api.UserService;
 using TraineeManagement.Api.UserServiceInterface;
 using TraineeManagement.Api.TaskAssignmentServiceInterface;
@@ -21,6 +19,7 @@ using TraineeManagement.Api.Data.CacheService;
 using TraineeManagement.Api.JwtService;
 using TraineeManagement.Api.ProcessingJobService;
 using TraineeManagement.Api.ProcessingJobServiceInterface;
+using TraineeManagement.Api.CorrelationId;
 
 namespace Microsoft.Extensions.DependencyInjection; 
 
@@ -28,7 +27,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // services.AddScoped<ITraineeService, TraineeService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IMentorServices, MentorService>();
@@ -40,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<ISubmissionFileService, SubmissionFileService>();
         services.AddScoped<ICacheService, CacheService>();
         services.AddScoped<IProcessingJobService,ProcessingJobService>();
+        services.AddScoped<ICorrelationIdAccessor,CorrelationIdAccessor>();
 
         return services;
     }

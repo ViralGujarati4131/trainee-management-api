@@ -1,0 +1,127 @@
+services:
+  db:
+    image: mysql:8.0.46
+    container_name: dotnetmysqldb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "3309:3306"
+    volumes:
+      - dotnetmysqldb:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-cache:
+    image: redis:7.0.11-alpine
+    container_name: dotnetrediscache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: dotnetrabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - dotnetrabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: TraineeManagement.Api/Dockerfile
+    container_name: dockerapi
+    restart: unless-stopped
+    ports:
+      - "5299:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT : ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};
+      Redis__ConnectionString: redis-cache:6379
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_DEFAULT_USER}
+      RabbitMQ__Password: ${RABBITMQ_DEFAULT_PASS}
+      RabbitMQ__VirtualHost: ${RABBITMQ_DEFAULT_VHOST}
+      Jwt__Key: ${JWT_SECRET}
+      DirectoryService__BaseUrl: http://trainingdirectory-api:8080/api/
+      FileStorage__BasePath: /app/Uploads
+    volumes:
+      - ./Uploads:/app/Uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+  
+  worker:
+    build:
+      context: .
+      dockerfile: TraineeManagement.Api.Worker/Dockerfile
+    container_name: dockerworker
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT : ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};
+      Redis__ConnectionString: redis-cache:6379
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: ${RABBITMQ_DEFAULT_USER}
+      RabbitMQ__Password: ${RABBITMQ_DEFAULT_PASS}
+      RabbitMQ__VirtualHost: ${RABBITMQ_DEFAULT_VHOST}
+      FileStorage__BasePath: /app/Uploads
+    volumes:
+      - ./Uploads:/app/Uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  trainingdirectory-api:
+    build:
+      context: .
+      dockerfile: TrainingDirectory.Api/Dockerfile
+    container_name: dockertrainingdirectory
+    restart: unless-stopped
+    ports:
+      - "5278:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT : ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dotnetmysqldb:
+  dotnetrabbitmq:

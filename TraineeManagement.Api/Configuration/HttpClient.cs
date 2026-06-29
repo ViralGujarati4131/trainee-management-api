@@ -10,6 +10,7 @@ using Polly.Fallback;
 using BrokenCircuitException = Polly.CircuitBreaker.BrokenCircuitException;
 using Polly.Extensions.Http;
 using Microsoft.Extensions.DependencyInjection;
+using TraineeManagement.Api.CorrelationIdsHandler;
 
 namespace TraineeManagement.Api.Extensions;
 
@@ -56,6 +57,7 @@ public static class HttpClientExtensions
                 });
 
         services.AddHttpContextAccessor();
+        services.AddTransient<CorrelationIdHandler>(); 
 
         services.AddHttpClient<ITraineeService, TraineeServices>((sp, client) =>
         {
@@ -67,14 +69,10 @@ public static class HttpClientExtensions
             }
 
             client.BaseAddress = new Uri(baseUrl);
-            client.Timeout = TimeSpan.FromSeconds(5); // finite timeout
+            client.Timeout = TimeSpan.FromSeconds(5); 
             client.DefaultRequestHeaders.Add("Accept", "application/json");
-
-            IHttpContextAccessor httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-            string? correlationId = httpContextAccessor.HttpContext?.TraceIdentifier;
-            if (!string.IsNullOrEmpty(correlationId))
-                client.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
         })
+        .AddHttpMessageHandler<CorrelationIdHandler>() 
         .AddPolicyHandler(fallbackPolicy)      
         .AddPolicyHandler(retryPolicy)       
         .AddPolicyHandler(circuitBreakerPolicy); 

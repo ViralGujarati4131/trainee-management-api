@@ -38,7 +38,7 @@ public class ProcessingJobsController : ControllerBase
 
         ProcessingJobResponseDto jobTrack = await _processingJobService.GetProcessingJobByIdAsync(id);
 
-        _logger.LogInformation("Endpoint execution completed successfully. JobId: {JobId}", id);
+        _logger.LogInformation("Job Detail Fetch completed successfully. JobId: {JobId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
             CustomResponse.DataRetrivedSuccess,
             jobTrack

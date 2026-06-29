@@ -20,6 +20,9 @@
   },
   "FileStorage": {
     "BasePath": ""
+  },
+  "DirectoryService": {
+    "BaseUrl": ""
   }
 }
 

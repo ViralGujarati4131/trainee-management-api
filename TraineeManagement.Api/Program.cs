@@ -1,6 +1,7 @@
 using TraineeManagement.Api.Extensions;
 using TraineeManagement.Api.GlobalExceptionMiddleware;
 using Newtonsoft.Json;
+using TraineeManagement.Api.CorrelationIdMiddleware;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,7 @@ WebApplication app = builder.Build();
 await app.InitializeMessagingAsync(logger);
 await UserSeeder.SeedAsync(app.Services);
 
+app.UseMiddleware<CorrelationIdMiddleware>();  
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors(CorsExtensions.AllowedOriginsPolicy);

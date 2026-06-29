@@ -1,8 +1,0 @@
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "server=127.0.0.1;port=<mysql_port>;database=<db_name>;user=root;password=<docker_mysql_password>;"
-  },
-  "Jwt": {
-    "Key": "<JWT_KEY>"
-  }
-}

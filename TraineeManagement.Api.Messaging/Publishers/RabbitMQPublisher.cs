@@ -11,7 +11,6 @@ namespace TraineeManagement.Api.Messaging.RabbitMQPublisher;
 public class RabbitMqService
 {
     private readonly RabbitConnection _connection;
-
     private readonly ILogger<RabbitMqService> _logger;
 
     public RabbitMqService(RabbitConnection connection, ILogger<RabbitMqService> logger)
@@ -19,17 +18,20 @@ public class RabbitMqService
         _connection = connection;
         _logger = logger;
     }
+
     public async Task PublishAsync(SubmissionProcessingContract message)
     {
         IConnection connection = _connection.Connection!;
 
         if (connection == null || !connection.IsOpen)
         {
-            _logger.LogError("Dependency failure: RabbitMQ publish failed. Reason: {Reason}", "Connection unavailable");  
+            _logger.LogError(
+                "Dependency failure: RabbitMQ publish failed. Reason: {Reason}. CorrelationId: {CorrelationId}",
+                "Connection unavailable",
+                message.CorrelationId);
             return;
         }
 
-        // To get the acknowledgement if succed to publish
         CreateChannelOptions channelOptions = new CreateChannelOptions(
             publisherConfirmationsEnabled: true,
             publisherConfirmationTrackingEnabled: true
@@ -37,10 +39,12 @@ public class RabbitMqService
 
         await using IChannel channel = await connection.CreateChannelAsync(channelOptions);
 
-        
         if (channel == null)
         {
-            _logger.LogError("Dependency failure: RabbitMQ publish failed. Reason: {Reason}", "Connection unavailable");
+            _logger.LogError(
+                "Dependency failure: RabbitMQ channel creation failed. Reason: {Reason}. CorrelationId: {CorrelationId}",
+                "Channel unavailable",
+                message.CorrelationId);
             return;
         }
 
@@ -48,9 +52,9 @@ public class RabbitMqService
 
         BasicProperties properties = new BasicProperties
         {
-            DeliveryMode = DeliveryModes.Persistent
-            // CorrelationId = message.CorrelationId,
-            // MessageId = message.MessageId.ToString()
+            DeliveryMode = DeliveryModes.Persistent,
+            CorrelationId = message.CorrelationId.ToString(),
+            MessageId = message.MessageId.ToString()
         };
 
         string targetExchange = AppConstants.RabbitMQ.GetExchange(AppConstants.RabbitMQ.SubmissionProcessing);
@@ -66,18 +70,21 @@ public class RabbitMqService
                 body: body
             );
 
-            _logger.LogInformation("Publish success. MessageId: {MessageId}, Exchange: {Exchange}", message.MessageId, targetExchange);
+            _logger.LogInformation(
+                "Publish success. MessageId: {MessageId}, CorrelationId: {CorrelationId}, Exchange: {Exchange}, RoutingKey: {RoutingKey}, SubmissionFileId: {SubmissionFileId}",
+                message.MessageId,
+                message.CorrelationId,
+                targetExchange,
+                targetRoutingKey,
+                message.SubmissionFileId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Publish failed. MessageId: {MessageId}, Exchange: {Exchange}", message.MessageId, targetExchange);
+            _logger.LogError("Publish failed. MessageId: {MessageId}, CorrelationId: {CorrelationId}, Error: {ErrorMessage}",
+                message.MessageId,
+                message.CorrelationId,
+                ex.Message);
             throw;
         }
-
-        _logger.LogInformation(
-            "RabbitMQ message published. MessageId={MessageId}, CorrelationId={CorrelationId}, SubmissionFileId={SubmissionFileId}",
-            message.MessageId,
-            message.CorrelationId,
-            message.SubmissionFileId);
     }
 }
