@@ -1,11 +1,11 @@
 using TraineeManagement.Api.Data.Constants;
 using TraineeManagement.Api.Data.FileStoreValidation;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
-public static class FileStorageExtensions
+public static class FileStoreConfig
 {
-    public static IServiceCollection AddAppFileStorage(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddFileStoreConfig(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<CustomFileStoreValidation>(
             configuration.GetSection(AppConstants.ConfigSections.FileStorage));

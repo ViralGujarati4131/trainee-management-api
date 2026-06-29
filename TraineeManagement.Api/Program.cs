@@ -1,4 +1,4 @@
-using TraineeManagement.Api.Extensions;
+using TraineeManagement.Api.Configuration;
 using TraineeManagement.Api.GlobalExceptionMiddleware;
 using Newtonsoft.Json;
 using TraineeManagement.Api.CorrelationIdMiddleware;
@@ -18,15 +18,15 @@ builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(o => o.SuppressModelStateInvalidFilter = true)
     .AddNewtonsoftJson(o => o.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error);
 
-builder.Services.AddAppDatabase(builder.Configuration, logger);
-builder.Services.AddAppRedis(builder.Configuration, logger);
-builder.Services.AddAppMessaging(builder.Configuration);
-builder.Services.AddAppAuth(builder.Configuration);
-builder.Services.AddAppCors(builder.Configuration, logger);
-builder.Services.AddAppHttpClients(builder.Configuration, logger);
-builder.Services.AddAppFileStorage(builder.Configuration);
-builder.Services.AddAppHealthChecks(builder.Configuration);
-builder.Services.AddApplicationServices();
+builder.Services.AddMySqlConnection(builder.Configuration, logger);
+builder.Services.AddRedisConnection(builder.Configuration, logger);
+builder.Services.AddRabbitMqConnection(builder.Configuration);
+builder.Services.AddJwtAuth(builder.Configuration);
+builder.Services.AddFrontendCors(builder.Configuration, logger);
+builder.Services.AddHttpClient(builder.Configuration, logger);
+builder.Services.AddFileStoreConfig(builder.Configuration);
+builder.Services.AddHealthChecks(builder.Configuration);
+builder.Services.AddDependencyInjection();
 
 WebApplication app = builder.Build();
 
@@ -36,7 +36,7 @@ await UserSeeder.SeedAsync(app.Services);
 app.UseMiddleware<CorrelationIdMiddleware>();  
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
-app.UseCors(CorsExtensions.AllowedOriginsPolicy);
+app.UseCors(SetFrontendCors.AllowedOriginsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

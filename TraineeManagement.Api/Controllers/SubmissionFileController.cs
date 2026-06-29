@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.FileStorageServiceInterface;
 using TraineeManagement.Api.ResponsesBuilder;
-using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.ConstRoute;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.SubmissionFileDTO;
@@ -56,7 +55,7 @@ public class SubmissionFilesController : ControllerBase
         bool isDuplicates = await _fileStorageService.ExistsAsync(submissionId,file);
         if(isDuplicates)
         {
-            _logger.LogWarning("Upload duplicate rejected. SubmissionId: {SubmissionId}, FileName: {FileName}", submissionId, file.FileName);
+            _logger.LogWarning("Upload duplicate rejected. SubmissionId: {SubmissionId}", submissionId);
             return CustomResponseBuilder.CreateValidationErrorResponse(CustomResponse.FileAlreadyUploaded);
         }
         

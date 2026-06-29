@@ -7,19 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-  <Content Include="../appsettings.json">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    <Link>appsettings.json</Link>
-  </Content>
-  <Content Include="../appsettings.Development.json">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    <Link>appsettings.Development.json</Link>
-  </Content>
-</ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.MySql" Version="9.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.RabbitMQ" Version="9.0.0" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />

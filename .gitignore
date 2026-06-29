@@ -1,5 +1,13 @@
 bin/
 obj/
 appsettings.Development.json
+AppData/
 Uploads/
 .env
+TraineeManagement.Api/appsettings.Development.json
+TraineeManagement.Api/appsettings.json
+TraineeManagement.Api.Worker/appsettings.Development.json
+TraineeManagement.Api.Worker/appsettings.json
+TrainingDirectory.Api/appsettings.Development.json
+TrainingDirectory.Api/appsettings.json
+nuget.config

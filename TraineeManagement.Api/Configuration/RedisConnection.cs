@@ -1,10 +1,10 @@
 using StackExchange.Redis;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
-public static class RedisExtensions
+public static class RedisConnection
 {
-    public static IServiceCollection AddAppRedis(this IServiceCollection services, IConfiguration configuration, ILogger logger)
+    public static IServiceCollection AddRedisConnection(this IServiceCollection services, IConfiguration configuration, ILogger logger)
     {
         logger.LogInformation("Registering distributed cache engine client dependencies.");
         

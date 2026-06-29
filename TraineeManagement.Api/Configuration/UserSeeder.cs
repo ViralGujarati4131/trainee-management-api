@@ -8,9 +8,8 @@ using TraineeManagement.Api.Data.Constants;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.Response;
-using TraineeManagement.Api.ResponsesBuilder;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
 public class UserSeeder
 {

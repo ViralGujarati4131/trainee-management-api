@@ -1,18 +1,18 @@
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.Response;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
-public static class CorsExtensions
+public static class SetFrontendCors
 {
     public const string AllowedOriginsPolicy = "_myAllowSpecificOrigins";
 
-    public static IServiceCollection AddAppCors(this IServiceCollection services, IConfiguration configuration, ILogger logger)
+    public static IServiceCollection AddFrontendCors(this IServiceCollection services, IConfiguration configuration, ILogger logger)
     {
-        string[] allowedOrigin = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-        if (allowedOrigin.Length == 0)
+        string? allowedOrigin = configuration["Cors:AllowedOrigins"];
+        if (allowedOrigin == null)
         {
-            logger.LogCritical("Dependency failure: CORS initialization parameters are missing.");
+            logger.LogCritical("Dependency failure: Frontend CORS initialization parameters are missing.");
             throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
         }
 

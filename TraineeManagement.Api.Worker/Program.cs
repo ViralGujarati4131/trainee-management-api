@@ -8,7 +8,6 @@ using TraineeManagement.Api.Data.CacheServiceInterface;
 using StackExchange.Redis;
 using TraineeManagement.Api.Data.FileStoreValidation;
 using TraineeManagement.Api.Data.Constants;
-using Microsoft.Extensions.Logging;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 

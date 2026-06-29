@@ -4,11 +4,11 @@ using Microsoft.IdentityModel.Tokens;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.Data.Response;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
-public static class AuthExtensions
+public static class AuthJwtToken
 {
-    public static IServiceCollection AddAppAuth(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddJwtAuth(this IServiceCollection services, IConfiguration configuration)
     {
         IConfigurationSection jwtSettings = configuration.GetSection("JWT");
         string jwtKeyString = jwtSettings["Key"] ?? throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);

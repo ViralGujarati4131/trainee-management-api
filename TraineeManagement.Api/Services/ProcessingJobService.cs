@@ -4,8 +4,6 @@ using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.ProcessingJobDto;
 using TraineeManagement.Api.ProcessingJobServiceInterface;
 using TraineeManagement.Api.Data.Response;
-using TraineeManagement.Api.ResponsesBuilder;
-using Microsoft.Extensions.Logging;
 
 namespace TraineeManagement.Api.ProcessingJobService;
 

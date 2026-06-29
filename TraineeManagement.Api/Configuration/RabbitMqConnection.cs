@@ -2,11 +2,11 @@ using TraineeManagement.Api.Messaging.RabbitMQPublisher;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
 using TraineeManagement.Api.Messaging.RabbitMqConnectionSettings;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
-public static class MessagingExtensions
+public static class RabbitMqConnection
 {
-    public static IServiceCollection AddAppMessaging(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddRabbitMqConnection(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<RabbitConnection>();
         services.Configure<RabbitMqSettings>(configuration.GetSection("RabbitMQ"));
@@ -26,7 +26,7 @@ public static class MessagingExtensions
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Dependency failure: Messaging initialization collapsed during application startup.");
+            logger.LogCritical(ex, "Dependency failure: RabbitMq connection initialization collapsed during application startup.");
             throw;
         }
     }

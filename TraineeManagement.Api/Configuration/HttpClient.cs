@@ -7,21 +7,18 @@ using Polly;
 using Polly.Retry;
 using Polly.CircuitBreaker;
 using Polly.Fallback;
-using BrokenCircuitException = Polly.CircuitBreaker.BrokenCircuitException;
 using Polly.Extensions.Http;
-using Microsoft.Extensions.DependencyInjection;
-using TraineeManagement.Api.CorrelationIdsHandler;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
-public static class HttpClientExtensions
+public static class HttpClient
 {
-    public static IServiceCollection AddAppHttpClients(this IServiceCollection services, IConfiguration configuration, ILogger logger)
+    public static IServiceCollection AddHttpClient(this IServiceCollection services, IConfiguration configuration, ILogger logger)
     {
         AsyncFallbackPolicy<HttpResponseMessage> fallbackPolicy = Policy<HttpResponseMessage>
             .Handle<HttpRequestException>()
             .Or<TaskCanceledException>()
-            .Or<Polly.CircuitBreaker.BrokenCircuitException>()
+            .Or<BrokenCircuitException>()
             .FallbackAsync(
                 fallbackValue: new HttpResponseMessage(HttpStatusCode.ServiceUnavailable),
                 onFallbackAsync: (outcome, context) =>
@@ -39,7 +36,9 @@ public static class HttpClientExtensions
                 onRetry: (outcome, timespan, retryAttempt, context) =>
                 {
                     logger.LogWarning("Retry attempt. AttemptCount: {Attempt}, DelayMs: {Delay}, Reason: {Reason}",
-                        retryAttempt, timespan.TotalMilliseconds, outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+                        retryAttempt, 
+                        timespan.TotalMilliseconds, 
+                        outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
                 });
 
         AsyncCircuitBreakerPolicy<HttpResponseMessage> circuitBreakerPolicy = HttpPolicyExtensions
@@ -57,14 +56,13 @@ public static class HttpClientExtensions
                 });
 
         services.AddHttpContextAccessor();
-        services.AddTransient<CorrelationIdHandler>(); 
 
         services.AddHttpClient<ITraineeService, TraineeServices>((sp, client) =>
         {
             string? baseUrl = configuration["DirectoryService:BaseUrl"];
             if (string.IsNullOrWhiteSpace(baseUrl))
             {
-                logger.LogCritical("Dependency failure: Base address missing for TraineeService configuration lookup.");
+                logger.LogCritical("Dependency failure: Base address missing for Directory TraineeService configuration lookup.");
                 throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
             }
 
@@ -72,7 +70,6 @@ public static class HttpClientExtensions
             client.Timeout = TimeSpan.FromSeconds(5); 
             client.DefaultRequestHeaders.Add("Accept", "application/json");
         })
-        .AddHttpMessageHandler<CorrelationIdHandler>() 
         .AddPolicyHandler(fallbackPolicy)      
         .AddPolicyHandler(retryPolicy)       
         .AddPolicyHandler(circuitBreakerPolicy); 

@@ -12,7 +12,7 @@ public class CorrelationIdMiddleware
         string correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault() 
                                ?? Guid.NewGuid().ToString();
 
-        context.Items[CorrelationIdHeader] = correlationId;
+        context.Items[CorrelationIdHeader] = CorrelationIdHeader;
         context.Response.Headers[CorrelationIdHeader] = correlationId;
 
         await _next(context);

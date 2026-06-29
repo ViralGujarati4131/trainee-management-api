@@ -37,11 +37,11 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
             try
             {
                 _connection = await _factory.CreateConnectionAsync();
-                _logger.LogInformation("Publish/consume connection initialized successfully. Host: {Host}", _settings.Host);
+                _logger.LogInformation("Publish/consume connection initialized successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Dependency failure opening connection. Host: {Host}", _settings.Host);
+                _logger.LogError(ex, "Dependency failure opening rabbitmq connection.");
                 throw;
             }
         }
@@ -50,14 +50,14 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
         {
             if(_connection == null)
             {
-                _logger.LogError("Dependency failure: Connection uninitialized.");
+                _logger.LogError("Dependency failure: RabbitMq connection uninitialized.");
                 throw new NotFoundException(CustomResponse.NotFound);
             }
                 
             using IChannel _channel = await _connection.CreateChannelAsync();
             if (_channel is null) 
             {
-                _logger.LogError("Dependency failure: Channel allocation failed.");
+                _logger.LogError("Dependency failure: RabbitMq channel allocation failed.");
                 throw new OperationException(CustomResponse.ChannelNotInitialized);
             }
 
@@ -69,7 +69,7 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
             string deadLetterQueue = AppConstants.RabbitMQ.GetDlxQueue(queueName);
             string deadLetterRoutingKey = AppConstants.RabbitMQ.GetDlxRoutingKey(queueName);
 
-            _logger.LogInformation("Initializing configuration pipeline");
+            _logger.LogInformation("RabbitMq initializing configuration pipeline");
 
             await _channel.ExchangeDeclareAsync(
                 exchange: deadLetterExchange, 
@@ -117,7 +117,7 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
                 routingKey: mainRoutingKey
             );
 
-            _logger.LogInformation("Queue initialization successfully. TargetQueue: {Queue}", mainQueue);
+            _logger.LogInformation("RabbitMq queue initialization successfully. TargetQueue: {Queue}", mainQueue);
         }
 
         public async ValueTask DisposeAsync()
@@ -125,7 +125,7 @@ namespace TraineeManagement.Api.Messaging.RabbitMqConnection
             if (_connection != null && _connection.IsOpen)
             {
                 await _connection.CloseAsync();
-                _logger.LogInformation("State transition: Connection closed asynchronously.");
+                _logger.LogInformation("State transition: RabbitMq connection closed asynchronously.");
             }
         }
     }

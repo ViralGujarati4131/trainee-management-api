@@ -54,7 +54,7 @@ public class SubmissionProcessingConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        IConnection connection = _connection.Connection!;
+        IConnection? connection = _connection.Connection!;
 
         if (connection == null || !connection.IsOpen)
         {
@@ -95,9 +95,6 @@ public class SubmissionProcessingConsumer : BackgroundService
                 message = JsonSerializer.Deserialize<SubmissionProcessingContract>(json)
                         ?? throw new JsonConversionException(CustomResponse.JsonConversionError);
 
-                // Correlation scope groups all down-stream operations inside this unique execution path
-                // using (IDisposable? scope = _logger.BeginScope(new Dictionary<string, object> { ["MessageId"] = message.MessageId, ["Queue"] = QueueName }))
-                // {
                     _logger.LogInformation("Consume message started. CorrelationId: {CorrelationId}", correlationId);
 
                     await ProcessSubmissionInternalAsync(message, stoppingToken, correlationId);
@@ -109,7 +106,6 @@ public class SubmissionProcessingConsumer : BackgroundService
                     );
 
                     _logger.LogInformation("Consume message acknowledged successfully. CorrelationId: {CorrelationId}", correlationId);
-                // }
             }
             catch (Exception ex)
             {
@@ -177,7 +173,7 @@ public class SubmissionProcessingConsumer : BackgroundService
                 }
 
                 newSubmissionFile.StorageFileName = file.StorageFileName;
-                _logger.LogInformation("Deduplication Success: Re-mapped file pointer. FileName: '{FileName}', CorrelationId: {CorrelationId}", file.StorageFileName, correlationId);
+                _logger.LogInformation("Deduplication Success: Re-mapped file pointer. CorrelationId: {CorrelationId}", correlationId);
                 break;
             }
         }
@@ -190,7 +186,7 @@ public class SubmissionProcessingConsumer : BackgroundService
 
         string cacheKey = $"task-assignment:{assignment.Id}";
         await _cacheService.RemoveAsync(cacheKey);
-        _logger.LogInformation("Cache Invalid. Key: {CacheKey}, CorrelationId: {CorrelationId}", cacheKey, correlationId);
+        _logger.LogInformation("Cache Invalid. CorrelationId: {CorrelationId}", correlationId);
     }
 
     private async Task HandleFailureAsync(
@@ -256,9 +252,9 @@ public class SubmissionProcessingConsumer : BackgroundService
                 }
             }
         }
-        catch (Exception criticalDbException)
+        catch (Exception)
         {
-            _logger.LogCritical(criticalDbException, "Failure. CorrelationId: {CorrelationId}", correlationId);
+            _logger.LogCritical("Failure. CorrelationId: {CorrelationId}", correlationId);
         }
     }
 

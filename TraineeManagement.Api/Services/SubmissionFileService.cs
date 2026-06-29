@@ -10,6 +10,7 @@ using TraineeManagement.Api.Data.ProcessingJobModel;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.CorrelationId;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace TraineeManagement.Api.SubmissionFileService;
@@ -38,7 +39,7 @@ public class SubmissionFileService : ISubmissionFileService
     public async Task<SubmissionPublishResult> RequestProcessing(int submissionId, int submissionFileId)
     {
         Guid correlationId = Guid.Parse(_correlationIdAccessor.Get());
-         ProcessingJob processingJob = new ProcessingJob{
+        ProcessingJob processingJob = new ProcessingJob{
                 MessageId = Guid.NewGuid(),
                 CorrelationId = correlationId,
                 SubmissionId = submissionId,
@@ -52,10 +53,11 @@ public class SubmissionFileService : ISubmissionFileService
 
         _logger.LogInformation("State transition: Queued. JobId: {JobId}, MessageId: {MessageId}", processingJob.Id, processingJob.MessageId);
 
-        int TaskId = _context.Submissions
+        int TaskId = await _context.Submissions
+            .AsNoTracking()
             .Where(s => s.Id == submissionId)
             .Select(s => s.TaskAssignmentId)
-            .FirstOrDefault();
+            .FirstOrDefaultAsync();
 
         SubmissionProcessingContract message = new SubmissionProcessingContract
         (

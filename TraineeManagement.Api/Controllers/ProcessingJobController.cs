@@ -5,12 +5,13 @@ using TraineeManagement.Api.Data.ProcessingJobDto;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.ProcessingJobServiceInterface;
 using TraineeManagement.Api.ResponsesBuilder;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TraineeManagement.Api.ProcessingJobControllers;
 
 [ApiController]
 [Route(CustomConstRoute.ProcessingJob)]
+[Authorize]
 public class ProcessingJobsController : ControllerBase
 {
     private readonly AppDbContext _context;

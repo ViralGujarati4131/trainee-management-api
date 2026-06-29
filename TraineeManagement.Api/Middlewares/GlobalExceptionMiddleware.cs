@@ -3,6 +3,7 @@ using MySqlConnector;
 using TraineeManagement.Api.Data.ResponseDescriptor;
 using TraineeManagement.Api.Data.Constants;
 using TraineeManagement.Api.Data.Response;
+using Polly.CircuitBreaker;
 
 namespace TraineeManagement.Api.GlobalExceptionMiddleware;
 
@@ -20,8 +21,6 @@ public class GlobalExceptionMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        string correlationId = context.TraceIdentifier;
-
         try
         {
             await _next(context);
@@ -29,8 +28,7 @@ public class GlobalExceptionMiddleware
         catch (BaseApplicationException ex)
         {
             _logger.LogWarning(
-                "Application exception caught. CorrelationId={CorrelationId}, ExceptionType={ExceptionType}, Path={Path}, StatusCode={StatusCode}, ErrorCode={ErrorCode}",
-                correlationId,
+                "Application exception caught. ExceptionType={ExceptionType}, Path={Path}, StatusCode={StatusCode}, ErrorCode={ErrorCode}",
                 ex.GetType().Name,
                 context.Request.Path,
                 ex.Descriptor.HttpStatusCode,
@@ -44,7 +42,7 @@ public class GlobalExceptionMiddleware
             context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
             await context.Response.WriteAsJsonAsync(new { Status = 504, Message = "Upstream service timed out." });
         }
-        catch (Exception ex) when (ex.GetType().Name == "BrokenCircuitException")
+        catch (BrokenCircuitException)
         {
             _logger.LogError("Circuit breaker open. Path={Path}", context.Request.Path);
             context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
@@ -60,10 +58,7 @@ public class GlobalExceptionMiddleware
         {
             if (ex is MySqlException mysqlEx || ex.InnerException is MySqlException { } nestedMysqlEx && (mysqlEx = nestedMysqlEx) != null)
             {
-                _logger.LogError(
-                    mysqlEx,
-                    "Database dependency failure. CorrelationId={CorrelationId}, Path={Path}, MySqlErrorCode={MySqlErrorCode}",
-                    correlationId,
+                _logger.LogError("Database dependency failure. Path={Path}, MySqlErrorCode={MySqlErrorCode}",
                     context.Request.Path,
                     mysqlEx.Number);
 
@@ -81,8 +76,7 @@ public class GlobalExceptionMiddleware
             {
                 _logger.LogError(
                     ex,
-                    "Unhandled exception. CorrelationId={CorrelationId}, Path={Path}, Method={Method}",
-                    correlationId,
+                    "Unhandled exception. Path={Path}, Method={Method}",
                     context.Request.Path,
                     context.Request.Method);
 

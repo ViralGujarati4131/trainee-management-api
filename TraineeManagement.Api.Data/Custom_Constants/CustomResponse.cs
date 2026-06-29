@@ -98,8 +98,8 @@ namespace TraineeManagement.Api.Data.Response;
         new(500, "5005", "Exception occur while doing the IO Operation");
     
      public static readonly CustomResponseDescriptor ChannelNotInitialized = 
-        new(500, "5005", "Channel is not initialized.");
+        new(500, "5006", "Channel is not initialized.");
 
     public static readonly CustomResponseDescriptor UnavailableRabbitMQService = 
-        new(503, "5006", "Submission saved but could not be queued for processing.");
+        new(503, "5007", "Submission saved but could not be queued for processing.");
 }

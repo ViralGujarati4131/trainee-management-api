@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
 
-namespace TraineeManagement.Api.Extensions;
+namespace TraineeManagement.Api.Configuration;
 
 public static class HealthCheck
 {
-    public static IServiceCollection AddAppHealthChecks(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHealthChecks()
             .AddMySql(

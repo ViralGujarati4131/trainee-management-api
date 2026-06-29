@@ -5,11 +5,11 @@
       "Microsoft.AspNetCore": "Warning"
     }
   },
-  "ConnectionStrings": {
-    "DefaultConnection": "server=127.0.0.1;port=<docker_mysql_port>;database=trainee_management_db;user=root;password=<docker_mysql_password>;"
-  },
   "JWT": {
     "Key": "YOUR_JWT_KEY"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "server=127.0.0.1;port=<docker_mysql_port>;database=trainee_management_db;user=root;password=<docker_mysql_password>;"
   },
   "Redis": {
     "ConnectionString": "localhost:<docker_redis_port>"

@@ -22,7 +22,7 @@ public class CacheService : ICacheService
         {
             if (!_connection.IsConnected)
             {
-                _logger.LogWarning("Dependency failure: Redis unavailable. Cache miss. CacheKey: {CacheKey}", key);
+                _logger.LogWarning("Dependency failure: Redis unavailable. Cache miss.");
                 return default;
             }
 
@@ -30,16 +30,16 @@ public class CacheService : ICacheService
 
             if (value.IsNullOrEmpty)
             {
-                _logger.LogDebug("Cache miss. CacheKey: {CacheKey}", key);
+                _logger.LogDebug("Cache miss.");
                 return default;
             }
 
-            _logger.LogDebug("Cache hit. CacheKey: {CacheKey}", key);
+            _logger.LogDebug("Cache hit.");
             return JsonSerializer.Deserialize<T>(value!);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Dependency failure: Cache GET failed. CacheKey: {CacheKey}", key);
+            _logger.LogError(ex, "Dependency failure: Cache GET failed.");
             return default;
         }
     }
@@ -50,18 +50,18 @@ public class CacheService : ICacheService
         {
             if (!_connection.IsConnected)
             {
-                _logger.LogWarning("Dependency failure: Redis unavailable. Skipping cache SET. CacheKey: {CacheKey}", key);
+                _logger.LogWarning("Dependency failure: Redis unavailable. Skipping cache SET.");
                 return;
             }
 
             string json = JsonSerializer.Serialize(value);
             await _connection.GetDatabase().StringSetAsync(key, json, ttl);
 
-            _logger.LogDebug("Cache set. CacheKey: {CacheKey}, TTL: {TTL}", key, ttl);
+            _logger.LogDebug("Cache set.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Dependency failure: Cache SET failed. CacheKey: {CacheKey}", key);
+            _logger.LogError(ex, "Dependency failure: Cache SET failed.");
         }
     }
 
@@ -71,16 +71,16 @@ public class CacheService : ICacheService
         {
             if (!_connection.IsConnected)
             {
-                _logger.LogWarning("Dependency failure: Redis unavailable. Skipping cache REMOVE. CacheKey: {CacheKey}", key);
+                _logger.LogWarning("Dependency failure: Redis unavailable. Skipping cache REMOVE.");
                 return;
             }
 
             await _connection.GetDatabase().KeyDeleteAsync(key);
-            _logger.LogDebug("Cache evict. CacheKey: {CacheKey}", key);
+            _logger.LogDebug("Cache Invalid.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Dependency failure: Cache REMOVE failed. CacheKey: {CacheKey}", key);
+            _logger.LogError(ex, "Dependency failure: Cache REMOVE failed.");
         }
     }
 

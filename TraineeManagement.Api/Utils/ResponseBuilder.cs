@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.ResponseDescriptor;
-using Microsoft.AspNetCore.Http;
 
 namespace TraineeManagement.Api.ResponsesBuilder;
 

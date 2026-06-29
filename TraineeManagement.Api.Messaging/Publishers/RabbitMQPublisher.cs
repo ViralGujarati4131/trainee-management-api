@@ -21,7 +21,7 @@ public class RabbitMqService
 
     public async Task PublishAsync(SubmissionProcessingContract message)
     {
-        IConnection connection = _connection.Connection!;
+        IConnection? connection = _connection.Connection;
 
         if (connection == null || !connection.IsOpen)
         {

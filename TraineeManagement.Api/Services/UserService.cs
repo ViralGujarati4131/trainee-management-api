@@ -7,7 +7,6 @@ using TraineeManagement.Api.UserServiceInterface;
 using TraineeManagement.Api.JwtService;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.Response;
-using TraineeManagement.Api.ResponsesBuilder;
 
 namespace TraineeManagement.Api.UserService;
 

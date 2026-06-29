@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using StackExchange.Redis;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TrainingDirectory.Api.DirectoryTraineeService;
 using TrainingDirectory.Api.DirectoryTraineeServiceInterface;
@@ -28,8 +27,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
 
-string[] allowedOrigin = builder.Configuration.GetSection("Cors:AllowedRequest").Get<string[]>() ?? Array.Empty<string>();
-if (allowedOrigin.Length == 0)
+string? allowedOrigin = builder.Configuration["Cors:AllowedRequest"];
+if (allowedOrigin == null)
 {
     logger.LogCritical("Dependency failure: CORS configuration is missing.");
     throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
