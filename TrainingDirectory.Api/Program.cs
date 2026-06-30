@@ -6,6 +6,7 @@ using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.CustomException;
 using TraineeManagement.Api.GlobalExceptionMiddleware;
 using TraineeManagement.Api.CorrelationId;
+using TraineeManagement.Api.Configuration;
 using TraineeManagement.Api.CorrelationIdMiddleware;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -27,20 +28,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion)
 );
 
-string? allowedOrigin = builder.Configuration["Cors:AllowedRequest"];
-if (allowedOrigin == null)
+string[]? allowedOrigins = builder.Configuration.GetSection("Cors:AllowedRequest").Get<string[]>();
+if (allowedOrigins == null || allowedOrigins.Length == 0)
 {
-    logger.LogCritical("Dependency failure: CORS configuration is missing.");
+    logger.LogCritical("Dependency failure: CORS are missing.");
     throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
 }
 
-logger.LogInformation("Configuring CORS policy. AllowedOriginsCount: {Count}", allowedOrigin.Length);
+
+logger.LogInformation("Configuring CORS policy. AllowedOriginsCount: {Count}", allowedOrigins.Length);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: AllowedOriginsPolicy,
                       policy =>
                       {
-                          policy.WithOrigins(allowedOrigin)
+                          policy.WithOrigins(allowedOrigins)
                                 .AllowAnyHeader()
                                 .AllowAnyMethod()
                                 .AllowCredentials();
@@ -51,6 +53,7 @@ builder.Services.AddScoped<IDirectoryTraineeService,DirectoryTraineeService>();
 
 builder.Services.AddHttpContextAccessor();      
 builder.Services.AddScoped<ICorrelationIdAccessor, CorrelationIdAccessor>();
+builder.AddSerilogLogging(); 
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>

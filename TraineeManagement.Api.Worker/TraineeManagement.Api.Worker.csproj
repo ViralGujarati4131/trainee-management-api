@@ -22,4 +22,17 @@
     <ProjectReference Include="..\TraineeManagement.Api.Data\TraineeManagement.Api.Data.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Messaging\TraineeManagement.Api.Messaging.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+  <Content Include="../appsettings.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    <Link>appsettings.json</Link>
+  </Content>
+  <Content Include="../appsettings.Development.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    <Link>appsettings.Development.json</Link>
+  </Content>
+</ItemGroup>
 </Project>

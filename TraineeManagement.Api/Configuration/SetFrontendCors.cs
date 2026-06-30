@@ -9,19 +9,19 @@ public static class SetFrontendCors
 
     public static IServiceCollection AddFrontendCors(this IServiceCollection services, IConfiguration configuration, ILogger logger)
     {
-        string? allowedOrigin = configuration["Cors:AllowedOrigins"];
-        if (allowedOrigin == null)
+        
+        string[]? allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        if (allowedOrigins == null || allowedOrigins.Length == 0)
         {
             logger.LogCritical("Dependency failure: Frontend CORS initialization parameters are missing.");
             throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
         }
-
         logger.LogInformation("Configuring CORS access profile layer.");
         services.AddCors(options =>
         {
             options.AddPolicy(name: AllowedOriginsPolicy, policy =>
             {
-                policy.WithOrigins(allowedOrigin)
+                policy.WithOrigins(allowedOrigins)
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();

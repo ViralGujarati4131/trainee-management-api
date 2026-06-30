@@ -2,19 +2,23 @@ namespace TraineeManagement.Api.CorrelationIdMiddleware;
 
 public class CorrelationIdMiddleware
 {
-    private const string CorrelationIdHeader = "X-Correlation-ID";
+    private const string HeaderName = "X-Correlation-ID";
     private readonly RequestDelegate _next;
-
     public CorrelationIdMiddleware(RequestDelegate next) => _next = next;
 
     public async Task InvokeAsync(HttpContext context)
     {
-        string correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault() 
-                               ?? Guid.NewGuid().ToString();
+        string correlationId = context.Request.Headers.TryGetValue(HeaderName, out var existing)
+            && !string.IsNullOrWhiteSpace(existing)
+                ? existing.ToString()
+                : Guid.NewGuid().ToString();
 
-        context.Items[CorrelationIdHeader] = CorrelationIdHeader;
-        context.Response.Headers[CorrelationIdHeader] = correlationId;
+        context.Items[HeaderName] = correlationId;
+        context.Response.Headers[HeaderName] = correlationId;
 
-        await _next(context);
+        using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId))
+        {
+            await _next(context);
+        }
     }
 }

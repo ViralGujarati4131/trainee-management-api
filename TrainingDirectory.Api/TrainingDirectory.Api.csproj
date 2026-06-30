@@ -4,6 +4,25 @@
     <ProjectReference Include="..\TraineeManagement.Api.Data\TraineeManagement.Api.Data.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api\TraineeManagement.Api.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+  <Content Include="../appsettings.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    <Link>appsettings.json</Link>
+  </Content>
+  <Content Include="../appsettings.Development.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    <Link>appsettings.Development.json</Link>
+  </Content>
+</ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+  </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>

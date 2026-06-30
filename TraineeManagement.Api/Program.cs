@@ -12,12 +12,11 @@ builder.Logging.AddDebug();
 using ILoggerFactory loggerFactory = LoggerFactory.Create(logging => logging.AddConsole());
 ILogger logger = loggerFactory.CreateLogger("Program");
 
-logger.LogInformation("Initializing web API pipeline container host.");
-
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(o => o.SuppressModelStateInvalidFilter = true)
     .AddNewtonsoftJson(o => o.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error);
 
+builder.AddSerilogLogging(); 
 builder.Services.AddMySqlConnection(builder.Configuration, logger);
 builder.Services.AddRedisConnection(builder.Configuration, logger);
 builder.Services.AddRabbitMqConnection(builder.Configuration);
@@ -27,6 +26,7 @@ builder.Services.AddHttpClient(builder.Configuration, logger);
 builder.Services.AddFileStoreConfig(builder.Configuration);
 builder.Services.AddHealthChecks(builder.Configuration);
 builder.Services.AddDependencyInjection();
+
 
 WebApplication app = builder.Build();
 
@@ -42,5 +42,4 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapAppHealthChecks();
 
-logger.LogInformation("State transition: Launching host thread run application loop.");
 app.Run();

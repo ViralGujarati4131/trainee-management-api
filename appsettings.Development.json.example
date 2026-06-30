@@ -1,10 +1,4 @@
 {
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
   "JWT": {
     "Key": "YOUR_JWT_KEY"
   },

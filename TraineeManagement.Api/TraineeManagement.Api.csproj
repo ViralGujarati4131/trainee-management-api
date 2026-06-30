@@ -32,6 +32,9 @@
     <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="StackExchange.Redis" Version="3.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
@@ -43,4 +46,17 @@
     <ProjectReference Include="..\TraineeManagement.Api.Contract\TraineeManagement.Api.Contract.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Messaging\TraineeManagement.Api.Messaging.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+  <Content Include="../appsettings.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    <Link>appsettings.json</Link>
+  </Content>
+  <Content Include="../appsettings.Development.json">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    <Link>appsettings.Development.json</Link>
+  </Content>
+</ItemGroup>
 </Project>

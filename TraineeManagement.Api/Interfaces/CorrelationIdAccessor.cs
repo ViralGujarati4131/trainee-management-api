@@ -7,12 +7,13 @@ public interface ICorrelationIdAccessor
 
 public class CorrelationIdAccessor : ICorrelationIdAccessor
 {
+    private const string HeaderName = "X-Correlation-ID";
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CorrelationIdAccessor(IHttpContextAccessor accessor) 
+    public CorrelationIdAccessor(IHttpContextAccessor accessor)
         => _httpContextAccessor = accessor;
 
     public string Get() =>
-        _httpContextAccessor.HttpContext?.Items["X-Correlation-ID"]?.ToString() 
+        _httpContextAccessor.HttpContext?.Items[HeaderName]?.ToString()
         ?? Guid.NewGuid().ToString();
 }
