@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+using TraineeManagement.Api.Data.SubmissionProcessingContarct;
 using TraineeManagement.Api.Messaging.RabbitMqConnection;
 using RabbitMQ.Client;
 using TraineeManagement.Api.Data.Constants;

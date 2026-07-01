@@ -13,7 +13,7 @@ using System.Security.Cryptography;
 
     public class FileStorageService : IFileStorageService
     {
-        private readonly string _rootPath;
+        private readonly string _basePath;
         
         private readonly ILogger<FileStorageService> _logger;
 
@@ -27,19 +27,11 @@ using System.Security.Cryptography;
             _fileConfiguration = fileConfiguration.Value;
             _context = context;
 
-            if (string.IsNullOrWhiteSpace(_fileConfiguration.RootPath))
-            {
-                throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
-            }
-            
-            string configuredPath = _fileConfiguration.RootPath; 
-            string basePath = _fileConfiguration.BasePath;
+            _basePath = _fileConfiguration.BasePath;
 
-            _rootPath = Path.Combine(basePath, configuredPath);
-
-            if (!Directory.Exists(_rootPath))
+            if (!Directory.Exists(_basePath))
             {
-                Directory.CreateDirectory(_rootPath);
+                Directory.CreateDirectory(_basePath);
             }
         }
 
@@ -84,7 +76,7 @@ using System.Security.Cryptography;
             string datePrefix = DateTime.UtcNow.ToString("yyyy/MM/dd");
             string storedFileName = $"{datePrefix}/{uniqueId}{ext}"; 
             string diskSafeFileName = storedFileName.Replace("/", "_");
-            string filePath = Path.Combine(_rootPath, diskSafeFileName);
+            string filePath = Path.Combine(_basePath, diskSafeFileName);
             try
             {
                 using FileStream output = new FileStream(filePath, FileMode.Create, FileAccess.Write);
@@ -109,7 +101,7 @@ using System.Security.Cryptography;
                 throw new BadRequestException(CustomResponse.DataEntryNotFound);
             }
 
-            string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
+            string filePath = Path.Combine(_basePath, metadata.StorageFileName);
             if (!File.Exists(filePath))
             {
                 _logger.LogWarning("Dependency failure: Physical file missing from disk store. FileId: {FileId}", id);
@@ -143,7 +135,7 @@ using System.Security.Cryptography;
             {
                 throw new BadRequestException(CustomResponse.DataEntryNotFound);
             }
-            string filePath = Path.Combine(_rootPath, metadata.StorageFileName);
+            string filePath = Path.Combine(_basePath, metadata.StorageFileName);
 
             if (File.Exists(filePath))
             {

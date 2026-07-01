@@ -1,4 +1,4 @@
-namespace TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+namespace TraineeManagement.Api.Data.SubmissionProcessingContarct;
 
 public record SubmissionProcessingContract
 (

@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TraineeManagement.Api.Contract\TraineeManagement.Api.Contract.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Data\TraineeManagement.Api.Data.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Messaging\TraineeManagement.Api.Messaging.csproj" />
   </ItemGroup>

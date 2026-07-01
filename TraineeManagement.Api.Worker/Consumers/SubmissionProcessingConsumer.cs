@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using TraineeManagement.Api.Data.CacheServiceInterface;
-using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+using TraineeManagement.Api.Data.SubmissionProcessingContarct;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.Constants;
 using TraineeManagement.Api.Data.CustomException;
@@ -25,7 +25,7 @@ public class SubmissionProcessingConsumer : BackgroundService
     private readonly RabbitConnection _connection;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ICacheService _cacheService;
-    private readonly string _rootPath;
+    private readonly string _basePath;
     private IChannel? channel;
 
     private const int MaxRetryAttempts = 3;
@@ -44,12 +44,12 @@ public class SubmissionProcessingConsumer : BackgroundService
         _cacheService = cacheService;
 
         CustomFileStoreValidation config = fileConfiguration.Value ?? throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
-        if (string.IsNullOrWhiteSpace(config.RootPath))
+        if (string.IsNullOrWhiteSpace(config.BasePath))
         {
             throw new ConfigurationMissingException(CustomResponse.ConfigurationMissingError);
         }
 
-        _rootPath = Path.Combine(config.BasePath, config.RootPath);
+        _basePath = config.BasePath;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -162,10 +162,10 @@ public class SubmissionProcessingConsumer : BackgroundService
 
         foreach (SubmissionFile file in duplicateFiles)
         {
-            string filePath = Path.Combine(_rootPath, file.StorageFileName);
+            string filePath = Path.Combine(_basePath, file.StorageFileName);
             if (File.Exists(filePath))
             {
-                string targetPathToDelete = Path.Combine(_rootPath, newSubmissionFile.StorageFileName);
+                string targetPathToDelete = Path.Combine(_basePath, newSubmissionFile.StorageFileName);
 
                 if (File.Exists(targetPathToDelete))
                 {

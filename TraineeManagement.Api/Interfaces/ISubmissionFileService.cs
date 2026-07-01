@@ -1,4 +1,4 @@
-using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+using TraineeManagement.Api.Data.SubmissionProcessingContarct;
 using TraineeManagement.Api.Data.SubmissionFileDTO;
 
 namespace TraineeManagement.Api.SubmissionFileServiceInterface;

@@ -6,7 +6,7 @@ using TraineeManagement.Api.Data.ConstRoute;
 using TraineeManagement.Api.Data.Response;
 using TraineeManagement.Api.Data.SubmissionFileDTO;
 using TraineeManagement.Api.SubmissionFileServiceInterface;
-using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+using TraineeManagement.Api.Data.SubmissionProcessingContarct;
 using TraineeManagement.Api.Data.DatabaseContext;
 
 namespace TraineeManagement.Api.SubmissionFileController;

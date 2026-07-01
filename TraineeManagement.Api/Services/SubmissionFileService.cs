@@ -3,7 +3,7 @@ using TraineeManagement.Api.SubmissionFileServiceInterface;
 using System.Security.Cryptography;
 using TraineeManagement.Api.Data.SubmissionFileModel;
 using TraineeManagement.Api.Data.Constants;
-using TraineeManagement.Api.Contract.SubmissionProcessingContarct;
+using TraineeManagement.Api.Data.SubmissionProcessingContarct;
 using TraineeManagement.Api.Messaging.RabbitMQPublisher;
 using TraineeManagement.Api.Data.DatabaseContext;
 using TraineeManagement.Api.Data.ProcessingJobModel;

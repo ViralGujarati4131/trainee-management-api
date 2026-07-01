@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\TraineeManagement.Api.Contract\TraineeManagement.Api.Contract.csproj" />
     <ProjectReference Include="..\TraineeManagement.Api.Data\TraineeManagement.Api.Data.csproj" />
   </ItemGroup>
 
