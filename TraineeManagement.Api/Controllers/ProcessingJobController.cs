@@ -41,7 +41,7 @@ public class ProcessingJobsController : ControllerBase
 
         _logger.LogInformation("Job Detail Fetch completed successfully. JobId: {JobId}", id);
         return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.DataRetrivedSuccess,
+            CustomResponse.StatusTrack,
             jobTrack
         ); 
     }

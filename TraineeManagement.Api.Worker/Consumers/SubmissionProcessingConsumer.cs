@@ -167,7 +167,7 @@ public class SubmissionProcessingConsumer : BackgroundService
             {
                 string targetPathToDelete = Path.Combine(_basePath, newSubmissionFile.StorageFileName);
 
-                if (File.Exists(targetPathToDelete))
+                if (File.Exists(targetPathToDelete) && !file.StorageFileName.Equals(newSubmissionFile.StorageFileName))
                 {
                     File.Delete(targetPathToDelete);
                 }

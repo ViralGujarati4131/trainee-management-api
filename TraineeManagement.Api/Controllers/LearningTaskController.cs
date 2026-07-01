@@ -98,9 +98,7 @@ public class LearningTasksController : ControllerBase
         await _learningTaskService.DeleteLearningTaskByIdAsync(id);
 
         _logger.LogInformation("State check: Task deletion success. Id: {TaskId}", id);
-        return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.DataDeletedNoContent
-        );
+        return NoContent();
     }
 
     [Authorize]

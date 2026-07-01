@@ -22,23 +22,156 @@ A backend REST API for managing trainees, mentors, learning tasks, assignments, 
 ## Project Structure
 
 ```
-TraineeManagement.Api/
-├── Controllers/
-├── DTOs/
-├── Services/
-├── Models/
-├── Data/
-│   └── AppDbContext.cs
-├── Middleware/
-├── Migrations/
+
+├── README.md
+├── SubmittedFiles
+│   ├── 2026_07_01_21c5df879c88486abcdfebcc4807bdb3e.png
+├── TraineeManagement.Api
+│   ├── Configuration
+│   │   ├── AuthJwtToken.cs
+│   │   ├── DependencyInjection.cs
+│   │   ├── FileStoreConfig.cs
+│   │   ├── HealthCheck.cs
+│   │   ├── HttpClient.cs
+│   │   ├── MySqlConnection.cs
+│   │   ├── RabbitMqConnection.cs
+│   │   ├── RedisConnection.cs
+│   │   ├── SeriLogConfig.cs
+│   │   ├── SetFrontendCors.cs
+│   │   ├── SetMicroServiceCors.cs
+│   │   └── UserSeeder.cs
+│   ├── Controllers
+│   │   ├── HealthController.cs
+│   │   ├── LearningTaskController.cs
+│   │   ├── MentorController.cs
+│   │   ├── ProcessingJobController.cs
+│   │   ├── ReviewController.cs
+│   │   ├── SubmissionController.cs
+│   │   ├── SubmissionFileController.cs
+│   │   ├── TaskAssignmentController.cs
+│   │   ├── TraineeController.cs
+│   │   └── UserController.cs
+│   ├── Dockerfile
+│   ├── Interfaces
+│   │   ├── CorrelationIdAccessor.cs
+│   │   ├── IFileStorageService.cs
+│   │   ├── ILearningTaskService.cs
+│   │   ├── IMentorService.cs
+│   │   ├── IProcessingJobService.cs
+│   │   ├── IReviewService.cs
+│   │   ├── ISubmissionFileService.cs
+│   │   ├── ISubmissionService.cs
+│   │   ├── ITaskAssignmentService.cs
+│   │   ├── ITraineeService.cs
+│   │   └── IUserService.cs
+│   ├── Middlewares
+│   │   ├── CorrelationIdMiddleware.cs
+│   │   └── GlobalExceptionMiddleware.cs
+│   ├── Program.cs
+│   ├── Properties
+│   │   └── launchSettings.json
+│   ├── Services
+│   │   ├── FileStorageService.cs
+│   │   ├── LearningTaskService.cs
+│   │   ├── MentorService.cs
+│   │   ├── ProcessingJobService.cs
+│   │   ├── ReviewService.cs
+│   │   ├── SubmissionFileService.cs
+│   │   ├── SubmissionService.cs
+│   │   ├── TaskAssignmentService.cs
+│   │   ├── TraineeService.cs
+│   │   └── UserService.cs
+│   ├── TraineeManagement.Api.csproj
+│   ├── TraineeManagement.Api.http
+│   ├── Utils
+│   │   ├── JwtService.cs
+│   │   └── ResponseBuilder.cs
+├── TraineeManagement.Api.Data
+│   ├── DTOs
+│   │   ├── LearningTaskDto.cs
+│   │   ├── MentorDto.cs
+│   │   ├── ProcessingJobDto.cs
+│   │   ├── ResponseDto.cs
+│   │   ├── ReviewDto.cs
+│   │   ├── SubmissionDto.cs
+│   │   ├── SubmissionFileDto.cs
+│   │   ├── TaskAssignmentDto.cs
+│   │   ├── TraineeDto.cs
+│   │   └── UserDto.cs
+│   ├── Database
+│   │   └── AppDbContext.cs
+│   ├── Interfaces
+│   │   ├── IModelTimeStamp.cs
+│   │   └── IRedisCacheService.cs
+│   ├── Migrations
+│   │   ├── 20260625085121_ProcessingJobStatus.Designer.cs
+│   │   ├── 20260625085121_ProcessingJobStatus.cs
+│   │   └── AppDbContextModelSnapshot.cs
+│   ├── Models
+│   │   ├── LearningTask.cs
+│   │   ├── Mentor.cs
+│   │   ├── ProcessingJob.cs
+│   │   ├── Reviwe.cs
+│   │   ├── Submission.cs
+│   │   ├── SubmissionFile.cs
+│   │   ├── TaskAssignment.cs
+│   │   ├── Trainee.cs
+│   │   └── User.cs
+│   ├── TraineeManagement.Api.Data.csproj
+│   ├── Utils
+│   │   ├── FileStoreValidation.cs
+│   │   └── SubmissionProcessingContract.cs
+│   ├── constants
+│   │   ├── CacheKey.cs
+│   │   ├── ConstRoute.cs
+│   │   ├── Constants.cs
+│   │   ├── CustomDataAnnotation.cs
+│   │   ├── CustomException.cs
+│   │   ├── CustomResponse.cs
+│   │   └── CustomResponseDescriptor.cs
+│   └── services
+│       └── RedisCacheService.cs
+├── TraineeManagement.Api.Messaging
+│   ├── Connection
+│   │   └── ConnectionInitialization.cs
+│   ├── Publishers
+│   │   └── RabbitMQPublisher.cs
+│   ├── RabbitMqSettings
+│   │   └── RabbitMQSetting.cs
+│   ├── TraineeManagement.Api.Messaging.csproj
+├── TraineeManagement.Api.Worker
+│   ├── Consumers
+│   │   └── SubmissionProcessingConsumer.cs
+│   ├── Dockerfile
+│   ├── Program.cs
+│   ├── Properties
+│   │   └── launchSettings.json
+│   ├── TraineeManagement.Api.Worker.csproj
+├── TraineeManagement.sln
+├── TrainingDirectory.Api
+│   ├── Controllers
+│   │   └── DirectoryTraineeController.cs
+│   ├── Dockerfile
+│   ├── Interfaces
+│   │   └── IDirectoryTraineeService.cs
+│   ├── Program.cs
+│   ├── Properties
+│   │   └── launchSettings.json
+│   ├── Services
+│   │   └── DirectoryTraineeService.cs
+│   ├── TrainingDirectory.Api.csproj
+│   ├── TrainingDirectory.Api.http
+├── Uploads
+│   └── AppData
+│       └── Uploads
+│           ├── 2026_06_30_90c0334b0f6a4sadf98a9a124a0841d6.png
+├── appsettings.Development.json
+├── appsettings.Development.json.example
 ├── appsettings.json
-└── Program.cs
+├── docker-compose.yml
+├── init-db
+│   └── 01-schema.sql
 
-SubmissionProcessor.Worker/
-└── Worker that consumes RabbitMQ messages and processes submission files
-
-TrainingDirectory.Api/
-└── Internal service that provides trainee and assignment profile data
 ```
 
 ---
@@ -65,37 +198,10 @@ cd trainee-management.api
 
 ### Step 2 — Configure appsettings.json
 
-Open `appsettings.json` and fill in your MySQL credentials and JWT settings:
+Open `.env.example` and create `.env` and fill in your MySQL & RabbitMQ credentials, JWT key and set envioronment:
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=3306;database=trainee_management_db;user=root;password=your_password;"
-  },
-  "Jwt": {
-    "Issuer": "TraineeManagementApi",
-    "Audience": "TraineeManagementClient",
-    "ExpiryMinutes": 60
-  }
-}
-```
 
-> Do not hardcode the JWT signing key inside any controller or service. Keep it in configuration only.  
-> Do not commit real passwords or secrets to source control.
-
-### Step 3 — Run the API
-
-```bash
-dotnet run
-```
-
-Once running, open Swagger in your browser to explore and test the APIs:
-
-```
-http://localhost:<port>/swagger
-```
-
-### Step 5 — Run Everything with Docker Compose
+### Step 3 — Run Everything with Docker Compose
 
 To start MySQL, Redis, RabbitMQ, the main API, the background worker, and the internal directory service all together:
 
@@ -103,7 +209,7 @@ To start MySQL, Redis, RabbitMQ, the main API, the background worker, and the in
 docker-compose up --build
 ```
 
-Services communicate using container names, not localhost. Credentials for all services must be set in environment configuration, not committed to source files.
+Services communicate using container names, not localhost. Credentials for all services must be set in environment configuration.
 
 ---
 

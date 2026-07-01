@@ -98,9 +98,7 @@ public class MentorController : ControllerBase
         await _mentorService.DeleteMentorByIdAsync(id);
 
         _logger.LogInformation("State check: Mentor deletion success. Id: {MentorId}", id);
-        return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.DataDeletedNoContent
-        );
+        return NoContent();
     }
 
     [HttpPut("{id}")]

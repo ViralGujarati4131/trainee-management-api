@@ -130,8 +130,6 @@ public class SubmissionFilesController : ControllerBase
         await _fileStorageService.DeleteAsync(id);
    
         _logger.LogInformation("State check: File erased from physical store tracking. FileId: {FileId}", id);
-        return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.DataDeletedNoContent
-        );
+        return NoContent();
     }
 }

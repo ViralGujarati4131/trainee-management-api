@@ -16,14 +16,11 @@ namespace TraineeManagement.Api.Data.Response;
     public static readonly CustomResponseDescriptor DataUpdatedSuccess = 
         new(200, "2003", "Data updated successfully");
 
-    public static readonly CustomResponseDescriptor DataDeletedNoContent = 
-        new(204, "2004", "No content Data deleted succesfully");
-
     public static readonly CustomResponseDescriptor FileUploadAccepted = 
-        new(202, "2005", "File Upload Accepted Successfully");
+        new(202, "2004", "File Upload Accepted Successfully");
     
     public static readonly CustomResponseDescriptor StatusTrack = 
-        new(200, "2006", "Current Status");
+        new(200, "2005", "Current Status");
 
 
     //  CLIENT SIDE ERRORS  

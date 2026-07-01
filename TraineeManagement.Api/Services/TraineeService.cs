@@ -76,41 +76,37 @@ public class TraineeServices : ITraineeService
         _logger.LogDebug("Cache miss.");
         _logger.LogInformation("Executing HTTP GET. TraineeId: {TraineeId}", id);
 
-        try
+
+        HttpResponseMessage response = await _httpClient.GetAsync($"/api/directory/trainee/{id}", cancellationToken);
+
+        if (response.IsSuccessStatusCode)
         {
-            HttpResponseMessage response = await _httpClient.GetAsync($"/api/directory/trainee/{id}", cancellationToken);
+            InterServiceCommunicationResponse<TraineeResponseDto>? responseData = await response.Content.ReadFromJsonAsync<InterServiceCommunicationResponse<TraineeResponseDto>>(
+                new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                cancellationToken
+            );
 
-            if (response.IsSuccessStatusCode)
+            if (responseData is null || responseData.Data is null)
             {
-                InterServiceCommunicationResponse<TraineeResponseDto>? responseData = await response.Content.ReadFromJsonAsync<InterServiceCommunicationResponse<TraineeResponseDto>>(
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web),
-                    cancellationToken
-                );
-
-                if (responseData is null || responseData.Data is null)
-                {
-                    _logger.LogWarning("Dependency failure: Empty body payload. TraineeId: {TraineeId}",id);
-                    throw new NotFoundException(CustomResponse.NotFound);
-                }
-
-                TraineeResponseDto trainee = responseData.Data;
-                await _cacheService.SetAsync(cacheKey, trainee, TimeSpan.FromMinutes(CacheTime.TTL));
-
-                _logger.LogInformation("HTTP GET success. TraineeId: {TraineeId}", id);
-                return trainee;
+                _logger.LogWarning("Dependency failure: Empty body payload. TraineeId: {TraineeId}",id);
+                throw new NotFoundException(CustomResponse.NotFound);
             }
-            else if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                _logger.LogWarning("Dependency failure: Remote resource missing. TraineeId: {TraineeId}", id);
-                throw new NotFoundException(CustomResponse.NotFound, "Trainee");
-            }
+
+            TraineeResponseDto trainee = responseData.Data;
+            await _cacheService.SetAsync(cacheKey, trainee, TimeSpan.FromMinutes(CacheTime.TTL));
+
+            _logger.LogInformation("HTTP GET success. TraineeId: {TraineeId}", id);
+            return trainee;
         }
-        catch
+        else if (response.StatusCode == HttpStatusCode.NotFound)
         {
-            throw;
+            _logger.LogWarning("Dependency failure: Remote resource missing. TraineeId: {TraineeId}", id);
+            throw new NotFoundException(CustomResponse.NotFound, "Trainee");
         }
-
-        return null;
+        else
+        {
+            throw new InternalServerException(CustomResponse.ServiceTemporaryUnavailable);
+        }
     }
 
     public async Task<TraineeResponseDto> CreateTraineeAsync(TraineeCreateDto createTraineeDto)

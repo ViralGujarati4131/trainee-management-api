@@ -137,7 +137,12 @@ using System.Security.Cryptography;
             }
             string filePath = Path.Combine(_basePath, metadata.StorageFileName);
 
-            if (File.Exists(filePath))
+            SubmissionFile? file = await _context.SubmissionFiles
+                .AsNoTracking()
+                .Where(f => f.StorageFileName == metadata.StorageFileName && f.Id != id)
+                .FirstOrDefaultAsync();
+
+            if (File.Exists(filePath) && file == null)
             {
                 try
                 {

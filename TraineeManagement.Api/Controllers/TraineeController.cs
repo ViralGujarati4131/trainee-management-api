@@ -108,9 +108,7 @@ public class TraineesController : ControllerBase
         await _traineeService.DeleteTraineeByIdAsync(id);
         
         _logger.LogInformation("State check: Trainee deletion success. Id: {TraineeId}", id);
-        return CustomResponseBuilder.CreateSuccessResponse(
-            CustomResponse.DataDeletedNoContent
-        );
+        return NoContent();
     }
 
     [HttpGet]

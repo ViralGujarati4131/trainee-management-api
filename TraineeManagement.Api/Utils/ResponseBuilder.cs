@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.Data.ResponseDescriptor;
 
@@ -18,7 +19,7 @@ public static class CustomResponseBuilder
     }
     public static ActionResult CreateSuccessResponse(CustomResponseDescriptor descriptor, object? data = null)
     {
-        if (descriptor.HttpStatusCode == StatusCodes.Status204NoContent ||  data == null)
+        if (data == null)
         {
             return new ObjectResult(new
             {
